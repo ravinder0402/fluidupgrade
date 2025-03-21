@@ -1,0 +1,7 @@
+*.lock
+*.tgz
+*.swp
+*.swo
+charts
+dist
+.idea/

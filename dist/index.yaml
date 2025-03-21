@@ -1,0 +1,94 @@
+apiVersion: v1
+entries:
+  ccs:
+  - apiVersion: v2
+    appVersion: "0.1"
+    created: "2025-03-25T05:38:16.867080877Z"
+    dependencies:
+    - name: helper
+      repository: file://components/helper
+      version: 0.1.0
+    - name: repository-cred
+      repository: file://components/repository-cred
+      version: 0.1.0
+    - condition: global.cloudManager.enabled
+      name: cloud-manager
+      repository: file://components/cloud-manager
+      version: 0.1.0
+    - condition: global.workflowManager.enabled
+      name: workflow-manager
+      repository: file://components/workflow-manager
+      version: 0.1.0
+    - condition: global.containerRegistry.enabled
+      name: container-registry
+      repository: file://components/container-registry
+      version: 0.1.0
+    - condition: global.baremetalManager.enabled
+      name: baremetal-manager
+      repository: file://components/baremetal-manager
+      version: 0.1.0
+    - condition: global.metering.enabled
+      name: metering
+      repository: file://components/metering
+      version: 0.1.0
+    - condition: global.storagePlugin.enabled
+      name: storage-plugin
+      repository: file://components/storage-plugin
+      version: 0.1.0
+    - condition: grafana.enabled
+      name: grafana
+      repository: https://grafana.github.io/helm-charts
+      version: 6.52.1
+    - name: auth-service
+      repository: file://components/auth-service
+      version: 0.1.0
+    - condition: global.networkManager.enabled
+      name: network-manager
+      repository: file://components/network-manager
+      version: 0.1.0
+    - name: userPortal
+      repository: file://components/user-portal
+      version: 0.1.0
+    - condition: global.adminServices.enabled
+      name: adminServices
+      repository: file://components/admin
+      version: 0.1.0
+    - condition: global.computeService.enabled
+      name: computeService
+      repository: file://components/compute-service
+      version: 0.1.0
+    - condition: global.volumeService.enabled
+      name: volumeService
+      repository: file://components/volume-service
+      version: 0.1.0
+    - condition: global.coremgmtService.enabled
+      name: coremgmtService
+      repository: file://components/core-mgmt-service
+      version: 0.1.0
+    - condition: global.neutronService.enabled
+      name: neutronService
+      repository: file://components/neutron-service
+      version: 0.1.0
+    - condition: global.autoscalingService.enabled
+      name: autoscalingService
+      repository: file://components/autoscaling
+      version: 0.1.0
+    - condition: global.archivalStorage.enabled
+      name: archivalStorage
+      repository: file://components/archival-storage
+      version: 0.1.0
+    - condition: postgres-operator.enabled
+      name: postgres-operator
+      repository: oci://registry-1.docker.io/coredgehelm
+      version: 1.12.2
+    - condition: global.keycloak.highavailability
+      name: keycloak-ha
+      repository: oci://registry-1.docker.io/coredgehelm
+      version: 0.1.4
+    description: Helm chart for Coredge Cloud Suite
+    digest: 90c3d57a43018ba778d27e98c17168e94fe236343fd1f50a3b21c42a3f2fd554
+    name: ccs
+    urls:
+    - ccs-0.1.0.tgz
+    version: 0.1.0
+generated: "2025-03-25T05:38:16.839447007Z"

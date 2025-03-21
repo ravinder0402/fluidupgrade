@@ -1,0 +1,133 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compute-service
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: compute-service
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: compute-service
+  template:
+    metadata: 
+      labels:
+        app: compute-service
+    spec:
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      initContainers:
+      {{ include "helper.postgresql.pgready" . }}
+      containers:
+      - name: compute  
+        image: {{ .Values.global.repository }}/{{ .Values.image }}:{{ .Values.global.releaseTag }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        resources: 
+          {{- toYaml .Values.resources | nindent 10 }}
+        ports:
+        - name: http
+          containerPort: 5000
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: platform-api-config   
+        # - configMapRef:
+        #     name: ccp-monitoring-config
+        - configMapRef:
+            name: redis-config
+        {{- if .Values.global.events.enabled }}
+        - configMapRef:
+            name: ccp-events-config
+        {{- end }}
+        - secretRef:
+            name: ccs-postgres-config
+        - secretRef:
+            name: ccs-auditdb-config
+        env:
+          - name: ENABLED_MODULES
+            value: {{ .Values.enabledServices | quote }}     
+          - name: POSTGRES_DB
+            value: "cloud"
+          - name: FLASK_CONFIG
+            value: {{ .Values.global.flaskConfig }}
+          - name: CACHING_ENABLED
+            value: "false"
+        volumeMounts:
+          - name: platform-config
+            readOnly: true
+            mountPath: /etc/yntraa/
+      volumes:
+        - name: platform-config
+          projected:
+            sources:
+            - secret:
+                name: ccs-super-admin-config
+---
+{{- if .Values.celery.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compute-service-celery
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: compute-service-celery
+spec:
+  replicas: {{ .Values.celery.replicaCount }}
+  selector:
+    matchLabels:
+      app: compute-service-celery
+  template:
+    metadata: 
+      labels:
+        app: compute-service-celery
+    spec:
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      initContainers:
+      {{ include "helper.postgresql.pgready" . }}
+      containers:
+      - name: compute-celery
+        image: {{ .Values.global.repository }}/{{ .Values.image }}:{{ .Values.global.releaseTag }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        {{- if .Values.celery.command }}              
+        command:
+          - "/bin/sh"
+          - "-c"
+          - "{{ .Values.celery.command }}"
+        {{- end }}
+        resources: 
+          {{- toYaml .Values.celery.resources | nindent 10 }}
+        ports:
+        - name: http
+          containerPort: 5000
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: platform-api-config   
+        # - configMapRef:
+        #     name: ccp-monitoring-config
+        - configMapRef:
+            name: redis-config
+        {{- if .Values.global.events.enabled }}
+        - configMapRef:
+            name: ccp-events-config
+        {{- end }}
+        - secretRef:
+            name: ccs-postgres-config
+        - secretRef:
+            name: ccs-auditdb-config
+        env:
+          - name: ENABLED_MODULES
+            value: {{ .Values.enabledServices | quote }}     
+          - name: POSTGRES_DB
+            value: "cloud"
+          - name: FLASK_CONFIG
+            value: {{ .Values.global.flaskConfig }}
+          - name: CACHING_ENABLED
+            value: "false"
+          - name: CONSOLE_PROXY
+            value: {{ .Values.vmconsoleProxyURL | quote }}
+{{- end }}

@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: core-mgmt
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: core-mgmt
+spec:
+  type: ClusterIP
+  ports:
+  - port: 7150
+    targetPort: 5000
+    protocol: TCP
+    name: http
+  selector:
+      app: core-mgmt
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: core-mgmt-celery
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: core-mgmt-celery
+spec:
+  type: ClusterIP
+  ports:
+  - port: 7150
+    targetPort: 5000
+    protocol: TCP
+    name: http
+  selector:
+      app: core-mgmt-celery

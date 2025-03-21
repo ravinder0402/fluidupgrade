@@ -1,0 +1,157 @@
+{{- if not .Values.global.postgresql.external.host }}
+{{- if and (.Capabilities.APIVersions.Has "acid.zalan.do/v1") (not .Values.global.postgresql.architecture.standalone) }}
+apiVersion: "acid.zalan.do/v1"
+kind: postgresql
+metadata:
+  name: ccs-postgresql-cluster
+  namespace: {{ .Release.Namespace }}
+  labels:
+    application: ccs
+#    environment: demo
+spec: 
+  dockerImage: {{ .Values.postgresqlHA.image }}
+  teamId: ccs
+  numberOfInstances: {{ .Values.postgresqlHA.replicaCount }}
+  users:  # Application/Robot users
+    zalando:
+    - superuser
+    - createdb
+    {{ .Values.postgresqlHA.creds.user }}: 
+    - createdb
+  databases: {}
+#  usersWithSecretRotation:
+#  - foo_user
+#  usersWithInPlaceSecretRotation:
+#  - flyway
+#  - bar_owner_user
+  enableMasterLoadBalancer: {{ .Values.postgresqlHA.loadBalancer.master }}
+  enableReplicaLoadBalancer: {{ .Values.postgresqlHA.loadBalancer.replica }}
+  enableConnectionPooler: false # enable/disable connection pooler deployment
+  enableReplicaConnectionPooler: false # set to enable connectionPooler for replica service
+  enableMasterPoolerLoadBalancer: false
+  enableReplicaPoolerLoadBalancer: false
+  allowedSourceRanges:  # load balancers' source ranges for both master and replica services
+  - 127.0.0.1/32
+  preparedDatabases: {}
+  postgresql:
+    version: {{ .Values.postgresqlHA.pgVersion | quote }}
+    parameters:  # Expert section
+      shared_buffers: "32MB"
+      max_connections: {{ .Values.postgresqlHA.maxconnections | quote }}
+      log_statement: "all"
+  
+  volume:
+    size: {{ .Values.postgresqlHA.volume.size }}
+    storageClass: {{ .Values.global.storageClass }}
+#    selector:
+#      matchExpressions:
+#        - { key: flavour, operator: In, values: [ "banana", "chocolate" ] }
+#      matchLabels:
+#        environment: dev
+#        service: postgres
+  
+  additionalVolumes:
+    # - name: data
+    #   mountPath: /home/postgres/pgdata/partitions
+    #   targetContainers:
+    #     - postgres
+    #   volumeSource:
+    #     PersistentVolumeClaim:
+    #       claimName: pvc-postgresql-data-partitions
+    #       readyOnly: false    
+
+  resources: 
+    {{- toYaml .Values.postgresqlHA.resources | nindent 4 }}
+  patroni:
+    failsafe_mode: false
+    initdb:
+      encoding: "UTF8"
+      locale: "en_US.UTF-8"
+      data-checksums: "true"
+    pg_hba:
+      - local   all             all                                   trust
+      - hostssl all             +zalandos    127.0.0.1/32       pam
+      - host    all             all                127.0.0.1/32       md5
+      - hostssl all             +zalandos    ::1/128            pam
+      - host    all             all                ::1/128            md5
+      - local   replication     standby                    trust
+      - hostssl replication     standby      all                      md5
+      - hostssl all             +zalandos    all                pam
+      - hostssl all             all                all                md5
+      {{- range .Values.postgresqlHA.pg_hba }}
+      - {{ . }}
+      {{- end }}
+# overwrite custom properties for connection pooler deployments
+  connectionPooler:
+    numberOfInstances: 1
+    mode: "transaction"
+    schema: "pooler"
+    user: "pooler"
+    resources:
+      requests:
+        cpu: 100m
+        memory: 250Mi
+      limits:
+        cpu: "500m"
+        memory: 500Mi
+
+  initContainers:
+  - name: date
+    image: {{ .Values.global.repository }}/busybox
+    command: [ "/bin/date" ]
+  {{- if .Values.postgresqlHA.monitoring.enabled }}
+  sidecars:
+  - name: "metrics-exporter"
+    image: "{{ .Values.global.repository }}/postgres-exporter:v0.15.0"
+    ports:
+    - name: exporter
+      containerPort: 9187
+      protocol: TCP
+    resources:
+      limits:
+        cpu: 500m
+        memory: 500Mi
+      requests:
+        cpu: 100m
+        memory: 100Mi
+    env:
+      - name: "DATA_SOURCE_URI"
+        value: "$(POD_NAME)/postgres?sslmode=require"
+      - name: "DATA_SOURCE_USER"
+        value: "$(POSTGRES_USER)"
+      - name: "DATA_SOURCE_PASS"
+        value: "$(POSTGRES_PASSWORD)"
+      - name: "PG_EXPORTER_AUTO_DISCOVER_DATABASES"
+        value: "true"
+  {{- end }}
+{{- end }}
+---
+{{- if and (.Capabilities.APIVersions.Has "acid.zalan.do/v1") (not .Values.global.postgresql.architecture.standalone) .Values.postgresqlHA.monitoring.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: ccs-postgresql-metrics
+  namespace: {{ .Release.Namespace }}
+  labels:
+    application: spilo
+    team: ccs
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9187"
+spec:
+  type: ClusterIP
+  ports:
+    - name: postgres-exporter
+      port: 9187
+      protocol: TCP
+      targetPort: 9187
+    - name: patroni-metrics
+      port: 8008
+      protocol: TCP
+      targetPort: 8008
+  selector:
+    application: spilo
+    team: ccs
+    cluster-name: ccs-postgresql-cluster
+{{- end }}
+{{- end }}

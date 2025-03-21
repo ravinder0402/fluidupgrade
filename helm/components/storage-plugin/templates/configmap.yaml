@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: storage-plugin-config
+  namespace: {{ .Release.Namespace }}
+data:
+  config.yml: |
+    mongodb:
+      host: compass-configdb
+      port: 27017
+    metricsdb:
+      host: compass-metricsdb
+      port: 27017
+    provider:
+      {{- if .Values.storageProvider.fileStorage }}
+      fileStorage:
+        id: {{ .Values.storageProvider.fileStorage.id }}
+        {{- if .Values.storageProvider.fileStorage.ceph }}
+        ceph:
+          endpoint: {{ .Values.storageProvider.fileStorage.ceph.endpoint | default "" }}
+          username: {{ .Values.storageProvider.fileStorage.ceph.username | default "" }}
+          passwd: {{ .Values.storageProvider.fileStorage.ceph.passwd | default "" }}
+          {{- if .Values.storageProvider.fileStorage.ceph.nfsProto | default "" }}
+          nfsProto:
+            nfsClusterId: {{ .Values.storageProvider.fileStorage.ceph.nfsProto.nfsClusterId | default "" }}
+          {{- end }}
+          {{- if .Values.storageProvider.fileStorage.ceph.rgw | default "" }}
+          rgw:
+            endpoint: {{ .Values.storageProvider.fileStorage.ceph.rgw.endpoint | default "" }}
+            userId: {{ .Values.storageProvider.fileStorage.ceph.rgw.userId | default "" }}
+            accessKey: {{ .Values.storageProvider.fileStorage.ceph.rgw.accessKey | default "" }}
+            secretKey: {{ .Values.storageProvider.fileStorage.ceph.rgw.secretKey | default "" }}
+          {{- end }}
+        {{- else if .Values.storageProvider.fileStorage.ontap }}
+        ontap:
+          mgmtEndpoint: {{ .Values.storageProvider.fileStorage.ontap.mgmtEndpoint | default "" }}
+          dataEndpoint: {{ .Values.storageProvider.fileStorage.ontap.dataEndpoint | default "" }}
+          username: {{ .Values.storageProvider.fileStorage.ontap.username | default "" }}
+          passwd: {{ .Values.storageProvider.fileStorage.ontap.passwd | default "" }}
+          svnName: {{ .Values.storageProvider.fileStorage.ontap.svnName | default "" }}
+          svmUuid: {{ .Values.storageProvider.fileStorage.ontap.svmUuid | default "" }}
+        {{- end }}
+      {{- end }}
+      {{- if .Values.storageProvider.objectStorage }}
+      objectStorage:
+        id: {{ .Values.storageProvider.objectStorage.id | default "default-object-storage" }}
+        providerType: {{ .Values.storageProvider.objectStorage.providerType | default "" }}
+        s3Endpoint: {{ .Values.storageProvider.objectStorage.s3Endpoint | default "" }}
+        accessKey: {{ .Values.storageProvider.objectStorage.accessKey | default "" }}
+        secretKey: {{ .Values.storageProvider.objectStorage.secretKey | default "" }}
+        endpoint: {{ .Values.storageProvider.objectStorage.endpoint | default "" }}
+        username: {{ .Values.storageProvider.objectStorage.username | default "" }}
+        password: {{ .Values.storageProvider.objectStorage.password | default "" }}
+        isMultiTenant: {{ .Values.storageProvider.objectStorage.isMultiTenant | default "" }}
+        tenantId: {{ .Values.storageProvider.objectStorage.tenantId | default "" }}
+      {{- end }}
+    default:
+      availabilityZone: {{ .Values.availabilityZone | default "" }}

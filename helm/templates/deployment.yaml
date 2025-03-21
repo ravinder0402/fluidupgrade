@@ -1,0 +1,801 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compass-api
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount.compassConfig }}
+  selector:
+    matchLabels:
+      app: compass-api
+  template:
+    metadata:
+      labels:
+        app: compass-api
+      annotations:
+        prometheus.io/path: metrics
+        prometheus.io/port: "9100"
+        prometheus.io/scrape: "true"
+    spec:
+      serviceAccountName: compass-controller
+      initContainers:
+      - name: mongodb-wait
+        image: {{ .Values.global.repository }}/mongo:5.0.3
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/bash
+        - -c
+        - |
+          while true; do
+            mongosh --host $MONGODB_SERVICE_SERVICE_HOST -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --eval "rs.status()"
+            if [ $? == "0" ]; then
+              exit 0
+            fi
+            echo "waiting for mongodb to start"
+            sleep 5
+          done
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        - name: MONGODB_SERVICE_SERVICE_HOST
+          value: "compass-configdb"
+      containers:
+      - name: api
+        image: {{ .Values.global.repository }}/compass-api:{{ include "helper.imageTag" . }}
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8090
+          name: grpc
+          protocol: TCP
+        - containerPort: 9100
+          name: metrics
+          protocol: TCP
+        env:
+        - name: MONGO_DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: MONGO_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        - name: KEYCLOAK_USER
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-admin-creds
+              key: username
+        - name: KEYCLOAK_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-admin-creds
+              key: password
+        - name: LOCAL_KEYCLOAK_URL
+          value: "https://keycloak:8443"
+        {{- if .Values.betaFeatures.enabled }}
+        - name: BETA_FEATURES_ENABLED
+          value: "true"
+        {{- end }}
+        - name: COMPASS_JWT_ISSUER_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: secretKey
+        volumeMounts:
+        - name: api-config-vol
+          mountPath: /opt/config.yml
+          subPath: config.yml
+        - name: api-config-secret-vol
+          mountPath: /opt/keycloak.yml
+          subPath: keycloak.yml
+        - name: controller-certs-vol
+          mountPath: /opt/certs
+        - name: trivy-config-vol
+          mountPath: /opt/trivy.yml
+          subPath: trivy.yml
+        {{- if .Values.global.kubectl.tokenAccess.enabled }}
+        - name: frontend-certs-vol
+          readOnly: true
+          mountPath: /etc/frontend/certs
+        {{- end }}
+      imagePullSecrets:
+      - name: {{ .Release.Name }}-docker-registry-key
+      dnsPolicy: ClusterFirst
+      volumes:
+      - name: controller-certs-vol
+        secret:
+          secretName: controller-certs
+      - name: api-config-secret-vol
+        secret:
+          secretName: api-config-secret
+      - name: api-config-vol
+        configMap:
+          name: api-config
+      - name: trivy-config-vol
+        configMap:
+          name: trivy-config
+      {{- if .Values.global.kubectl.tokenAccess.enabled }}
+      - name: frontend-certs-vol
+        secret:
+          {{- if .Values.global.frontend.globalTLS }}
+          secretName: {{ .Values.global.frontend.globalTLS }}
+          {{- else }}
+          secretName: frontend-certs
+          {{- end }}
+      {{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compass-controller
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount.compassController }}
+  selector:
+    matchLabels:
+      app: compass-controller
+  template:
+    metadata:
+      labels:
+        app: compass-controller
+    spec:
+      serviceAccountName: compass-controller
+      initContainers:
+      - name: mongodb-wait
+        image: {{ .Values.global.repository }}/mongo:5.0.3
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/bash
+        - -c
+        - |
+          while true; do
+            mongosh --host $MONGODB_SERVICE_SERVICE_HOST -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --eval "rs.status()"
+            if [ $? == "0" ]; then
+              exit 0
+            fi
+            echo "waiting for mongodb to start"
+            sleep 5
+          done
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        - name: MONGODB_SERVICE_SERVICE_HOST
+          value: "compass-configdb"
+      containers:
+      - name: controller
+        image: {{ .Values.global.repository }}/compass-controller:{{ include "helper.imageTag" . }}
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        - containerPort: 8090
+          name: grpc
+          protocol: TCP
+        env:
+        - name: MONGO_DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: MONGO_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        volumeMounts:
+        - name: controller-certs-vol
+          mountPath: /opt/certs
+        - name: ingress-certs-vol
+          mountPath: /opt/certs/ingress
+        - name: controller-config-vol
+          mountPath: /opt/
+      imagePullSecrets:
+      - name: {{ .Release.Name }}-docker-registry-key
+      dnsPolicy: ClusterFirst
+      volumes:
+      - name: ingress-certs-vol
+        secret:
+          secretName: ingress-certs
+      - name: controller-certs-vol
+        secret:
+          secretName: controller-certs
+      - name: controller-config-vol
+        configMap:
+          name: controller-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compass-term
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount.compassTerminal }}
+  selector:
+    matchLabels:
+      app: compass-term
+  template:
+    metadata:
+      labels:
+        app: compass-term
+    spec:
+      serviceAccountName: compass-controller
+      initContainers:
+      - name: mongodb-wait
+        image: {{ .Values.global.repository }}/mongo:5.0.3
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/bash
+        - -c
+        - |
+          while true; do
+            mongosh --host $MONGODB_SERVICE_SERVICE_HOST -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --eval "rs.status()"
+            if [ $? == "0" ]; then
+              exit 0
+            fi
+            echo "waiting for mongodb to start"
+            sleep 5
+          done
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        - name: MONGODB_SERVICE_SERVICE_HOST
+          value: "compass-configdb"
+      containers:
+      - name: terminal
+        image: {{ .Values.global.repository }}/compass-term:{{ include "helper.imageTag" . }}
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+          name: websocket
+          protocol: TCP
+        env:
+        - name: MONGO_DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: MONGO_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        volumeMounts:
+        - name: terminal-config-vol
+          mountPath: /opt/
+        - name: ingress-certs-vol
+          mountPath: /opt/certs/ingress
+      imagePullSecrets:
+      - name: {{ .Release.Name }}-docker-registry-key
+      dnsPolicy: ClusterFirst
+      volumes:
+      - name: ingress-certs-vol
+        secret:
+          secretName: ingress-certs
+      - name: terminal-config-vol
+        configMap:
+          name: terminal-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kg-cluster-notifier
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kg-cluster-notifier
+  template:
+    metadata:
+      labels:
+        app: kg-cluster-notifier
+    spec:
+      serviceAccountName: compass-controller
+      initContainers:
+      - name: mongodb-wait
+        image: {{ .Values.global.repository }}/mongo:5.0.3
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/bash
+        - -c
+        - |
+          while true; do
+            mongosh --host $MONGODB_SERVICE_SERVICE_HOST -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --eval "rs.status()"
+            if [ $? == "0" ]; then
+              exit 0
+            fi
+            echo "waiting for mongodb to start"
+            sleep 5
+          done
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        - name: MONGODB_SERVICE_SERVICE_HOST
+          value: "compass-configdb"
+      containers:
+      - name: kg-cluster-notifier
+        image: {{ .Values.global.repository }}/kg-cluster-notifier:{{ include "helper.imageTag" . }}
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: MONGO_DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: MONGO_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        volumeMounts:
+        - name: ingress-certs-vol
+          mountPath: /opt/certs/ingress
+        - name: kg-config-vol
+          mountPath: /opt/
+      imagePullSecrets:
+      - name: {{ .Release.Name }}-docker-registry-key
+      dnsPolicy: ClusterFirst
+      volumes:
+      - name: ingress-certs-vol
+        secret:
+          secretName: ingress-certs
+      - name: kg-config-vol
+        configMap:
+          name: kg-cluster-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compass-orchestrator
+  namespace: {{ .Release.Namespace }}
+spec:
+  # currently we only support 1 replica
+  replicas: {{ .Values.replicaCount.compassOrchestrator }}
+  selector:
+    matchLabels:
+      app: compass-orchestrator
+  template:
+    metadata:
+      labels:
+        app: compass-orchestrator
+    spec:
+      serviceAccountName: compass-controller
+      initContainers:
+      - name: mongodb-wait
+        image: {{ .Values.global.repository }}/mongo:5.0.3
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/bash
+        - -c
+        - |
+          while true; do
+            mongosh --host $MONGODB_SERVICE_SERVICE_HOST -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --eval "rs.status()"
+            if [ $? == "0" ]; then
+              exit 0
+            fi
+            echo "waiting for mongodb to start"
+            sleep 5
+          done
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        - name: MONGODB_SERVICE_SERVICE_HOST
+          value: "compass-configdb"
+      containers:
+      - name: orchestrator
+        image: {{ .Values.global.repository }}/compass-orchestrator:{{ include "helper.imageTag" . }}
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: MONGO_DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: configdb-secret
+        - name: MONGO_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: configdb-secret
+        - name: ADDONS_IMAGE_REPO
+          value: "{{ .Values.global.repository }}"
+        {{- if .Values.betaFeatures.enabled }}
+        - name: BETA_FEATURES_ENABLED
+          value: "true"
+        {{- end }}
+        volumeMounts:
+        - mountPath: /opt/
+          name: orchestrator-config-vol
+        - mountPath: /opt/certs/ingress
+          name: ingress-certs-vol
+      imagePullSecrets:
+      - name: {{ .Release.Name }}-docker-registry-key
+      dnsPolicy: ClusterFirst
+      volumes:
+      - name: ingress-certs-vol
+        secret:
+          secretName: ingress-certs
+      - name: orchestrator-config-vol
+        configMap:
+          name: orchestrator-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compass-metric-server
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount.compassMetricServer }}
+  selector:
+    matchLabels:
+      app: compass-metric-server
+  template:
+    metadata:
+      labels:
+        app: compass-metric-server
+    spec:
+      serviceAccountName: compass-controller
+      initContainers:
+      - name: mongodb-wait
+        image: {{ .Values.global.repository }}/mongo:5.0.3
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/bash
+        - -c
+        - |
+          while true; do
+            mongosh --host $MONGODB_SERVICE_SERVICE_HOST -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --eval "rs.status()"
+            if [ $? == "0" ]; then
+              exit 0
+            fi
+            echo "waiting for mongodb to start"
+            sleep 5
+          done
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        - name: MONGODB_SERVICE_SERVICE_HOST
+          value: "compass-configdb"
+      - name: metricsdb-wait
+        image: {{ .Values.global.repository }}/mongo:5.0.3
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/bash
+        - -c
+        - |
+          while true; do
+            mongosh --host $MONGODB_SERVICE_SERVICE_HOST -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --eval "rs.status()"
+            if [ $? == "0" ]; then
+              exit 0
+            fi
+            echo "waiting for mongodb to start"
+            sleep 5
+          done
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        - name: MONGODB_SERVICE_SERVICE_HOST
+          value: "compass-metricsdb"
+      containers:
+      - name: metric-server
+        image: {{ .Values.global.repository }}/compass-metric-server:{{ include "helper.imageTag" . }}
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: MONGO_DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: configdb-secret
+        - name: MONGO_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: configdb-secret
+        - name: KEYCLOAK_USER
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-admin-creds
+              key: username
+        - name: KEYCLOAK_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-admin-creds
+              key: password
+        volumeMounts:
+        - name: metric-server-config-vol
+          mountPath: /opt/config.yml
+          subPath: config.yml
+        - name: metric-server-config-secret-vol
+          mountPath: /opt/keycloak.yml
+          subPath: keycloak.yml
+      imagePullSecrets:
+      - name: {{ .Release.Name }}-docker-registry-key
+      dnsPolicy: ClusterFirst
+      volumes:
+      - name: metric-server-config-vol
+        configMap:
+          name: metric-server-config
+      - name: metric-server-config-secret-vol
+        secret:
+          secretName: api-config-secret
+{{- if .Values.trivy.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compass-image-scanner
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount.compassImageScanner }}
+  selector:
+    matchLabels:
+      app: compass-image-scanner
+  template:
+    metadata:
+      labels:
+        app: compass-image-scanner
+    spec:
+      serviceAccountName: compass-controller
+      initContainers:
+      - name: mongodb-wait
+        image: {{ .Values.global.repository }}/mongo:5.0.3
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/bash
+        - -c
+        - |
+          while true; do
+            mongosh --host $MONGODB_SERVICE_SERVICE_HOST -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --eval "rs.status()"
+            if [ $? == "0" ]; then
+              exit 0
+            fi
+            echo "waiting for mongodb to start"
+            sleep 5
+          done
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        - name: MONGODB_SERVICE_SERVICE_HOST
+          value: "compass-configdb"
+      containers:
+      - name: image-scanner
+        image: {{ .Values.global.repository }}/compass-image-scanner:{{ include "helper.imageTag" . }}
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: MONGO_DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: configdb-secret
+        - name: MONGO_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: configdb-secret
+        volumeMounts:
+        - name: image-scanner-config-vol
+          mountPath: /opt/config.yml
+          subPath: config.yml
+        - name: trivy-config-vol
+          mountPath: /opt/trivy.yml
+          subPath: trivy.yml
+      imagePullSecrets:
+      - name: {{ .Release.Name }}-docker-registry-key
+      dnsPolicy: ClusterFirst
+      volumes:
+      - name: image-scanner-config-vol
+        configMap:
+          name: image-scanner-config
+      - name: trivy-config-vol
+        configMap:
+          name: trivy-config
+{{- end }}
+{{- if .Values.global.clusterManager.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compass-cluster-manager
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount.clusterManager }}
+  selector:
+    matchLabels:
+      app: compass-cluster-manager
+  template:
+    metadata:
+      labels:
+        app: compass-cluster-manager
+    spec:
+      serviceAccountName: compass-controller
+      initContainers:
+      - name: mongodb-wait
+        image: {{ .Values.global.repository }}/mongo:5.0.3
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/bash
+        - -c
+        - |
+          while true; do
+            mongosh --host $MONGODB_SERVICE_SERVICE_HOST -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --eval "rs.status()"
+            if [ $? == "0" ]; then
+              exit 0
+            fi
+            echo "waiting for mongodb to start"
+            sleep 5
+          done
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: configdb-secret
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: configdb-secret
+        - name: MONGODB_SERVICE_SERVICE_HOST
+          value: compass-configdb
+      containers:
+      - name: cluster-manager
+        image: {{ .Values.global.repository }}/compass-cluster-manager:{{ include "helper.imageTag" . }}
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        env:
+        {{- if .Values.global.proxy.enabled }}
+        - name: HTTP_PROXY
+          value: {{ .Values.global.proxy.http_proxy }}
+        - name: HTTPS_PROXY
+          value: {{ .Values.global.proxy.https_proxy }}
+        - name: NO_PROXY
+          value: {{ .Values.global.proxy.no_proxy }}                   
+        {{- end }}          
+        {{- if .Values.betaFeatures.enabled }}
+        - name: BETA_FEATURES_ENABLED
+          value: "true"
+        {{- end }}
+        - name: MONGO_DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: configdb-secret
+        - name: MONGO_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: configdb-secret
+        - name: KEYCLOAK_USER
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-admin-creds
+              key: username
+        - name: KEYCLOAK_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-admin-creds
+              key: password
+        - name: COMPASS_JWT_ISSUER_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: secretKey
+        volumeMounts:
+        - mountPath: /opt/config.yml
+          name: api-config-vol
+          subPath: config.yml
+        - mountPath: /opt/certs
+          name: controller-certs-vol
+      imagePullSecrets:
+      - name: {{ .Release.Name }}-docker-registry-key
+      volumes:
+      - name: controller-certs-vol
+        secret:
+          defaultMode: 420
+          secretName: controller-certs
+      - configMap:
+          defaultMode: 420
+          name: api-config
+        name: api-config-vol
+{{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sockets-server
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: sockets-server
+spec:
+  replicas: {{ .Values.sockets.replicaCount }}
+  selector:
+    matchLabels:
+      app: sockets-server
+  template:
+    metadata:
+      labels:
+        app: sockets-server
+    spec:
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+      containers:
+      - name: socket
+        image: {{ .Values.global.repository }}/socket:{{ .Values.global.releaseTag }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        ports:
+        - name: http
+          containerPort: 5000
+          protocol: TCP
+        env:
+        - name: REDIS_HOST
+          value: cache-store
+        - name: REDIS_PORT
+          value: "6379"

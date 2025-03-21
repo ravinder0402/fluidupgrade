@@ -1,0 +1,58 @@
+global:
+  # indicates usage of external ingress, currently also acts as a
+  # switch to indicate use of domain configuration
+  dnsEnabled: &dnsEnabled false
+
+  # Ingress claas to be defined to Ingress configuration 
+  ingressClass: &ingressClass ""
+
+  # repository from where the controller images are pulled for
+  # controller
+  repository: &repository coredgeio
+
+  # this field is considered only when UseDailyBuilds is set to be false
+  # provides configuration of build tag to be used for container images
+  releaseTag: &releaseTag latest
+
+  # Global theme for the Web GUI
+  theme: ""
+
+  # image pull policy to be used
+  imagePullPolicy: &imagePolicy Always
+
+  # external IP for controller, relevant, when domain is not
+  # configured to allow generation of server certificate validity using
+  # this IP address
+  externalIP: &controllerIP 127.0.0.1
+
+  # Flask Config (Development OR Production)
+  # TEMPORARY
+  flaskConfig: "production"
+
+nodeSelector: {} 
+
+replicaCount: '1'
+
+image: ""
+
+resources: 
+  limits:
+    cpu: 400m
+    # memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 200Mi
+
+celery:
+  enabled: true
+  replicaCount: '1'
+  command: "celery -A app  worker --concurrency=2 --loglevel=debug -Q q_autoscaling_group"
+  resources: 
+    limits:
+      cpu: 1000m
+      memory: 6Gi
+    requests:
+      cpu: 100m
+      memory: 2Gi
+
+enabledServices: "autoscaling_group,api"

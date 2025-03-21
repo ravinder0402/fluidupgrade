@@ -1,0 +1,228 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orbiter-auth-config
+  namespace: {{ .Release.Namespace }}
+data:
+  config.yml: |
+    allowCors: true
+    keycloak:
+      clientId: {{ .Values.keycloak.clientId }}
+      introspect:
+        clientId: {{ .Values.keycloak.introspect.clientId }}
+        clientSecret: {{ .Values.keycloak.introspect.clientSecret }}
+    mongoDb:
+      host: compass-configdb
+      port: 27017
+    metricsDb:
+      host: compass-metricsdb
+      port: 27017
+    accessLogs:
+      limits:
+        maxSize: 1000000 # max memory allowed to be used in bytes for access logs
+        maxEntries: 5000 # max number of entries allowed to be used for access logs
+    geolocation:
+      host: {{ .Values.global.geolocation.host }}
+      port: {{ .Values.global.geolocation.port }}
+    gateway:
+      rateLimiter:
+        rateLimit: 200
+        burstSize: 500
+    events:
+      limits:
+        maxSize: 1000000 # max memory allowed to be used in bytes for events per domain
+        maxEntries: 5000 # max number of entries allowed to be used for events per domain
+    defaultRepos:
+      enabled: {{ .Values.global.defaultRepos.enabled }}
+{{- if .Values.global.tenantManagement.register.enabled }}
+    smtp:
+      sender: {{ .Values.global.tenantManagement.register.smtp.sender }}
+      password: {{ .Values.global.tenantManagement.register.smtp.password }}
+      smtpHost: {{ .Values.global.tenantManagement.register.smtp.smtpHost }}
+      smtpPort: "{{ .Values.global.tenantManagement.register.smtp.smtpPort }}"
+{{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-config
+  namespace: {{ .Release.Namespace }}
+data:
+  config.yml: |
+{{- if .Values.gateway.payment.enabled }}
+    conditions:
+      disableIfNoPayment: true
+{{- end }}
+    http:
+      locations:
+      - prefix: /api/cloud-manager
+        endpoint: http://cloud-manager:8080
+        rewritePrefix: /
+      - prefix: /api/container-ingress
+        endpoint: http://compass-cluster-manager:8060
+        accessType: public
+        rewritePrefix: /
+      - prefix: /api/container-kubeapi
+        endpoint: http://compass-cluster-manager:8060
+        accessType: unscoped
+      - prefix: /api/cluster-manager/v1/domain
+        endpoint: http://compass-cluster-manager:8080
+        rewritePrefix: /v1/domain
+      - prefix: /api/cluster-manager/v1
+        endpoint: http://compass-cluster-manager:8080
+        rewritePrefix: /v1
+        accessType: unscoped
+      - prefix: /api/cluster-manager/v1/download
+        endpoint: http://compass-cluster-manager:8080
+        rewritePrefix: /v1/download
+        accessType: public
+      - prefix: /api/slurmrest
+        endpoint: http://compass-cluster-manager:8085
+        rewritePrefix: /
+      - prefix: /api/orchestrator
+        endpoint: http://compass-orchestrator:8080
+      - prefix: /api/auth-mgmt
+        consumeLocally: true
+        allowRootTenantOnly: true
+      - prefix: /api/auth-service
+        consumeLocally: true
+      - prefix: /api/auth-service/v1/download
+        consumeLocally: true
+        accessType: public
+      - prefix: /api/accessibility
+        consumeLocally: true
+        accessType: unscoped
+      - prefix: /api/ingress
+        endpoint: http://compass-api:8071
+        rewritePrefix: /
+      - prefix: /ws/terminal
+        endpoint: http://compass-term:8000
+        rewritePrefix: /
+      - prefix: /ws/robincli
+        endpoint: http://compass-term:8001
+        rewritePrefix: /
+      - prefix: /ws/compass
+        endpoint: http://compass-api:9080
+{{- if .Values.global.containerRegistry.enabled }}
+      - prefix: /api/container-registry
+        endpoint: http://container-registry:8080
+      - prefix: /ws/container-registry
+        endpoint: http://container-registry:9080
+{{- end }}
+{{- if .Values.global.baremetalManager.enabled }}
+      - prefix: /api/baremetal-manager
+        endpoint: http://baremetal-manager:8080
+      - prefix: /api/baremetal-admin
+        endpoint: http://baremetal-manager:8080
+      - prefix: /ws/baremetal-manager
+        endpoint: http://baremetal-manager:9080
+      - prefix: /api/baremetal-mgmt
+        endpoint: http://baremetal-manager:8080
+        allowRootTenantOnly: true
+{{- end }}
+{{- if .Values.global.storagePlugin.enabled }}
+      - prefix: /api/storage-plugin
+        endpoint: http://storage-plugin:8080
+      - prefix: /api/storage-admin
+        endpoint: http://storage-plugin:8080
+{{- end }}
+{{- if .Values.global.networkManager.enabled }}
+      - prefix: /api/network-manager
+        endpoint: http://network-manager:8080
+        rewritePrefix: /api/network-manager
+{{- end }}
+{{- if .Values.global.metering.enabled }}
+      - prefix: /api/license
+        endpoint: http://orbiter-metering:8080
+      - prefix: /api/metering
+        endpoint: http://orbiter-metering:8080
+{{- end }}
+      - prefix: /v1/download
+        endpoint: http://compass-api:8085
+        accessType: public
+      - prefix: /v1
+        endpoint: http://compass-api:8085
+      - prefix: /
+        endpoint: http://compass-api:8085
+        accessType: public
+      - prefix: /api/myaccount
+        consumeLocally: true
+        accessType: unscoped
+{{- if .Values.global.tenantManagement.register.enabled }}
+      - prefix: /api/register
+        endpoint: http://orbiter-auth:8081
+        accessType: public
+      - prefix: /adminapi
+        endpoint: http://admin-platform:5000
+        accessType: unscoped
+      - prefix: /socket
+        endpoint: http://sockets-server:5000
+        accessType: unscoped
+      - prefix: /api/v1/users/me
+        endpoint: http://core-mgmt:7150
+        accessType: unscoped
+      - prefix: /api/v1/organisations/is_subscribed
+        endpoint: http://core-mgmt:7150
+        accessType: unscoped
+      - prefix: /api/v1/organisations/project_scopes/
+        endpoint: http://core-mgmt:7150
+        accessType: unscoped
+      - endpoint: http://autoscaling:7181
+        prefix: /api/v1/autoscaling-group
+      - accessType: public
+        endpoint: http://autoscaling:7181
+        prefix: /api/v1/autoscaling-group/openstack-events-s1
+      - accessType: public
+        endpoint: http://autoscaling:7181
+        prefix: /api/v1/autoscaling-group/openstack-events-s2
+      - endpoint: http://file-system:7220
+        prefix: /api/v1/file-systems
+      - endpoint: http://object-storage:7130
+        prefix: /api/v1/object_storages
+      - endpoint: http://compute:7110
+        prefix: /api/v1/computes
+      - endpoint: http://compute:7110
+        prefix: /api/v1/vpn
+      - endpoint: http://core-mgmt:7150
+        prefix: /api/v1/projects
+      - endpoint: http://compute:7110
+        prefix: /api/v1/metrics
+      - endpoint: http://volume:7120
+        prefix: /api/v1/volumes
+      - endpoint: http://certificates:7140
+        prefix: /api/v1/certificates
+      - endpoint: http://network:7160
+        prefix: /api/v1/networks
+      - endpoint: http://network:7160
+        prefix: /api/v1/load-balancers
+      - endpoint: http://network:7160
+        prefix: /api/v1/dnszones
+      - endpoint: http://network:7160
+        prefix: /api/v1/firewalls
+      - endpoint: http://ccp-firewall:7180
+        prefix: /api/v1/tenant_firewall
+      - endpoint: http://commvault:7030
+        prefix: /api/v1/backup
+      - endpoint: http://archival-storage:7170
+        prefix: /api/v1/archival-storages
+      - endpoint: http://core-mgmt:7150
+        prefix: /api/v1/role_permission_group
+      - endpoint: http://core-mgmt:7150
+        prefix: /api/v1/organisations
+      - endpoint: http://core-mgmt:7150
+        prefix: /api/v1/users
+      - endpoint: http://core-mgmt:7150
+        prefix: /api/v1/tickets
+      - endpoint: http://core-mgmt:7150
+        prefix: /api/v1/providers
+      - endpoint: http://core-mgmt:7150
+        prefix: /api/v1/container-projects
+      - endpoint: http://core-mgmt:7150
+        prefix: /api/v1
+      - prefix: /auth
+        endpoint: http://core-mgmt:7150
+        rewritePrefix: /
+{{- end }}
+{{- if .Values.gateway.locations }}
+{{ toYaml .Values.gateway.locations | indent 6 }}
+{{- end }}

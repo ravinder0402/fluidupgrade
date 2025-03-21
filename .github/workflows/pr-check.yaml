@@ -1,0 +1,18 @@
+name: Validate pull request
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+jobs:
+  pr-check-build:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Validate Helm chart
+        run: make 
+
+      - name: Cleanup
+        run: make clean
+      

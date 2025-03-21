@@ -1,0 +1,143 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: core-mgmt
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: core-mgmt
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: core-mgmt
+  template:
+    metadata: 
+      labels:
+        app: core-mgmt
+    spec:
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      initContainers:
+      {{ include "helper.postgresql.pgready" . }}
+      containers:
+      - name: core-mgmt  
+        image: {{ .Values.global.repository }}/{{ .Values.image }}:{{ .Values.global.releaseTag }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        resources: 
+          {{- toYaml .Values.resources | nindent 10 }}
+        ports:
+        - name: http
+          containerPort: 5000
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: platform-api-config   
+        - configMapRef:
+            name: redis-config
+        {{- if .Values.global.events.enabled }}
+        - configMapRef:
+            name: ccp-events-config
+        {{- end }}
+        - secretRef:
+            name: ccs-postgres-config
+        - secretRef:
+            name: ccs-auditdb-config
+        env:
+          - name: ENABLED_MODULES
+            value: {{ .Values.enabledServices | quote }}     
+          - name: POSTGRES_DB
+            value: "cloud"
+          - name: FLASK_CONFIG
+            value: {{ .Values.global.flaskConfig }}
+          - name: CACHING_ENABLED
+            value: "false"
+          {{- if .Values.global.proxy.enabled }}
+          - name: HTTP_PROXY
+            value: {{ .Values.global.proxy.http | quote }}
+          - name: HTTPS_PROXY
+            value: {{ .Values.global.proxy.https | quote }}
+          - name: NO_PROXY
+            value: {{ .Values.global.proxy.noproxy | quote }}
+          {{- end }}
+        volumeMounts:
+          - name: platform-config
+            readOnly: true
+            mountPath: /etc/yntraa/
+      volumes:
+        - name: platform-config
+          projected:
+            sources:
+            - secret:
+                name: ccs-super-admin-config
+---
+{{- if .Values.celery.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: core-mgmt-celery
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: core-mgmt-celery
+spec:
+  replicas: {{ .Values.celery.replicaCount }}
+  selector:
+    matchLabels:
+      app: core-mgmt-celery
+  template:
+    metadata: 
+      labels:
+        app: core-mgmt-celery
+    spec:
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      initContainers:
+      {{ include "helper.postgresql.pgready" . }}
+      containers:
+      - name: core-mgmt-celery
+        image: {{ .Values.global.repository }}/{{ .Values.image }}:{{ .Values.global.releaseTag }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        {{- if .Values.celery.command }}              
+        command:
+          - "/bin/sh"
+          - "-c"
+          - "{{ .Values.celery.command }}"
+        {{- end }}
+        resources: 
+          {{- toYaml .Values.celery.resources | nindent 10 }}
+        ports:
+        - name: http
+          containerPort: 5000
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: platform-api-config
+        - configMapRef:
+            name: redis-config
+        {{- if .Values.global.events.enabled }}
+        - configMapRef:
+            name: ccp-events-config
+        {{- end }}
+        - secretRef:
+            name: ccs-postgres-config
+        - secretRef:
+            name: ccs-auditdb-config
+        env:
+          - name: ENABLED_MODULES
+            value: {{ .Values.enabledServices | quote }}     
+          - name: POSTGRES_DB
+            value: "cloud"
+          - name: FLASK_CONFIG
+            value: {{ .Values.global.flaskConfig }}
+          - name: CACHING_ENABLED
+            value: "false"
+          {{- if .Values.global.proxy.enabled }}
+          - name: HTTP_PROXY
+            value: {{ .Values.global.proxy.http | quote }}
+          - name: HTTPS_PROXY
+            value: {{ .Values.global.proxy.https | quote }}
+          - name: NO_PROXY
+            value: {{ .Values.global.proxy.noproxy | quote }}
+          {{- end }}
+{{- end }}

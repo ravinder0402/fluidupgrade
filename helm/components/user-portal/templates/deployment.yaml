@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-portal
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: user-portal
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: user-portal
+  template:
+    metadata:
+      labels:
+        app: user-portal
+    spec:
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      containers:
+      - name: user-portal
+        image: {{ .Values.global.repository }}/{{ .Values.image }}:{{ .Values.global.releaseTag }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        resources: 
+          {{- toYaml .Values.resources | nindent 10 }}
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        env:
+          - name: VITE_OIDC_ENABLED 
+            value: 'true'
+          {{- if .Values.global.dnsEnabled }}
+          - name: VITE_OIDC_AUTH_URL 
+            value: https://{{ .Values.global.keycloak.domain }}/auth
+          {{- else }}
+          - name: VITE_OIDC_AUTH_URL 
+            value: http://{{ .Values.global.externalIP }}{{ .Values.global.keycloak.nodePorts.http }}/auth
+          {{- end }}
+          - name: VITE_OIDC_REALM 
+            value: {{ .Values.global.keycloak.rootRealm }}
+          - name: VITE_OIDC_CLIENT_ID
+            value: "controller"
+          - name: VITE_API_URL
+            value: ''
+          {{- if .Values.global.marketPlace.url }}   
+          - name: VITE_MARKET_PLACE_URL
+            value: {{ .Values.global.marketPlace.url }}
+          {{- end }}          
+          - name: VITE_DOC_URL
+            value: {{ .Values.docsURL | quote }}
+          - name: VITE_BUILD_VERSION
+            value: {{ .Values.global.releaseTag | quote }}
+          {{- if .Values.objectStorage.maxBucketSize }}
+          - name: VITE_MAX_BUCKET_SIZE
+            value: {{ .Values.objectStorage.maxBucketSize | quote }}
+          {{- end }}
+          {{- if .Values.blockStorage.maxSize }}
+          - name: VITE_MAX_BLOCK_STORAGE_SIZE
+            value: {{ .Values.blockStorage.maxSize | quote }}
+          {{- end }}
+          - name: VITE_INCLUDE_SERVICES
+            value: {{ .Values.enabledServices | quote }}
+          - name: VITE_QUARTZ_URL
+            value: {{ .Values.additionalURLs.quartzURL | quote }}
+          - name: VITE_COBALT_URL
+            value: {{ .Values.additionalURLs.cobaltURL | quote }}
+          - name: VITE_SHOW_CHATBOT
+            value: {{ .Values.chatbot.enabled | quote }}
+          - name: VITE_APP_STORE_URL
+            value: {{ .Values.additionalURLs.appStoreURL | quote }}
+          - name: VITE_SECURITY_COMPLIANCE_URL
+            value: {{ .Values.additionalURLs.secComplianceURL | quote }}
+          - name: VITE_USER_REGISTER_URL
+            value: {{ .Values.additionalURLs.userRegisterURL | quote }}
+          - name: VITE_PAM_IFRAME_URL
+            value: {{ .Values.additionalURLs.pamIframeURL | quote }}
+          - name: VITE_VM_CONSOLE_URL
+            value: {{ .Values.additionalURLs.vmconsoleURL | quote }}
+          - name: VITE_CLOUD_SECURITY_POSTURE_URL
+            value: {{ .Values.additionalURLs.cloudSecurityPosture | quote }}
+          - name: VITE_VIRTUAL_SUITE_DASHBOARD_URL
+            value: {{ .Values.additionalURLs.virtualSuiteDashboard | quote }}
+          - name: VITE_TICKET_SUPPORT_URL
+            value: {{ .Values.additionalURLs.ticketSupport | quote }}
+        volumeMounts:
+        - name: console-rev-proxy
+          readOnly: true
+          mountPath: /etc/nginx/conf.d/default.conf
+          subPath: default.conf
+      volumes:
+      - name: console-rev-proxy
+        configMap:
+          name: console-nginx-conf

@@ -1,0 +1,104 @@
+global:
+  # indicates usage of external ingress, currently also acts as a
+  # switch to indicate use of domain configuration
+  dnsEnabled: &dnsEnabled false
+
+  # Ingress claas to be defined to Ingress configuration 
+  ingressClass: &ingressClass ""
+
+  # repository from where the controller images are pulled for
+  # controller
+  repository: &repository coredgeio
+
+  # this field is considered only when UseDailyBuilds is set to be false
+  # provides configuration of build tag to be used for container images
+  releaseTag: &releaseTag latest
+
+  # Global theme for the Web GUI
+  theme: ""
+
+  # image pull policy to be used
+  imagePullPolicy: &imagePolicy Always
+
+  # external IP for controller, relevant, when domain is not
+  # configured to allow generation of server certificate validity using
+  # this IP address
+  externalIP: &controllerIP 127.0.0.1
+
+  # Flask Config (Development OR Production)
+  # TEMPORARY
+  flaskConfig: "production"
+
+  # keycloak realm to be used as the root
+  rootRealm: &rootRealm "cloud"
+
+  ## Keycloak Architecture override to enable HA or standalone
+  keycloak:
+    domain: &keycloakDomain ""
+    nodePorts:
+      http: &keycloakNodePortHTTP "32701"
+      https: &keycloakNodePortHTTPS "32702"
+
+  frontend:
+    userPortal:
+      domain: &userDomain ""
+      tlsSecret: &userTls ""
+    # For Production environment we require kyc status validation
+    # However, for dev and test environments we should be able to skip
+    # these validations
+    # Setting skipKyc true will bypass this validation
+    # Note: This configuration should not be used for Production env
+    skipKyc: false
+
+nodeSelector: {} 
+
+replicaCount: '1'
+
+image: "ccp_console"
+
+service:
+  nodePort: "32500"
+
+resources: 
+  limits:
+    cpu: 400m
+    # memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 200Mi
+
+## Only use when https.enabled is set true
+## Else leave empty
+ingress:
+  tlsSecret: ""
+  hostname: ""
+  class: nginx
+
+## Enabled Services
+enabledServices: ""
+
+docsURL: ""
+
+additionalURLs:
+  appStoreURL: ""
+  secComplianceURL: ""
+  userRegisterURL: ""
+  pamIframeURL: ""
+  vmconsoleURL: ""
+  quartzURL: ""
+  cobaltURL: ""
+  cloudSecurityPosture: ""
+  virtualSuiteDashboard: ""
+  ticketSupport: ""
+
+objectStorage:
+  maxBucketSize: ""
+
+blockStorage: 
+  maxSize: ""
+
+enabledServices: ""
+
+## Enable ChatBot on the GUI
+chatbot:
+  enabled: false

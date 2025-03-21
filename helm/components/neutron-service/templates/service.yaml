@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: neutron-service
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: neutron-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 7160
+    targetPort: 5000
+    protocol: TCP
+    name: http
+  selector:
+      app: neutron-service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: neutron-service-celery
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: neutron-service-celery
+spec:
+  type: ClusterIP
+  ports:
+  - port: 7160
+    targetPort: 5000
+    protocol: TCP
+    name: http
+  selector:
+      app: neutron-service-celery

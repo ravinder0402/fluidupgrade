@@ -1,0 +1,9 @@
+apiVersion: v2
+appVersion: "0.1"
+description: Metering sub module Helm Chart, this module is responsible for providing the metering logic for the resource utilization
+name: metering
+version: 0.1.0
+dependencies:
+  - name: helper
+    version: 0.1.0
+    repository: 'file://../helper'

@@ -1,0 +1,5 @@
+repository: docker.io
+repositoryCred:
+  user: kubedrona
+  password: password
+  mail: info@coredge.io

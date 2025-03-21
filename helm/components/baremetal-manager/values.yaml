@@ -1,0 +1,12 @@
+maas:
+  url: ""
+  apikey: ""
+  
+replicaCount:
+  baremetalManager: 1
+
+fabric:
+  enabled: false
+  virtualIPs:
+    first: ""
+    last: ""

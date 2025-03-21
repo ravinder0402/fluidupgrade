@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: compass-init-{{ include "helper.jobIdentifier" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  template:
+    spec:
+      serviceAccountName: compass-controller
+      containers:
+      - name: setup
+        image: {{ .Values.global.repository }}/compass-init:{{ include "helper.imageTag" . }}
+        imagePullPolicy: IfNotPresent
+      restartPolicy: OnFailure
+      imagePullSecrets:
+      - name: {{ .Release.Name }}-docker-registry-key

@@ -1,0 +1,3 @@
+global:
+  releaseTag: latest
+  UseDailyBuilds: true
