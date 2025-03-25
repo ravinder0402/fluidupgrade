@@ -1,0 +1,9 @@
+apiVersion: v2
+appVersion: "0.1"
+description: Auth service deployment Helm Chart
+name: auth-service
+version: 0.1.0
+dependencies:
+- name: helper
+  version: 0.1.0
+  repository: 'file://../helper'

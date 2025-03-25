@@ -1,0 +1,78 @@
+{{- if not .Values.global.postgresql.external.host }}
+{{- if and (.Capabilities.APIVersions.Has "acid.zalan.do/v1") (not .Values.global.postgresql.architecture.standalone) }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ccs-pg-cluster-ready
+  namespace:  {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": post-install,pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  spec:
+  backoffLimit: 5
+  activeDeadlineSeconds: 600
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: ccp-postgresql-operator
+      containers:
+      - name: pg-cluster-readiness
+        image: coredgeio/kubectl:1.18.16
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/bash
+        - -c
+        - |
+          i=0
+          while [ $i -ne 120 ]; do
+            i=$(($i+1))
+            sleep 5
+            kubectl get postgresql -n {{ .Release.Namespace }} ccs-postgresql-cluster -o=jsonpath='{.status.PostgresClusterStatus}' | grep Running
+            if [ $? == "0" ]; then
+              exit 0
+            fi
+            echo "Waiting for postgresql cluster to be ready!"
+          done
+{{- end }}
+---
+{{- if and (.Capabilities.APIVersions.Has "acid.zalan.do/v1") .Values.postgresqlHA.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ccs-pg-cluster-cleanup
+  namespace:  {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  spec:
+  backoffLimit: 5
+  activeDeadlineSeconds: 600
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: ccp-postgresql-operator
+      containers:
+      - name: pg-cluster-cleanup
+        image: coredgeio/kubectl:1.18.16
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/bash
+        - -c
+        - |
+          i=0
+          while [ $i -ne 40 ]; do
+            i=$(($i+1))
+            kubectl delete postgresql -n {{ .Release.Namespace }} ccs-postgresql-cluster --ignore-not-found=true
+            output=$(kubectl get pod -n {{ .Release.Namespace }} --selector=cluster-name=ccs-postgresql-cluster --field-selector status.phase=Running | wc -l)            
+            if [ "$output" == "0" ]; then
+              echo "Postgresql cluster cleanup success!"
+              kubectl delete svc -l cluster-name=ccs-postgresql-cluster -n {{ .Release.Namespace }}
+              exit 0
+            fi
+            echo "Waiting for postgresql cluster cleanup!"
+            sleep 5
+          done
+{{- end }}
+{{- end }}

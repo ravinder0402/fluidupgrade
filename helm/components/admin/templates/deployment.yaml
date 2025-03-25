@@ -1,0 +1,201 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-portal
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: admin-portal
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: admin-portal
+  template:
+    metadata:
+      labels:
+        app: admin-portal
+    spec:
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      containers:
+      - name: admin-portal
+        image: {{ .Values.global.repository }}/{{ .Values.adminportal.image }}:{{ .Values.global.releaseTag }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        resources: 
+          {{- toYaml .Values.adminportal.resources | nindent 10 }}
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        env:
+          - name: VITE_API_URL
+            value: ''
+          - name: VITE_OIDC_ENABLED
+            value: 'true'
+          {{- if .Values.global.dnsEnabled }}
+          - name: VITE_OIDC_AUTH_URL 
+            value: https://{{ .Values.global.keycloak.domain }}/auth
+          {{- else }}
+          - name: VITE_OIDC_AUTH_URL 
+            value: http://{{ .Values.global.externalIP }}{{ .Values.global.keycloak.nodePorts.http }}/auth
+          {{- end }}
+          - name: VITE_OIDC_REALM 
+            value: {{ .Values.global.keycloak.rootRealm }}
+          - name: VITE_OIDC_CLIENT_ID
+            value: "controller"
+          - name: VITE_RESOURCE_MONITORING_URL
+            value: {{ .Values.adminportal.monitoringURL.resource | quote }}
+          - name: VITE_RESOURCE_MANAGEMENT_URL
+            value: {{ .Values.adminportal.managementURL.resource | quote }}
+          - name: VITE_PROJECT_RESOURCE_MONITORING_URL
+            value: {{ .Values.adminportal.monitoringURL.projectResource | quote }}
+          - name: VITE_BUILD_VERSION
+            value: {{ .Values.global.releaseTag | quote }}
+          - name: VITE_INCLUDE_SERVICES
+            value: {{ .Values.adminportal.enabledServices | quote }}
+      {{- if not .Values.global.dnsEnabled }}
+        volumeMounts:
+        - name: portal-rev-proxy
+          readOnly: true
+          mountPath: /etc/nginx/conf.d/default.conf
+          subPath: default.conf
+      volumes:
+      - name: portal-rev-proxy
+        configMap:
+          name: admin-portal-nginx-conf
+      {{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-platform
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: admin-platform
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: admin-platform
+  template:
+    metadata:
+      labels:
+        app: admin-platform
+    spec:
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      initContainers:
+      {{ include "helper.postgresql.pgready" . }}
+      containers:
+      - name: admin-platform
+        image: {{ .Values.global.repository }}/{{ .Values.adminPlatform.image }}:{{ .Values.global.releaseTag }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        resources: 
+          {{- toYaml .Values.adminPlatform.resources | nindent 10 }}
+        ports:
+        - name: http
+          containerPort: 5000
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: platform-api-config   
+        - configMapRef:
+            name: redis-config
+        - secretRef:
+            name: ccs-postgres-config
+        - secretRef:
+            name: ccs-auditdb-config
+        {{- if .Values.global.events.enabled }}
+        - configMapRef:
+            name: ccp-events-config
+        {{- end }}
+        env:
+        - name: POSTGRES_DB
+          value: "cloud"
+        - name: FLASK_CONFIG
+          value: {{ .Values.global.flaskConfig | quote }}
+        - name: AUTH_GATEWAY_ENABLED
+          value: "true"
+        - name: ALLOWED_ADMIN_USER_DOMAIN
+          value: {{ .Values.allowedAdminUserDomain | quote }}
+        {{- if .Values.global.proxy.enabled }}
+        - name: HTTP_PROXY
+          value: {{ .Values.global.proxy.http | quote }}
+        - name: HTTPS_PROXY
+          value: {{ .Values.global.proxy.https | quote }}
+        - name: NO_PROXY
+          value: {{ .Values.global.proxy.noproxy | quote }}
+        {{- end }}
+---
+{{- if .Values.adminPlatform.celery.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-platform-celery
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: admin-platform-celery
+spec:
+  replicas: {{ .Values.adminPlatform.celery.replicaCount }}
+  selector:
+    matchLabels:
+      app: admin-platform-celery
+  template:
+    metadata:
+      labels:
+        app: admin-platform-celery
+    spec:
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      initContainers:
+      {{ include "helper.postgresql.pgready" . }}
+      containers:
+      - name: admin-platform-celery
+        image: {{ .Values.global.repository }}/{{ .Values.adminPlatform.image }}:{{ .Values.global.releaseTag }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        {{- if .Values.adminPlatform.celery.command }}              
+        command:
+          - "/bin/sh"
+          - "-c"
+          - "{{ .Values.adminPlatform.celery.command }}"
+        {{- end }}
+        resources: 
+          {{- toYaml .Values.adminPlatform.celery.resources | nindent 10 }}
+        ports:
+        - name: http
+          containerPort: 5000
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: platform-api-config   
+        - configMapRef:
+            name: redis-config
+        - secretRef:
+            name: ccs-postgres-config
+        - secretRef:
+            name: ccs-auditdb-config
+        {{- if .Values.global.events.enabled }}
+        - configMapRef:
+            name: ccp-events-config
+        {{- end }}
+        env:
+        - name: POSTGRES_DB
+          value: "cloud"
+        - name: FLASK_CONFIG
+          value: {{ .Values.global.flaskConfig | quote }}
+        - name: AUTH_GATEWAY_ENABLED
+          value: "true"
+        - name: ALLOWED_ADMIN_USER_DOMAIN
+          value: {{ .Values.allowedAdminUserDomain | quote }}
+        {{- if .Values.global.proxy.enabled }}
+        - name: HTTP_PROXY
+          value: {{ .Values.global.proxy.http | quote }}
+        - name: HTTPS_PROXY
+          value: {{ .Values.global.proxy.https | quote }}
+        - name: NO_PROXY
+          value: {{ .Values.global.proxy.noproxy | quote }}
+        {{- end }}
+{{- end }}

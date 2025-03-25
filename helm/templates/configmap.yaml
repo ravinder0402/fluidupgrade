@@ -1,0 +1,302 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-config
+  namespace: {{ .Release.Namespace }}
+data:
+  config.yml: |
+    gateway:
+      port: 8060
+      rateLimiter:
+        rateLimit: 200
+        burstSize: 500
+    geolocation:
+      host: {{ .Values.global.geolocation.host }}
+      port: {{ .Values.global.geolocation.port }}
+    saas:
+      enabled: {{ .Values.global.saas.enabled }}
+    grafana:
+      enabled: {{ .Values.global.grafana.enabled }}
+      endpoint: {{ .Release.Name }}-grafana.{{ .Release.Namespace }}
+    api:
+      externalIP: {{ .Values.global.externalIP }}
+      {{- if .Values.global.dnsEnabled  }}
+      domainName: {{ .Values.global.frontend.userPortal.domain }}
+      {{- end }}
+      port: 8090
+      ingressPort: 8070
+      centralIngressPort: 8071
+      {{- if .Values.global.dnsEnabled  }}
+      kubectlTokenAccess: {{ .Values.global.kubectl.tokenAccess.enabled }}
+      allowCORS: false
+      {{- else }}
+      allowCORS: true
+      {{- end }}
+      auth:
+        enabled: true
+        {{- if .Values.global.dnsEnabled  }}
+        provider: https://{{ .Values.global.frontend.userPortal.domain }}
+        {{- else }}
+        provider: http://{{ .Values.controller.externalIP }}:{{ .Values.global.userPortal.nodePort  }}
+        {{- end }}
+        realm: default-domain
+        clientId: controller
+      agent:
+        image: "{{ .Values.controller.agent.image }}"
+        imageRepo: "{{ .Values.controller.agent.imageRepo }}"
+        hostNetwork: {{ .Values.controller.agent.hostNetwork }}
+    proxyProtocol:
+      enabled: {{ .Values.global.proxyProtocol.enabled }}
+    tenantManagement:
+      enabled: {{ .Values.global.tenantManagement.enabled }}
+    {{- if .Values.cluster.accessLogs.enabled }}
+    accessLogs:
+      limits:
+        maxSize: 1000000 # max memory allowed to be used in bytes for access logs
+        maxEntries: 5000 # max number of entries allowed to be used for access logs
+    cluster:
+      accessLogs:
+        enabled: true
+        limits:
+          maxSize: 1000000 # max memory allowed to be used in bytes for cluster access logs per cluster
+          maxEntries: 5000 # max number of entries allowed to be used for cluster access logs per cluster
+    {{- end }}
+    events:
+      limits:
+        maxSize: 1000000 # max memory allowed to be used in bytes for events per domain
+        maxEntries: 5000 # max number of entries allowed to be used for events per domain
+    controller:
+      externalIP: "{{ .Values.controller.externalIP }}"
+      domainName: "{{ .Values.global.frontend.userPortal.domain }}"
+      port: 8040
+      bootstrapPort: 8030
+      internalGatewayPort: 8090
+      mTLSDisabled: {{ .Values.global.controller.mtls.disabled }}
+      {{- if ne .Values.controller.prometheus.endpoint "" }}
+      prometheus:
+        endpoint: {{ .Values.controller.prometheus.endpoint }}
+      {{- end }}
+    mongodb:
+      host: compass-configdb
+      port: 27017
+    metricsdb:
+      host: compass-metricsdb
+      port: 27017
+    redisdb:
+      host: notification-store
+      port: 6380
+    certificates:
+      rootCA:
+        cert: "/opt/certs/rootCA.pem"
+        key: "/opt/certs/rootCA.key"
+    defaultRepos:
+      enabled: {{ .Values.global.defaultRepos.enabled }}
+    marketPlace:
+      url: {{ .Values.global.marketPlace.url }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: controller-config
+  namespace: {{ .Release.Namespace }}
+data:
+  config.yml: |
+    controller:
+      port: 8040
+      internalGatewayPort: 8090
+      ingressPort: 6443
+      bootstrapPort: 8030
+      externalIP: "{{ .Values.controller.externalIP }}"
+      {{- if .Values.controller.proxyIPs }}
+      proxyIPs:
+      {{- range .Values.controller.proxyIPs }}
+      - {{ . | quote }}
+      {{- end }}
+      {{- end }}
+      domainName: "{{ .Values.global.frontend.userPortal.domain }}"
+      mTLSDisabled: {{ .Values.global.controller.mtls.disabled }}
+      hostAgent:
+        {{- if .Values.global.dnsEnabled  }}
+        url: https://{{ .Values.global.frontend.userPortal.domain }}/api/cluster-manager/v1/download/compass-host-agent
+        {{- else }}
+        url: http://{{ .Values.global.externalIP }}:{{ .Values.global.frontend.userPortal.nodePort  }}/api/cluster-manager/v1/download/compass-host-agent
+        {{- end }}
+    proxyProtocol:
+      enabled: {{ .Values.global.proxyProtocol.enabled }}
+    mongodb:
+      host: compass-configdb
+      port: 27017
+    metricsdb:
+      host: compass-metricsdb
+      port: 27017
+    certificates:
+      client:
+        certValidity: 5
+      rootCA:
+        cert: "/opt/certs/rootCA.pem"
+        key: "/opt/certs/rootCA.key"
+      ingress:
+        cert: "/opt/certs/ingress/cert.pem"
+        key: "/opt/certs/ingress/key.pem"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: terminal-config
+  namespace: {{ .Release.Namespace }}
+data:
+  config.yml: |
+    term:
+      port: 8000
+      auth:
+        enabled: true
+        {{- if .Values.global.dnsEnabled  }}
+        provider: https://{{ .Values.global.frontend.userPortal.domain }}
+        {{- else }}
+        provider: http://{{ .Values.controller.externalIP }}:{{ .Values.global.frontend.userPortal.nodePort  }}
+        {{- end }}
+        realm: default-domain
+        clientId: controller
+    mongodb:
+      host: compass-configdb
+      port: 27017
+    metricsdb:
+      host: compass-metricsdb
+      port: 27017
+    certificates:
+      ingress:
+        cert: "/opt/certs/ingress/cert.pem"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kg-cluster-config
+  namespace: {{ .Release.Namespace }}
+data:
+  config.yml: |
+    mongodb:
+      host: compass-configdb
+      port: 27017
+    metricsdb:
+      host: compass-metricsdb
+      port: 27017
+    certificates:
+      ingress:
+        cert: "/opt/certs/ingress/cert.pem"
+    kgApp:
+      endpoint: "kgapp-service:5555"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orchestrator-config
+  namespace: {{ .Release.Namespace }}
+data:
+  config.yml: |
+    mongodb:
+      host: compass-configdb
+      port: 27017
+    metricsdb:
+      host: compass-metricsdb
+      port: 27017
+    appInstanceLogs:
+      limits:
+        maxSize: 50000 # assuming each log entry to be of 1000 bytes, for 50 max entries, the size limit will be 50*1000
+        maxEntries: 50 # max number of entries allowed to be used for orchestrator logs per appInstance
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: metric-server-config
+  namespace: {{ .Release.Namespace }}
+data:
+  config.yml: |
+    mongodb:
+      host: compass-configdb
+      port: 27017
+    metricsdb:
+      host: compass-metricsdb
+      port: 27017
+    events:
+      limits:
+        maxSize: 1000000 # max memory allowed to be used in bytes for events per domain
+        maxEntries: 5000 # max number of entries allowed to be used for events per domain
+    geolocation:
+      host: {{ .Values.global.geolocation.host }}
+      port: {{ .Values.global.geolocation.port }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: image-scanner-config
+  namespace: {{ .Release.Namespace }}
+data:
+  config.yml: |
+    mongodb:
+      host: compass-configdb
+      port: 27017
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trivy-config
+  namespace: {{ .Release.Namespace }}
+data:
+  trivy.yml: |
+    trivy:
+      {{- if .Values.trivy.enabled }}
+      enabled: true
+      {{- end }}
+      defaultServer:
+        hostName: {{ .Values.trivy.defaultServer.hostName }}
+        port: {{ .Values.trivy.defaultServer.port }}
+        scheme: {{ .Values.trivy.defaultServer.scheme }}
+        allowInsecure: {{ .Values.trivy.defaultServer.allowInsecure }}
+        customHeaders:
+        {{- range .Values.trivy.defaultServer.customHeaders }}
+        - name: {{ .name }}
+          values:
+          {{- range .values }}
+          - {{ . }}
+          {{- end }}
+        {{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongo-init
+  namespace: {{ .Release.Namespace }}
+data:
+{{ (.Files.Glob "files/start-mongodb.sh").AsConfig | indent 2 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-api-config
+  namespace: {{ .Release.Namespace }}
+data:
+  DB_COLOCATION_ENABLED: "false"
+  COMPUTE_API_URL: "http://compute-service:7110/api/v1"
+  VOLUME_API_URL: "http://volume-service:7120/api/v1"
+  CORE_MGMT_API_URL: "http://core-mgmt:7150/api/v1"
+  BASE_NETWORK_API_URL: "http://neutron-service:7160/api/v1"
+  LOAD_BALANCER_BASE_URL: "http://neutron-service:7160/api/v1"
+  CERTIFICATE_API_URL: "http://certificates-manager:7140/api/v1"
+  AUTOSCALING_API_URL: 'http://autoscaling-service:7181/api/v1'
+  BACKUP_API_URL: 'http://commvault:7030/api/v1'
+  NOTIFICATION_URL: 'http://notification:5000'
+  SCHEDULER_URL: 'http://scheduler:5003'
+  TENANT_FIREWALL_API_URL: 'http://ccp-firewall:7180/api/v1'
+  ADMIN_API_URL: 'http://admin-platform:5000'
+  SCHEDULER_BASE_API_URL: 'http://scheduler:5003'
+  INIT_PROVIDER_LIST: {{ .Values.global.regionNames | quote }}
+  APPLICATION: {{ .Values.global.application | quote }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: {{ .Release.Namespace }}
+data:
+  REDIS_HOST: 'cache-store'
+  REDIS_PORT: '6379'

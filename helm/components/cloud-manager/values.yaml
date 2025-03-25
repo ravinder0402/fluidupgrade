@@ -1,0 +1,2 @@
+replicaCount:
+  cloudManager: 1

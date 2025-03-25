@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orbiter-metering
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount.metering }}
+  selector:
+    matchLabels:
+      app: orbiter-metering
+  template:
+    metadata:
+      labels:
+        app: orbiter-metering
+    spec:
+      serviceAccountName: compass-controller
+      initContainers:
+      - name: mongodb-wait
+        image: {{ .Values.global.repository }}/mongo:5.0.3
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/bash
+        - -c
+        - |
+          while true; do
+            mongosh --host $MONGODB_SERVICE_SERVICE_HOST -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --eval "rs.status()"
+            if [ $? == "0" ]; then
+              exit 0
+            fi
+            echo "waiting for mongodb to start"
+            sleep 5
+          done
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        - name: MONGODB_SERVICE_SERVICE_HOST
+          value: "compass-configdb"
+      containers:
+      - name: orbiter-metering
+        image: {{ .Values.global.repository }}/orbiter-metering:{{ include "helper.imageTag" . }}
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8090
+          name: grpc
+          protocol: TCP
+        env:
+        - name: MONGO_DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: MONGO_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        volumeMounts:
+        - name: metering-config-vol
+          mountPath: /opt/config.yml
+          subPath: config.yml
+      imagePullSecrets:
+      - name: {{ .Release.Name }}-docker-registry-key
+      dnsPolicy: ClusterFirst
+      volumes:
+      - name: metering-config-vol
+        configMap:
+          name: orbiter-metering-config

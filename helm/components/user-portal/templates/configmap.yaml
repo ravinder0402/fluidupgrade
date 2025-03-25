@@ -1,0 +1,204 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-portal-tcp-config
+  namespace: {{ .Release.Namespace }}
+data:
+  default.conf: |-
+    server {
+        listen     6443;
+        proxy_pass compass-api:6443;
+    }
+    server {
+        listen     8030;
+        proxy_pass compass-controller:8030;
+    }
+    server {
+        listen     8040;
+        proxy_pass compass-controller:8040;
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-portal-config
+  namespace: {{ .Release.Namespace }}
+data:
+  default.conf: |-
+    map $http_upgrade $connection_upgrade {
+        default upgrade;
+        ''      close;
+    }
+    server {
+        {{- if not .Values.global.dnsEnabled }}
+        listen       80{{- if .Values.global.proxyProtocol.enabled }} proxy_protocol{{- end }};
+        listen       [::]:80{{- if .Values.global.proxyProtocol.enabled }} proxy_protocol{{- end }};
+        {{- else }}
+        listen       443 ssl{{- if .Values.global.proxyProtocol.enabled }} proxy_protocol{{- end }};
+        listen       [::]:443 ssl{{- if .Values.global.proxyProtocol.enabled }} proxy_protocol{{- end }};
+        {{- end }}
+        server_name  _;
+        client_max_body_size 2M;
+        proxy_busy_buffers_size   128k;
+        proxy_buffers   64 64k;
+        proxy_buffer_size   128k;
+        {{- if .Values.global.dnsEnabled }}
+        ssl_certificate /etc/nginx/certs/ingress/tls.crt;
+        ssl_certificate_key /etc/nginx/certs/ingress/tls.key;
+        {{- end }}
+
+        proxy_set_header X-Forwarded-For $proxy_protocol_addr; # To forward the original client's IP address
+        proxy_set_header X-Forwarded-Proto $scheme; # to forward the  original protocol (HTTP or HTTPS)
+        {{- if not .Values.global.dnsEnabled }}
+        proxy_set_header Host $host:{{ .Values.service.nodePort }}; # to forward the original host requested by the client
+        {{- else }}
+        proxy_set_header Host $host; # to forward the original host requested by the client
+        {{- end }}
+
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html index.htm;
+            try_files $uri /index.html;
+            add_header 'Cache-Control' 'no-store, no-cache, max-age=10';
+        }
+
+        location /dbaas {
+            rewrite ^/dbaas(.*) /v1$1  break;
+            proxy_pass  http://orbiter-auth:8060;
+            add_header 'Cache-Control' 'no-store, no-cache, max-age=10';
+        }
+
+        location /auth/resources {
+            proxy_pass http://keycloak:8080;
+            add_header 'Cache-Control' 'no-store, no-cache, max-age=10';
+        }
+
+        location /auth/realms/master {
+            deny all;
+        }
+
+        location /api/auth-service {
+            proxy_pass  http://orbiter-auth:8060;
+            add_header 'Cache-Control' 'no-store, no-cache, max-age=10';
+        }
+
+        location /auth/realms {
+            proxy_pass http://keycloak:8080;
+            add_header 'Cache-Control' 'no-store, no-cache, max-age=10';
+        }
+
+        location /api/grafana {
+            proxy_pass  http://compass-api:8081;
+        }
+
+        {{- if .Values.global.containerRegistry.enabled }}
+        location /v2/ {
+            proxy_pass  http://container-registry:8020;
+            add_header 'Cache-Control' 'no-store, no-cache, max-age=10';
+            
+            # Setting client_max_body_size to a high value (10G) 
+            # to accommodate large uploads for the container registry.
+            client_max_body_size 10G;
+        }
+
+        location /api/registry/auth {
+            proxy_pass  http://container-registry:8070;
+            add_header 'Cache-Control' 'no-store, no-cache, max-age=10';
+        }
+        {{- end }}
+
+        {{- if .Values.global.dnsEnabled }}
+        location /api/compass/v1 {
+            rewrite ^/api/compass/v1(.*) /v1$1  break;
+            proxy_pass  http://orbiter-auth:8060;
+            add_header 'Cache-Control' 'no-store, no-cache, max-age=10';
+        }
+        {{- else }}
+        location /api/compass {
+            rewrite ^/api/compass/(.*) /$1  break;
+            proxy_pass  http://orbiter-auth:8060;
+            add_header 'Cache-Control' 'no-store, no-cache, max-age=10';
+        }
+        {{- end }}
+
+        location /api/ingress {
+            proxy_pass  http://orbiter-auth:8060;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $host;
+            proxy_cache_bypass $http_upgrade;
+            proxy_read_timeout 3600s;
+            proxy_send_timeout 3600s;
+        }
+
+        location /api/kubeapi {
+            rewrite ^/api/kubeapi/(.*) /$1  break;
+            proxy_pass  http://compass-api:8070;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+            proxy_read_timeout 3600s;
+            proxy_send_timeout 3600s;
+        }
+
+        location /api/container-kubeapi {
+            proxy_pass  http://orbiter-auth:8060;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+            proxy_read_timeout 3600s;
+            proxy_send_timeout 3600s;
+        }
+        
+        location /api/pc-ingress {
+            rewrite ^/api/pc-ingress/(.*) /$1  break;
+            proxy_pass  http://compass-api:8061;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+            proxy_read_timeout 3600s;
+            proxy_send_timeout 3600s;
+        }
+
+        location /api/container-ingress {
+            proxy_pass  http://orbiter-auth:8060;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+            proxy_read_timeout 3600s;
+            proxy_send_timeout 3600s;
+        }
+
+        location /api {
+            proxy_pass  http://orbiter-auth:8060;
+            add_header 'Cache-Control' 'no-store, no-cache, max-age=10';
+        }
+
+        location /socket {
+            proxy_pass  http://orbiter-auth:8060;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $host;
+            proxy_cache_bypass $http_upgrade;
+            proxy_read_timeout 3600s;
+            proxy_send_timeout 3600s;
+        }
+
+        location /ws {
+            proxy_pass  http://orbiter-auth:8060;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $host;
+            proxy_cache_bypass $http_upgrade;
+            proxy_read_timeout 3600s;
+            proxy_send_timeout 3600s;
+        }
+
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   /usr/share/nginx/html;
+        }
+    }

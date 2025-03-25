@@ -1,0 +1,408 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: configdb
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    {{- if .Values.configDB.metrics.enabled }}
+    prometheus.io/scrape: 'true'
+    prometheus.io/path: '/metrics'
+    prometheus.io/port: '9216'
+    {{- end }}
+spec:
+  serviceName: "configdb"
+  selector:
+    matchLabels:
+      app: configdb
+  replicas: {{ .Values.configDB.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: configdb
+    spec:
+      securityContext:
+        fsGroup: 999
+        runAsUser: 999
+      containers:
+      - name: mongodb
+        image: {{ .Values.global.repository }}/mongo:5.0.3
+        imagePullPolicy: IfNotPresent
+        command: ["bash"]
+        args: ["-c", "/start-mongodb.sh"]
+        volumeMounts:
+        - name: mongodb-data
+          mountPath: /data/db
+        - name: mongo-script-vol
+          mountPath: /start-mongodb.sh
+          subPath: start-mongodb.sh
+        - name: config-replica-auth-vol
+          mountPath: /opt/auth
+          subPath: auth
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        - name: MONGODB_SERVICE_SERVICE_HOST
+          value: "configdb"
+        - name: REPLICA_COUNT
+          value: "{{ .Values.configDB.replicaCount }}"
+        ports:
+        - name: mongodb
+          containerPort: 27017
+#        livenessProbe:
+#          exec:
+#            command:
+#            - mongosh
+#            - -u
+#            - $MONGO_INITDB_ROOT_USERNAME
+#            - -p
+#            - $MONGO_INITDB_ROOT_PASSWORD
+#            - --eval
+#            - db.adminCommand("ping")
+#          failureThreshold: 3
+#          periodSeconds: 10
+#          #successThreshold: 2
+#          timeoutSeconds: 2
+#          initialDelaySeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - /usr/bin/echo
+            - "hello"
+#            - mongosh
+#            - -u
+#            - $MONGO_INITDB_ROOT_USERNAME
+#            - -p
+#            - $MONGO_INITDB_ROOT_PASSWORD
+#            - --eval
+#            - db.adminCommand("ping")
+#          failureThreshold: 10
+#          periodSeconds: 5
+#          #successThreshold: 2
+#          timeoutSeconds: 2
+          initialDelaySeconds: 10
+      {{- if .Values.configDB.metrics.enabled }}
+      - name: metrics
+        image: {{ .Values.global.repository }}/mongodb-exporter:0.40.0
+        imagePullPolicy: IfNotPresent
+        args:
+        - --discovering-mode
+        - --compatible-mode
+        - --collect-all
+        - --log.level=debug
+        - --mongodb.uri=$(MONGODB_URI)
+        env:
+        - name: EXPORTER_USER
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: EXPORTER_PASS
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.podIP
+        - name: MONGODB_URI
+          value: mongodb://$(EXPORTER_USER):$(EXPORTER_PASS)@$(POD_IP):27017
+        ports:
+        - name: metrics
+          containerPort: 9216
+      {{- end }}
+      imagePullSecrets:
+      - name: {{ .Release.Name }}-docker-registry-key
+      volumes:
+      - name: config-replica-auth-vol
+        secret:
+          secretName: config-replica-auth
+          defaultMode: 0400
+      - name: mongo-script-vol
+        configMap:
+          name: mongo-init
+          defaultMode: 0555
+  volumeClaimTemplates:
+  - metadata:
+      name: mongodb-data
+    spec:
+      accessModes:
+      - "ReadWriteOnce"
+      resources:
+        requests:
+          storage: {{ .Values.configDB.persistence.size }}
+      {{- if .Values.global.storageClass }}
+      storageClassName: {{ .Values.global.storageClass }}
+      {{- end }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: metricsdb
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    {{- if .Values.metricsDB.metrics.enabled }}
+    prometheus.io/scrape: 'true'
+    prometheus.io/path: '/metrics'
+    prometheus.io/port: '9216'
+    {{- end }}
+spec:
+  serviceName: "metricsdb"
+  selector:
+    matchLabels:
+      app: metricsdb
+  replicas: {{ .Values.metricsDB.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: metricsdb
+    spec:
+      securityContext:
+        fsGroup: 999
+        runAsUser: 999
+      containers:
+      - name: mongodb
+        image: {{ .Values.global.repository }}/mongo:5.0.3
+        imagePullPolicy: IfNotPresent
+        command: ["bash"]
+        args: ["-c", "/start-mongodb.sh"]
+        volumeMounts:
+        - name: mongodb-data
+          mountPath: /data/db
+        - name: mongo-script-vol
+          mountPath: /start-mongodb.sh
+          subPath: start-mongodb.sh
+        - name: config-replica-auth-vol
+          mountPath: /opt/auth
+          subPath: auth
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        - name: MONGODB_SERVICE_SERVICE_HOST
+          value: "metricsdb"
+        - name: REPLICA_COUNT
+          value: "{{ .Values.metricsDB.replicaCount }}"
+        ports:
+        - name: mongodb
+          containerPort: 27017
+        readinessProbe:
+          exec:
+            command:
+            - /usr/bin/echo
+            - "hello"
+          initialDelaySeconds: 10
+      {{- if .Values.configDB.metrics.enabled }}
+      - name: metrics
+        image: {{ .Values.global.repository }}/mongodb-exporter:0.40.0
+        imagePullPolicy: IfNotPresent
+        args:
+        - --discovering-mode
+        - --compatible-mode
+        - --collect-all
+        - --log.level=debug
+        - --mongodb.uri=$(MONGODB_URI)
+        env:
+        - name: EXPORTER_USER
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: EXPORTER_PASS
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.podIP
+        - name: MONGODB_URI
+          value: mongodb://$(EXPORTER_USER):$(EXPORTER_PASS)@$(POD_IP):27017
+        ports:
+        - name: metrics
+          containerPort: 9216
+      {{- end }}
+      imagePullSecrets:
+      - name: {{ .Release.Name }}-docker-registry-key
+      volumes:
+      - name: config-replica-auth-vol
+        secret:
+          secretName: config-replica-auth
+          defaultMode: 0400
+      - name: mongo-script-vol
+        configMap:
+          name: mongo-init
+          defaultMode: 0555
+  volumeClaimTemplates:
+  - metadata:
+      name: mongodb-data
+    spec:
+      accessModes:
+      - "ReadWriteOnce"
+      resources:
+        requests:
+          storage: {{ .Values.metricsDB.persistence.size }}
+      {{- if .Values.global.storageClass }}
+      storageClassName: {{ .Values.global.storageClass }}
+      {{- end }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: notification-store
+  namespace: {{ .Release.Namespace }}
+spec:
+  serviceName: "notification-store"
+  selector:
+    matchLabels:
+      app: notification-store
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: notification-store
+    spec:
+      containers:
+      - name: redis
+        image: {{ .Values.global.repository }}/redis:6.2.5
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: redisport
+          containerPort: 6380
+        volumeMounts:
+          - name: redis-data
+            mountPath: /data
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-data
+    spec:
+      accessModes:
+      - "ReadWriteOnce"
+      resources:
+        requests:
+          storage: {{ .Values.notificationStore.persistence.size }}
+      {{- if .Values.global.storageClass }}
+      storageClassName: {{ .Values.global.storageClass }}
+      {{- end }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cache-store
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: cache-store
+spec:
+  serviceName: "cache-store"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cache-store
+  template:
+    metadata:
+      labels:
+        app: cache-store
+    spec:
+      dnsPolicy: ClusterFirst
+      containers:
+      - name: redis
+        image: {{ .Values.global.repository }}/redis:6.2.5
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        ports:
+        - containerPort: 6379
+          protocol: TCP
+        env:
+          - name: ALLOW_EMPTY_PASSWORD
+            value: "yes"
+        volumeMounts:
+          - name: cache-store-data
+            mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: cache-store-data
+      spec:
+        accessModes:
+        - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: 5Gi
+        {{- if .Values.global.storageClass }}
+        storageClassName: {{ .Values.global.storageClass }}
+        {{- end }}
+---
+{{- if not .Values.global.postgresql.external.host }}
+{{- if .Values.global.postgresql.architecture.standalone }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ccs-postgres
+  labels:
+    app: ccs-postgres
+spec:
+  serviceName: ccs-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ccs-postgres
+  template:
+    metadata:
+      labels:
+        app: ccs-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: {{ .Values.global.repository }}/postgres:15.7
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ccs-standalone-postgres-secret
+                  key: password
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: ccs-standalone-postgres-secret
+                  key: username
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: ccs-standalone-postgres-secret
+                  key: database
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: ccs-postgres-data
+  volumeClaimTemplates:
+    - metadata:
+        name: ccs-postgres-data
+      spec:
+        accessModes:
+        - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: 5Gi
+        {{- if .Values.global.storageClass }}
+        storageClassName: {{ .Values.global.storageClass }}
+        {{- end }}
+{{- end }}
+{{- end }}

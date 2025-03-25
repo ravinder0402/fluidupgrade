@@ -1,0 +1,44 @@
+{{- if not .Values.global.dnsEnabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: admin-portal-nginx-conf
+  namespace: {{ .Release.Namespace }}
+data: 
+  default.conf: |-
+    server {
+        listen       80;
+        listen       [::]:80;
+
+        proxy_set_header X-Forwarded-For $proxy_protocol_addr; # To forward the original client's IP address
+        proxy_set_header X-Forwarded-Proto $scheme; # to forward the  original protocol (HTTP or HTTPS)
+        proxy_set_header Host $host;    
+        proxy_redirect off;
+        server_tokens off;
+        proxy_set_header X-Real-IP $http_x_forwarded_for;
+
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html index.htm;
+            try_files $uri /index.html;
+        }
+        
+        location /adminapi {
+            proxy_pass http://orbiter-auth:8060;
+            proxy_buffering off;
+        }
+
+        location /socket {
+            proxy_pass http://orbiter-auth:8060;
+            proxy_buffering off;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_read_timeout 86400;
+        }
+
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   /usr/share/nginx/html;
+        }
+    }
+{{- end }}

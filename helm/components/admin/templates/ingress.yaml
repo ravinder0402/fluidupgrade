@@ -1,0 +1,54 @@
+{{- if .Values.global.dnsEnabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: admin-portal-ingress
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/affinity: cookie
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.org/websocket-services: orbiter-auth
+    nginx.ingress.kubernetes.io/websocket-services: orbiter-auth
+    nginx.ingress.kubernetes.io/server-snippet: |
+      location /adminapi/v1/swagger {
+            deny all;
+            return 403;
+        }
+spec:
+  ingressClassName: {{ .Values.global.ingressClass }}
+  rules:
+    - host: {{ .Values.adminportal.ingress.hostname }}
+      http:
+        paths:
+          - pathType: Prefix
+            backend:
+              service:
+                name: orbiter-auth
+                port:
+                  number: 8060
+            path: /adminapi
+          - backend:
+              service:
+                name: orbiter-auth
+                port:
+                  number: 8060
+            path: /socket
+            pathType: Prefix
+          - pathType: Prefix
+            backend:
+              service:
+                name: admin-portal
+                port:
+                  number: 80
+            path: /
+  tls:
+    - hosts:
+      - {{ .Values.adminportal.ingress.hostname }}
+      {{ if eq .Values.global.https.tlsSecret "" }}
+      secretName: {{ .Values.adminportal.ingress.tlsSecret }}
+      {{- else }}
+      secretName: {{ .Values.global.https.tlsSecret }}
+      {{- end }}
+{{- end }}
