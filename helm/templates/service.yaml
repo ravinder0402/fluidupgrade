@@ -275,22 +275,6 @@ spec:
   selector:
       app: notification-store
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: cache-store
-  namespace: {{ .Release.Namespace }}
-  labels:
-    app: cache-store
-spec:
-  type: ClusterIP
-  ports:
-  - port: 6379
-    targetPort: 6379
-    protocol: TCP
-  selector:
-      app: cache-store
----
 {{- if not .Values.global.postgresql.external.host }}
 apiVersion: v1
 kind: Service

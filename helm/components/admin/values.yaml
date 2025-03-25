@@ -14,9 +14,6 @@ global:
   # provides configuration of build tag to be used for container images
   releaseTag: &releaseTag latest
 
-  # Global theme for the Web GUI
-  theme: ""
-
   # image pull policy to be used
   imagePullPolicy: &imagePolicy Always
 
@@ -38,17 +35,6 @@ global:
     nodePorts:
       http: &keycloakNodePortHTTP "32701"
       https: &keycloakNodePortHTTPS "32702"
-
-  frontend:
-    userPortal:
-      domain: &userDomain ""
-      tlsSecret: &userTls ""
-    # For Production environment we require kyc status validation
-    # However, for dev and test environments we should be able to skip
-    # these validations
-    # Setting skipKyc true will bypass this validation
-    # Note: This configuration should not be used for Production env
-    skipKyc: false
 
 nodeSelector: {} 
 
@@ -72,7 +58,6 @@ adminportal:
   ingress:
     tlsSecret: ""
     hostname: ""
-    class: nginx
   ## Monitoring URLs
   monitoringURL: 
     resource: ""

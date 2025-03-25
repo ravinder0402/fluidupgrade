@@ -303,51 +303,6 @@ spec:
       storageClassName: {{ .Values.global.storageClass }}
       {{- end }}
 ---
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: cache-store
-  namespace: {{ .Release.Namespace }}
-  labels:
-    app: cache-store
-spec:
-  serviceName: "cache-store"
-  replicas: 1
-  selector:
-    matchLabels:
-      app: cache-store
-  template:
-    metadata:
-      labels:
-        app: cache-store
-    spec:
-      dnsPolicy: ClusterFirst
-      containers:
-      - name: redis
-        image: {{ .Values.global.repository }}/redis:6.2.5
-        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
-        ports:
-        - containerPort: 6379
-          protocol: TCP
-        env:
-          - name: ALLOW_EMPTY_PASSWORD
-            value: "yes"
-        volumeMounts:
-          - name: cache-store-data
-            mountPath: /data
-  volumeClaimTemplates:
-    - metadata:
-        name: cache-store-data
-      spec:
-        accessModes:
-        - "ReadWriteOnce"
-        resources:
-          requests:
-            storage: 5Gi
-        {{- if .Values.global.storageClass }}
-        storageClassName: {{ .Values.global.storageClass }}
-        {{- end }}
----
 {{- if not .Values.global.postgresql.external.host }}
 {{- if .Values.global.postgresql.architecture.standalone }}
 apiVersion: apps/v1

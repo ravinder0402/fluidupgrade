@@ -46,9 +46,7 @@ spec:
   tls:
     - hosts:
       - {{ .Values.adminportal.ingress.hostname }}
-      {{ if eq .Values.global.https.tlsSecret "" }}
+      {{ if .Values.adminportal.ingress.tlsSecret }}
       secretName: {{ .Values.adminportal.ingress.tlsSecret }}
-      {{- else }}
-      secretName: {{ .Values.global.https.tlsSecret }}
       {{- end }}
 {{- end }}

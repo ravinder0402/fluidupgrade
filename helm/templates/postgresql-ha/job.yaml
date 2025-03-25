@@ -15,7 +15,7 @@ spec:
   template:
     spec:
       restartPolicy: Never
-      serviceAccountName: ccp-postgresql-operator
+      serviceAccountName: ccs-postgresql-operator
       containers:
       - name: pg-cluster-readiness
         image: coredgeio/kubectl:1.18.16
@@ -52,7 +52,7 @@ spec:
   template:
     spec:
       restartPolicy: Never
-      serviceAccountName: ccp-postgresql-operator
+      serviceAccountName: ccs-postgresql-operator
       containers:
       - name: pg-cluster-cleanup
         image: coredgeio/kubectl:1.18.16
@@ -68,7 +68,7 @@ spec:
             output=$(kubectl get pod -n {{ .Release.Namespace }} --selector=cluster-name=ccs-postgresql-cluster --field-selector status.phase=Running | wc -l)            
             if [ "$output" == "0" ]; then
               echo "Postgresql cluster cleanup success!"
-              kubectl delete svc -l cluster-name=ccs-postgresql-cluster -n {{ .Release.Namespace }}
+              kubectl delete svc,sts -l cluster-name=ccs-postgresql-cluster -n {{ .Release.Namespace }}
               exit 0
             fi
             echo "Waiting for postgresql cluster cleanup!"

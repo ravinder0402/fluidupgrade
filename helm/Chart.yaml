@@ -43,7 +43,8 @@ dependencies:
   repository: file://components/network-manager
   version: 0.1.0
 #####
-- name: userPortal
+- condition: global.userPortal.enabled
+  name: userPortal
   repository: 'file://components/user-portal'
   version: 0.1.0
 - condition: global.adminServices.enabled
