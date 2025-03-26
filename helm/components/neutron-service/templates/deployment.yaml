@@ -56,16 +56,6 @@ spec:
             value: {{ .Values.global.flaskConfig }}
           - name: CACHING_ENABLED
             value: "false"
-        volumeMounts:
-          - name: provider-vol
-            readOnly: true
-            mountPath: /etc/yntraa/
-          - name: api-conf-vol
-            mountPath: /etc/api/
-          - name: openstack-templates-vol
-            mountPath: /etc/yntraa/app/extensions/providers/templates/openstack/
-          - name: openstack-templates-lib-vol
-            mountPath: /etc/yntraa/app/extensions/providers/templates/openstack/lib/
       volumeMounts:
           - name: platform-config
             readOnly: true

@@ -796,6 +796,6 @@ spec:
           protocol: TCP
         env:
         - name: REDIS_HOST
-          value: cache-store
+          value: notification-store
         - name: REDIS_PORT
           value: "6379"

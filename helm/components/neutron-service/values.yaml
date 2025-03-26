@@ -13,10 +13,7 @@ global:
   # this field is considered only when UseDailyBuilds is set to be false
   # provides configuration of build tag to be used for container images
   releaseTag: &releaseTag latest
-
-  # Global theme for the Web GUI
-  theme: ""
-
+  
   # image pull policy to be used
   imagePullPolicy: &imagePolicy Always
 

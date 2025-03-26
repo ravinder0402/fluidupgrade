@@ -86,6 +86,7 @@ spec:
         {{- toYaml .Values.nodeSelector | nindent 8 }}
       initContainers:
       {{ include "helper.postgresql.pgready" . }}
+      containers:
       - name: volume-celery
         image: {{ .Values.global.repository }}/{{ .Values.image }}:{{ .Values.global.releaseTag }}
         imagePullPolicy: {{ .Values.global.imagePullPolicy }}

@@ -29,9 +29,6 @@ global:
   # provides configuration of build tag to be used for container images
   releaseTag: &releaseTag latest
 
-  # Global theme for the Web GUI
-  theme: ""
-
   # image pull policy to be used
   imagePullPolicy: &imagePolicy Always
 
@@ -209,7 +206,7 @@ global:
     enabled: true
   
   autoscalingService:
-    enabled: true
+    enabled: false
 
   volumeService:
     enabled: true
@@ -443,7 +440,7 @@ repository-cred:
   # container repository credentials
   repositoryCred:
     user: docker
-    password: docker
+    password: password
     mail: info@coredge.io
 
 # certs:
@@ -556,7 +553,6 @@ grafana:
   # over API can configure relevant datasource and dashboards
   adminUser: admin
   adminPassword: admin@compass
-
   # persistence is enabled to ensure we don't have to worry
   # about grafana restarts, please don not change this configuration
   persistence:
@@ -689,9 +685,9 @@ storage-plugin:
 
 adminServices:
   replicaCount: '1'
-  allowedAdminUserDomain: ""
+  allowedAdminUserDomain: "*"
   adminportal:
-    image: "ccp_admin_console"
+    image: "fluid-admin"
     service:
       nodePort: "32600"
     resources: 
@@ -737,7 +733,7 @@ adminServices:
 
 userPortal:
   replicaCount: '1'
-  image: "ccp_console"
+  image: "fluid-console"
   service:
     nodePort: *frontendNodePort
   resources: 
@@ -947,7 +943,7 @@ postgresqlHA:
     enabled: false
 
 ## Postgresql Operator configuration
-## This operator will manage the lifecycl of the above postgresql cluster
+## This operator will manage the lifecycle of the above postgresql cluster
 postgres-operator:
   enabled: true
   registry: docker.io
