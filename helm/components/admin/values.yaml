@@ -43,7 +43,7 @@ replicaCount: '1'
 allowedAdminUserDomain: ""
 
 adminportal:
-  image: "ccp_admin_console"
+  image: "fluid-admin"
   service:
     nodePort: "32600"
   resources: 

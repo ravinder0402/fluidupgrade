@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: user-portal-tcp-config
+  name: frontend-tcp-config
   namespace: {{ .Release.Namespace }}
 data:
   default.conf: |-
@@ -21,7 +21,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: user-portal-config
+  name: frontend-config
   namespace: {{ .Release.Namespace }}
 data:
   default.conf: |-
@@ -175,15 +175,16 @@ data:
             add_header 'Cache-Control' 'no-store, no-cache, max-age=10';
         }
 
+        {{- if .Values.extraRoutes }}
+        {{ .Values.extraRoutes | trim | nindent 8 }}
+        {{- end }}
+
         location /socket {
-            proxy_pass  http://orbiter-auth:8060;
-            proxy_http_version 1.1;
+            proxy_pass http://orbiter-auth:8060;
+            proxy_buffering off;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
-            proxy_set_header Host $host;
-            proxy_cache_bypass $http_upgrade;
-            proxy_read_timeout 3600s;
-            proxy_send_timeout 3600s;
+            proxy_read_timeout 86400;
         }
 
         location /ws {

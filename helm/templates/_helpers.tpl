@@ -1,7 +1,7 @@
 {{/*
 Returns the PostgreSQL port
 */}}
-{{- define "postgresql.port" -}}
+{{- define "ccspostgresql.port" -}}
 {{- if .Values.global.postgresql.external.port -}}
 {{- .Values.global.postgresql.external.port -}}
 {{- else -}}
@@ -12,7 +12,7 @@ Returns the PostgreSQL port
 {{/*
 Returns the PostgreSQL user
 */}}
-{{- define "postgresql.user" -}}
+{{- define "ccspostgresql.user" -}}
 {{- if .Values.global.postgresql.external.user -}}
 {{- .Values.global.postgresql.external.user -}}
 {{- else if not .Values.global.postgresql.architecture.standalone -}}
@@ -25,7 +25,7 @@ admin
 {{/*
 Returns the PostgreSQL host
 */}}
-{{- define "postgresql.host" -}}
+{{- define "ccspostgresql.host" -}}
 {{- if .Values.global.postgresql.external.host -}}
 {{- .Values.global.postgresql.external.host -}}
 {{- else if not .Values.global.postgresql.architecture.standalone -}}
@@ -38,7 +38,7 @@ ccs-postgres
 {{/*
 Returns the PostgreSQL password
 */}}
-{{- define "postgresql.password" -}}
+{{- define "ccspostgresql.password" -}}
 {{- if .Values.global.postgresql.external.password -}}
 {{- .Values.global.postgresql.external.password -}}
 {{- else if not .Values.global.postgresql.architecture.standalone -}}
@@ -51,51 +51,51 @@ admin
 {{/*
 Returns the AuditDB port
 */}}
-{{- define "auditdb.port" -}}
+{{- define "ccsauditdb.port" -}}
 {{- if .Values.global.auditdb.port -}}
 {{- .Values.global.auditdb.port -}}
 {{- else -}}
-{{- include "postgresql.port" . -}}
+{{- include "ccspostgresql.port" . -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
 Returns the AuditDB user
 */}}
-{{- define "auditdb.username" -}}
+{{- define "ccsauditdb.username" -}}
 {{- if .Values.global.auditdb.username -}}
 {{- .Values.global.auditdb.username -}}
 {{- else -}}
-{{- include "postgresql.user" . -}}
+{{- include "ccspostgresql.user" . -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
 Returns the AuditDB host
 */}}
-{{- define "auditdb.host" -}}
+{{- define "ccsauditdb.host" -}}
 {{- if .Values.global.auditdb.host -}}
 {{- .Values.global.auditdb.host -}}
 {{- else -}}
-{{- include "postgresql.host" . -}}
+{{- include "ccspostgresql.host" . -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
 Returns the AuditDB password
 */}}
-{{- define "auditdb.password" -}}
+{{- define "ccsauditdb.password" -}}
 {{- if .Values.global.auditdb.password -}}
 {{- .Values.global.auditdb.password -}}
 {{- else -}}
-{{- include "postgresql.password" . -}}
+{{- include "ccspostgresql.password" . -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
 Returns the AuditDB database
 */}}
-{{- define "auditdb.database" -}}
+{{- define "ccsauditdb.database" -}}
 {{- if .Values.global.auditdb.database -}}
 {{- .Values.global.auditdb.database -}}
 {{- else -}}

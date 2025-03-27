@@ -798,4 +798,4 @@ spec:
         - name: REDIS_HOST
           value: notification-store
         - name: REDIS_PORT
-          value: "6379"
+          value: "6380"

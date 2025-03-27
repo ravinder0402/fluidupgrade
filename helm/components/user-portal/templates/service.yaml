@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: user-portal
+  name: frontend
   namespace: {{ .Release.Namespace }}
 {{- if eq "AWS" .Values.global.environment }}
 {{- if .Values.global.proxyProtocol.enabled  }}
@@ -39,4 +39,4 @@ spec:
   type: LoadBalancer
 {{ end }}
   selector:
-    app: user-portal
+    app: frontend

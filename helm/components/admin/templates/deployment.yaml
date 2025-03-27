@@ -38,10 +38,10 @@ spec:
             value: https://{{ .Values.global.keycloak.domain }}/auth
           {{- else }}
           - name: VITE_OIDC_AUTH_URL 
-            value: http://{{ .Values.global.externalIP }}{{ .Values.global.keycloak.nodePorts.http }}/auth
+            value: http://{{ .Values.global.externalIP }}:{{ .Values.global.keycloak.nodePorts.http }}/auth
           {{- end }}
           - name: VITE_OIDC_REALM 
-            value: {{ .Values.global.keycloak.rootRealm }}
+            value: {{ .Values.global.rootRealm }}
           - name: VITE_OIDC_CLIENT_ID
             value: "controller"
           - name: VITE_RESOURCE_MONITORING_URL

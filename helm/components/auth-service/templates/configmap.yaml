@@ -152,6 +152,7 @@ data:
       - prefix: /api/register
         endpoint: http://orbiter-auth:8081
         accessType: public
+{{- end }}
       - prefix: /adminapi
         endpoint: http://admin-platform:5000
         accessType: unscoped
@@ -167,42 +168,34 @@ data:
       - prefix: /api/v1/organisations/project_scopes/
         endpoint: http://core-mgmt:7150
         accessType: unscoped
-      - endpoint: http://autoscaling:7181
+      - endpoint: http://autoscaling-service:7181
         prefix: /api/v1/autoscaling-group
       - accessType: public
-        endpoint: http://autoscaling:7181
+        endpoint: http://autoscaling-service:7181
         prefix: /api/v1/autoscaling-group/openstack-events-s1
       - accessType: public
-        endpoint: http://autoscaling:7181
+        endpoint: http://autoscaling-service:7181
         prefix: /api/v1/autoscaling-group/openstack-events-s2
-      - endpoint: http://file-system:7220
-        prefix: /api/v1/file-systems
-      - endpoint: http://object-storage:7130
-        prefix: /api/v1/object_storages
-      - endpoint: http://compute:7110
+      - endpoint: http://compute-service:7110
         prefix: /api/v1/computes
-      - endpoint: http://compute:7110
+      - endpoint: http://compute-service:7110
         prefix: /api/v1/vpn
       - endpoint: http://core-mgmt:7150
         prefix: /api/v1/projects
-      - endpoint: http://compute:7110
+      - endpoint: http://compute-service:7110
         prefix: /api/v1/metrics
-      - endpoint: http://volume:7120
+      - endpoint: http://volume-service:7120
         prefix: /api/v1/volumes
-      - endpoint: http://certificates:7140
+      - endpoint: http://certificates-manager:7140
         prefix: /api/v1/certificates
-      - endpoint: http://network:7160
+      - endpoint: http://neutron-service:7160
         prefix: /api/v1/networks
-      - endpoint: http://network:7160
+      - endpoint: http://neutron-service:7160
         prefix: /api/v1/load-balancers
-      - endpoint: http://network:7160
+      - endpoint: http://neutron-service:7160
         prefix: /api/v1/dnszones
-      - endpoint: http://network:7160
+      - endpoint: http://neutron-service:7160
         prefix: /api/v1/firewalls
-      - endpoint: http://ccp-firewall:7180
-        prefix: /api/v1/tenant_firewall
-      - endpoint: http://commvault:7030
-        prefix: /api/v1/backup
       - endpoint: http://archival-storage:7170
         prefix: /api/v1/archival-storages
       - endpoint: http://core-mgmt:7150
@@ -222,7 +215,6 @@ data:
       - prefix: /auth
         endpoint: http://core-mgmt:7150
         rewritePrefix: /
-{{- end }}
 {{- if .Values.gateway.locations }}
 {{ toYaml .Values.gateway.locations | indent 6 }}
 {{- end }}
