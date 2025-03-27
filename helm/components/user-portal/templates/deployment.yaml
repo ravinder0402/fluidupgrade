@@ -1,32 +1,32 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user-portal
+  name: frontend
   namespace: {{ .Release.Namespace }}
   labels:
-    app: user-portal
+    app: frontend
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: user-portal
+      app: frontend
   template:
     metadata:
       labels:
-        app: user-portal
+        app: frontend
     spec:
       dnsPolicy: ClusterFirst
       nodeSelector:
         {{- toYaml .Values.nodeSelector | nindent 8 }}
       containers:
-      - name: user-portal
+      - name: frontend
         image: {{ .Values.global.repository }}/{{ .Values.image }}:{{ .Values.global.releaseTag }}
         imagePullPolicy: {{ .Values.global.imagePullPolicy }}
         resources: 
           {{- toYaml .Values.resources | nindent 10 }}
         ports:
-        - name: http
-          containerPort: 80
+        - containerPort: 80
+          name: 80tcp2
           protocol: TCP
         env:
           - name: VITE_OIDC_ENABLED 
@@ -85,11 +85,26 @@ spec:
           - name: VITE_TICKET_SUPPORT_URL
             value: {{ .Values.additionalURLs.ticketSupport | quote }}
         volumeMounts:
-        - name: console-rev-proxy
+        - mountPath: /etc/nginx/tcp_conf.d
           readOnly: true
-          mountPath: /etc/nginx/conf.d/default.conf
-          subPath: default.conf
+          name: default-tcp-conf
+        - mountPath: /etc/nginx/conf.d
+          readOnly: true
+          name: default-conf
+        - name: frontend-certs-vol
+          readOnly: true
+          mountPath: /etc/nginx/certs/ingress
       volumes:
-      - name: console-rev-proxy
+      - name: default-tcp-conf
         configMap:
-          name: console-nginx-conf
+          name: frontend-tcp-config
+      - name: default-conf
+        configMap:
+          name: frontend-config
+      - name: frontend-certs-vol
+        secret:
+          {{- if .Values.global.frontend.userPortal.tlsSecret }}
+          secretName: {{ .Values.global.frontend.userPortal.tlsSecret }}
+          {{- else }}
+          secretName:  frontend-self-certs
+          {{- end}}

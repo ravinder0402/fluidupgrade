@@ -37,7 +37,7 @@ data:
         {{- if .Values.global.dnsEnabled  }}
         provider: https://{{ .Values.global.frontend.userPortal.domain }}
         {{- else }}
-        provider: http://{{ .Values.controller.externalIP }}:{{ .Values.global.userPortal.nodePort  }}
+        provider: http://{{ .Values.controller.externalIP }}:{{ .Values.global.frontend.userPortal.nodePort }}
         {{- end }}
         realm: default-domain
         clientId: controller
@@ -119,7 +119,7 @@ data:
         {{- if .Values.global.dnsEnabled  }}
         url: https://{{ .Values.global.frontend.userPortal.domain }}/api/cluster-manager/v1/download/compass-host-agent
         {{- else }}
-        url: http://{{ .Values.global.externalIP }}:{{ .Values.global.frontend.userPortal.nodePort  }}/api/cluster-manager/v1/download/compass-host-agent
+        url: http://{{ .Values.global.externalIP }}:{{ .Values.global.frontend.userPortal.nodePort }}/api/cluster-manager/v1/download/compass-host-agent
         {{- end }}
     proxyProtocol:
       enabled: {{ .Values.global.proxyProtocol.enabled }}
