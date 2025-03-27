@@ -5,7 +5,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
   name: {{ .Release.Namespace }}-compass-controller
   namespace: {{ .Release.Namespace }}
@@ -17,7 +17,7 @@ rules:
   verbs:
   - '*'
 ---
-kind: RoleBinding
+kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: {{ .Release.Namespace }}-compass-controller

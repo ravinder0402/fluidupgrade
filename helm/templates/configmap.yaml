@@ -299,4 +299,4 @@ metadata:
   namespace: {{ .Release.Namespace }}
 data:
   REDIS_HOST: 'notification-store'
-  REDIS_PORT: '6379'
+  REDIS_PORT: '6380'
