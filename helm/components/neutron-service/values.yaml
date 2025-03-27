@@ -32,7 +32,7 @@ replicaCount: '1'
 
 image: ""
 
-enabledServices: "networks,dns,certificates,api"
+enabledServices: "networks,dns,api"
 
 resources: 
   limits:
@@ -53,11 +53,3 @@ celery:
     requests:
       cpu: 100m
       memory: 2Gi
-
-certificates:
-  enabled: false
-  ## Vault integration for certificate management
-  vault:
-    url: ""
-    token: ""
-    kvPath: ""

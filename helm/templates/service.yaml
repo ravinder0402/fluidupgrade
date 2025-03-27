@@ -291,3 +291,20 @@ spec:
       port: 5432
       targetPort: 5432
 {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sockets-server
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: sockets-server
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5000
+    targetPort: 5000
+    protocol: TCP
+    name: http
+  selector:
+      app: sockets-server
