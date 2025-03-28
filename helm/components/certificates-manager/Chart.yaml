@@ -1,0 +1,10 @@
+apiVersion: v2
+name: certificatesManager
+description: A Helm chart for certificates manager
+type: application
+version: 0.1.0 
+appVersion: "0.1"
+dependencies:
+- name: helper
+  repository: "file://../helper"
+  version: 0.1.0

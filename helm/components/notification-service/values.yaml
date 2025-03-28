@@ -1,0 +1,38 @@
+global:
+  # repository from where the controller images are pulled for
+  # controller
+  repository: &repository coredgeio
+
+  # this field is considered only when UseDailyBuilds is set to be false
+  # provides configuration of build tag to be used for container images
+  releaseTag: &releaseTag latest
+  
+  # image pull policy to be used
+  imagePullPolicy: &imagePolicy Always
+
+replicaCount: "1"
+
+image: "ccp_notification"
+
+resources: 
+  limits:
+    cpu: 200m
+    # memory: 128Mi
+  requests:
+    cpu: 10m
+    memory: 50Mi
+
+nodeSelector: {}  
+
+command: []
+
+smtp:
+  senderEmail: ''
+  server: ''
+  port: ''
+  username: ''
+  password: ''
+
+sms:
+  sender: ''
+  apiKey: ''

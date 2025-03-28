@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notiication-service
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: notiication-service
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: notiication-service
+  template:
+    metadata:
+      labels:
+        app: notiication-service
+    spec:
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      containers:
+      - name: notification
+        image: {{ .Values.global.repository }}/{{ .Values.image }}:{{ .Values.global.releaseTag }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        {{- if .Values.command }}              
+        command:  
+          {{  range .Values.command }}
+              - {{ . }}
+          {{ end }}         
+        {{- end }} 
+        resources: 
+          {{- toYaml .Values.resources | nindent 10 }}
+        ports:
+        - name: http
+          containerPort: 5000
+          protocol: TCP
+        env:
+          - name: EMAIL_NOTIFICATION_SENDER
+            value: {{ .Values.smtp.senderEmail | quote }}
+          - name: SMS_SENDER
+            value: {{ .Values.sms.sender | quote }}
+          - name: SMS_API_KEY
+            value: {{ .Values.sms.apiKey | quote }}
+          - name: SMTP_SERVER
+            value: {{ .Values.smtp.server | quote }}
+          - name: SMTP_PORT
+            value: {{ .Values.smtp.port | quote }}
+          {{- if and ( .Values.smtp.username) ( .Values.smtp.password) }}
+          - name: SMTP_USERNAME
+            valueFrom: 
+              secretKeyRef:
+                name: notiication-smtp-creds
+                key: smtp-username
+          - name: SMTP_PASSWORD
+            valueFrom: 
+              secretKeyRef:
+                name: notiication-smtp-creds
+                key: smtp-password 
+          {{- end }}
+        

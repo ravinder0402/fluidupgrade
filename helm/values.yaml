@@ -216,6 +216,12 @@ global:
 
   archivalStorage:
     enabled: false
+  
+  certificatesManager:
+    enabled: false
+  
+  notificationService:
+    enabled: false
 
   # enable loading default repositories for better user experience with
   # preconfigured helm repositories
@@ -893,6 +899,41 @@ autoscalingService:
         cpu: 100m
         memory: 2Gi
 
+certificatesManager:
+  replicaCount: '1'
+  image: "ccp_platform"
+  enabledServices: "certificates,api"
+  resources: 
+    limits:
+      cpu: 500m
+      # memory: ""
+    requests:
+      cpu: 20m
+      memory: 100Mi 
+  ## Vault integration for managing certificates
+  ## vault.ssl Enable SSL validation
+  ## vault.url Vault endpoint / URL
+  ## vault.token Vault root token
+  ## vault.kvPath Default vault KV Secret path 
+  vault:
+    ssl: false
+    url: ""
+    token: ""
+    kvPath: ""
+
+notificationService:
+  replicaCount: "1"
+  image: "ccp_notification"
+  smtp:
+    senderEmail: ''
+    server: ''
+    port: ''
+    username: ''
+    password: ''
+  sms:
+    sender: ''
+    apiKey: ''
+
 sockets:
   replicaCount: 1
 
@@ -982,3 +1023,6 @@ postgres-operator:
       memory: 250Mi
   serviceAccount:
     name: "postgresql-operator"
+
+pgadmin:
+  enabled: false
