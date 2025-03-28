@@ -39,19 +39,12 @@ init-%:
 
 push-helm:
 	@echo "============================================="
-	@echo " Pushing helm charts "
+	@echo " pushing helm chart $* "
 	@echo "============================================="
-	@for chart in $(PUSH_HELM_CHARTS); do \
-		tgz_file=$$(ls $(PACKAGE_DIR)/$$chart-*.tgz 2>/dev/null | head -n 1); \
-		if [ -n "$$tgz_file" ]; then \
-			version=$$(basename $$tgz_file | sed 's/^.*-\(.*\)\.tgz/\1/'); \
-			echo "Pushing $$tgz_file"; \
-			export HELM_EXPERIMENTAL_OCI=1; \
-			$(HELM) push $$tgz_file $(HELM_REGISTRY); \
-		else \
-			echo "No .tgz file found for $$chart in $(PACKAGE_DIR)"; \
-		fi \
-	done
+	if [ -f $(PACKAGE_DIR)/$**.tgz ];
+	then
+		helm push $(PACKAGE_DIR)/$**.tgz $(HELM_REGISTRY)
+	fi
 
 clean:
 	rm -rf dist
