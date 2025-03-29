@@ -109,7 +109,7 @@ spec:
             name: ccs-auditdb-config
         {{- if .Values.global.events.enabled }}
         - configMapRef:
-            name: ccp-events-config
+            name: ccs-events-config
         {{- end }}
         env:
         - name: POSTGRES_DB
@@ -179,7 +179,7 @@ spec:
             name: ccs-auditdb-config
         {{- if .Values.global.events.enabled }}
         - configMapRef:
-            name: ccp-events-config
+            name: ccs-events-config
         {{- end }}
         env:
         - name: POSTGRES_DB

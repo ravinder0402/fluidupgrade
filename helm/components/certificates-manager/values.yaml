@@ -1,0 +1,55 @@
+global:
+  # indicates usage of external ingress, currently also acts as a
+  # switch to indicate use of domain configuration
+  dnsEnabled: &dnsEnabled false
+
+  # Ingress claas to be defined to Ingress configuration 
+  ingressClass: &ingressClass ""
+
+  # repository from where the controller images are pulled for
+  # controller
+  repository: &repository coredgeio
+
+  # this field is considered only when UseDailyBuilds is set to be false
+  # provides configuration of build tag to be used for container images
+  releaseTag: &releaseTag latest
+  
+  # image pull policy to be used
+  imagePullPolicy: &imagePolicy Always
+
+  # external IP for controller, relevant, when domain is not
+  # configured to allow generation of server certificate validity using
+  # this IP address
+  externalIP: &controllerIP 127.0.0.1
+
+  # Flask Config (Development OR Production)
+  # TEMPORARY
+  flaskConfig: "production"
+
+nodeSelector: {} 
+
+replicaCount: '1'
+
+image: "ccp_platform"
+
+enabledServices: "certificates,api"
+
+resources: 
+  limits:
+    cpu: 500m
+    # memory: ""
+  requests:
+    cpu: 20m
+    memory: 100Mi 
+
+
+## Vault integration for managing certificates
+## vault.ssl Enable SSL validation
+## vault.url Vault endpoint / URL
+## vault.token Vault root token
+## vault.kvPath Default vault KV Secret path 
+vault:
+  ssl: false
+  url: ""
+  token: ""
+  kvPath: ""

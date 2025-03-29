@@ -1,13 +1,11 @@
-{{- if .Values.certificates.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: certificates-manager-config
   namespace: {{ .Release.Namespace }}
 data:
+  VAULT_ENABLED: "true"
   VAULT_ADDR: {{ .Values.vault.url | quote }}
   VAULT_TOKEN: {{ .Values.vault.token | quote }}
   VAULT_KV_PATH: {{ .Values.vault.kvPath | quote }}
-  VAULT_ENABLED: {{ .Values.vault.enabled | quote }}
-  VERIFY_VAULT_SSL: "false"
-{{- end }}
+  VERIFY_VAULT_SSL: {{ .Values.vault.ssl | quote }}

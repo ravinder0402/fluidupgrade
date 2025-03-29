@@ -37,7 +37,7 @@ spec:
             name: redis-config
         {{- if .Values.global.events.enabled }}
         - configMapRef:
-            name: ccp-events-config
+            name: ccs-events-config
         {{- end }}
         - secretRef:
             name: ccs-postgres-config
@@ -117,7 +117,7 @@ spec:
             name: redis-config
         {{- if .Values.global.events.enabled }}
         - configMapRef:
-            name: ccp-events-config
+            name: ccs-events-config
         {{- end }}
         - secretRef:
             name: ccs-postgres-config

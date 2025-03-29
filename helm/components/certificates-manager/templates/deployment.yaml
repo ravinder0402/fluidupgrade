@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: archival-storage
+  name: certificates-manager
   namespace: {{ .Release.Namespace }}
   labels:
-    app: archival-storage
+    app: certificates-manager
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: archival-storage
+      app: certificates-manager
   template:
     metadata: 
       labels:
-        app: archival-storage
+        app: certificates-manager
     spec:
       dnsPolicy: ClusterFirst
       nodeSelector:
@@ -21,7 +21,7 @@ spec:
       initContainers:
       {{ include "helper.postgresql.pgready" . }}
       containers:
-      - name: archival-storage 
+      - name: certificates-manager
         image: {{ .Values.global.repository }}/{{ .Values.image }}:{{ .Values.global.releaseTag }}
         imagePullPolicy: {{ .Values.global.imagePullPolicy }}
         resources: 
@@ -31,6 +31,7 @@ spec:
           containerPort: 5000
           protocol: TCP
         envFrom:
+        envFrom:
         - configMapRef:
             name: platform-api-config   
         - configMapRef:
@@ -39,6 +40,8 @@ spec:
         - configMapRef:
             name: ccs-events-config
         {{- end }}
+        - configMapRef:
+            name: certificates-manager-config
         - secretRef:
             name: ccs-postgres-config
         - secretRef:
@@ -47,11 +50,11 @@ spec:
           - name: ENABLED_MODULES
             value: {{ .Values.enabledServices | quote }}     
           - name: POSTGRES_DB
-            value: "cloud"
+            value: {{ .Values.postgres.db }}
           - name: FLASK_CONFIG
             value: {{ .Values.global.flaskConfig }}
           - name: CACHING_ENABLED
-            value: "false"
+            value: {{ .Values.global.enableCaching | quote }}
         volumeMounts:
           - name: platform-config
             readOnly: true

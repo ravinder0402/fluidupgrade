@@ -1,0 +1,19 @@
+global:
+  repository: &repository coredgeio
+  imagePullPolicy: &imagePolicy Always
+  imagePullSecrets: []
+
+image: 'adminer:4.8.1'
+
+service:
+  type: NodePort
+
+resources: 
+  limits:
+    cpu: 50m
+    memory: 250Mi
+  requests:
+    cpu: 1m
+    memory: 10Mi
+
+nodeSelector: {}

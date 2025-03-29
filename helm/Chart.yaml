@@ -83,6 +83,18 @@ dependencies:
   name: keycloak-ha
   repository: oci://registry-1.docker.io/coredgehelm
   version: 0.1.4
+- condition: pgadmin.enabled
+  name: pgadmin
+  repository: 'file://components/pgadmin'
+  version: 0.1.0
+- condition: global.notificationService.enabled
+  name: notificationService
+  repository: 'file://components/notification-service'
+  version: 0.1.0
+- condition: global.certificatesManager.enabled
+  name: certificatesManager
+  repository: 'file://components/certificates-manager'
+  version: 0.1.0
 description: Helm chart for Coredge Cloud Suite
 name: ccs
 version: 0.1.0
