@@ -720,7 +720,7 @@ adminServices:
     ## Enabled Services
     enabledServices: ""
   adminPlatform:
-    image: "ccp_admin_platform"
+    image: "fluid_admin_platform"
     resources: 
       limits:
         cpu: 500m
@@ -777,7 +777,7 @@ userPortal:
 
 coremgmtService:
   replicaCount: '1'
-  image: "ccp_platform"
+  image: "fluid_platform"
   enabledServices: "core_mgmt,tickets,api"
   resources: 
     limits:
@@ -800,7 +800,7 @@ coremgmtService:
 
 computeService:
   replicaCount: '1'
-  image: "ccp_platform"
+  image: "fluid_platform"
   enabledServices: "compute,resource_metrices,api"
   resources: 
     limits:
@@ -823,7 +823,7 @@ computeService:
 
 neutronService:
   replicaCount: '1'
-  image: "ccp_platform"
+  image: "fluid_platform"
   enabledServices: "networks,dns,certificates,api"
   celery:
     enabled: true
@@ -845,7 +845,7 @@ neutronService:
       kvPath: ""
 
 volumeService:
-  image: "ccp_platform"
+  image: "fluid_platform"
   enabledServices: "volumes,api"
   replicaCount: '1'
   resources: 
@@ -868,7 +868,7 @@ volumeService:
         memory: 2Gi
 
 archivalStorage:
-  image: "ccp_platform"
+  image: "fluid_platform"
   enabledServices: "archival_storage,api"
   replicaCount: '1'
   resources: 
@@ -882,7 +882,7 @@ archivalStorage:
 autoscalingService:
   enabledServices: "autoscaling_group,api"
   replicaCount: '1'
-  image: "ccp_platform"
+  image: "fluid_platform"
   resources: 
     limits:
       cpu: 400m
@@ -904,7 +904,7 @@ autoscalingService:
 
 certificatesManager:
   replicaCount: '1'
-  image: "ccp_platform"
+  image: "fluid_platform"
   enabledServices: "certificates,api"
   resources: 
     limits:
@@ -926,7 +926,7 @@ certificatesManager:
 
 notificationService:
   replicaCount: "1"
-  image: "ccp_notification"
+  image: "fluid_notification"
   smtp:
     senderEmail: ''
     server: ''

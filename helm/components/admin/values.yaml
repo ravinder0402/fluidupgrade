@@ -69,7 +69,7 @@ adminportal:
   enabledServices: ""
 
 adminPlatform:
-  image: "ccp_admin_platform"
+  image: "fluid_admin_platform"
   resources: 
     limits:
       cpu: 500m

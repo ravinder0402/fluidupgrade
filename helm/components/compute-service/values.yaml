@@ -30,7 +30,7 @@ nodeSelector: {}
 
 replicaCount: '1'
 
-image: ""
+image: "fluid_platform"
 
 enabledServices: "compute,resource_metrices,api"
 
