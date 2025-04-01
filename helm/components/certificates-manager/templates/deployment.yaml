@@ -50,11 +50,11 @@ spec:
           - name: ENABLED_MODULES
             value: {{ .Values.enabledServices | quote }}     
           - name: POSTGRES_DB
-            value: {{ .Values.postgres.db }}
+            value: "cloud"
           - name: FLASK_CONFIG
             value: {{ .Values.global.flaskConfig }}
           - name: CACHING_ENABLED
-            value: {{ .Values.global.enableCaching | quote }}
+            value: "false"
         volumeMounts:
           - name: platform-config
             readOnly: true

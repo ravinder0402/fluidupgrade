@@ -50,6 +50,9 @@ global:
   events:
     enabled: false
 
+  # Default application type: "ccp"
+  application: "ccp"
+
   ## Override for PostgresDB architecture
   ## global.postgresql.architecture.standalone Set to 'false' deploys a postgresql as a cluster with High Availability
   ## global.postgresql.architecture.standalone Set to 'true' deploys postgresql in standalone mode with no High Availability
