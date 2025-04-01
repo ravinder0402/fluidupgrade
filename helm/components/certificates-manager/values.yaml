@@ -30,7 +30,7 @@ nodeSelector: {}
 
 replicaCount: '1'
 
-image: "ccp_platform"
+image: "fluid_platform"
 
 enabledServices: "certificates,api"
 
