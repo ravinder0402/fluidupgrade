@@ -723,6 +723,8 @@ spec:
         - name: BETA_FEATURES_ENABLED
           value: "true"
         {{- end }}
+        - name: CKP_IMAGE_REPO  # Repo hosting CKP images and Byoh bundles
+          value: {{ .Values.global.repository }}
         - name: MONGO_DB_USERNAME
           valueFrom:
             secretKeyRef:
@@ -788,7 +790,7 @@ spec:
       nodeSelector:
       containers:
       - name: socket
-        image: {{ .Values.global.repository }}/socket:{{ .Values.global.releaseTag }}
+        image: {{ .Values.global.repository }}/fluid_socket:{{ .Values.global.releaseTag }}
         imagePullPolicy: {{ .Values.global.imagePullPolicy }}
         ports:
         - name: http
