@@ -69,7 +69,7 @@ data:
         }
 
         location /auth/resources {
-            proxy_pass http://keycloak:8080;
+            proxy_pass http://keycloak:80;
             add_header 'Cache-Control' 'no-store, no-cache, max-age=10';
         }
 
@@ -83,7 +83,7 @@ data:
         }
 
         location /auth/realms {
-            proxy_pass http://keycloak:8080;
+            proxy_pass http://keycloak:80;
             add_header 'Cache-Control' 'no-store, no-cache, max-age=10';
         }
 
