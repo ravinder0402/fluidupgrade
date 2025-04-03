@@ -95,6 +95,10 @@ dependencies:
   name: certificatesManager
   repository: 'file://components/certificates-manager'
   version: 0.1.0
+- condition: global.ccpExtension.enabled
+  name: ccpExtension
+  repository: 'file://components/ccp-extension'
+  version: 0.1.0
 description: Helm chart for Coredge Cloud Suite
 name: ccs
 version: 0.1.0

@@ -196,6 +196,9 @@ global:
   networkManager:
     enabled: false
 
+  ccpExtension:
+    enabled: true
+
   adminServices:
     enabled: true
 
@@ -923,6 +926,10 @@ notificationService:
 sockets:
   replicaCount: 1
 
+ccpExtension:
+  replicaCount: "1"
+  image: "ccp-extension"
+
 ## Postgresql HA Configuration
 ## Deploys a postgresql cluster in HA configuration
 ## Requires Zalando Operator running on the cluster or in the same namespace
@@ -1011,4 +1018,6 @@ postgres-operator:
     name: "postgresql-operator"
 
 pgadmin:
+  enabled: false
+ccp-extension:
   enabled: false
