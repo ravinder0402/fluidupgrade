@@ -1,0 +1,435 @@
+global:
+  # indicates usage of external ingress, currently also acts as a
+  # switch to indicate use of domain configuration
+  dnsEnabled: &dnsEnabled false
+
+  # Ingress claas to be defined to inngress configuration when using Ingress controller
+  # Only supports Nginx Ingress Controller for now
+  ingressClass: &ingressClass "nginx"
+
+  # repository from where the controller images are pulled for
+  # controller
+  repository: &repository coredgeio
+
+  # use build using the tag generated based on the date of deployment
+  # this is relevant for enabling some of the CI/CD platforms
+  UseDailyBuilds: &useDailyBuilds false
+
+  # this field is considered only when UseDailyBuilds is set to be false
+  # provides configuration of build tag to be used for container images
+  releaseTag: &releaseTag latest
+
+  # image pull policy to be used
+  imagePullPolicy: &imagePolicy Always
+
+  # storage class to use for persistent volumes, if empty fallback to
+  # default storage class
+  storageClass: &storageclass ""
+
+  # external IP for controller, relevant, when domain is not
+  # configured to allow generation of server certificate validity using
+  # this IP address
+  externalIP: &controllerIP 127.0.0.1
+
+  # Flask Config (Development OR Production)
+  # TEMPORARY
+  flaskConfig: "development"
+
+  events:
+    enabled: false
+
+  # Default application type: "ccp"
+  application: "ccp"
+
+  ## Override for PostgresDB architecture
+  ## global.postgresql.architecture.standalone Set to 'false' deploys a postgresql as a cluster with High Availability
+  ## global.postgresql.architecture.standalone Set to 'true' deploys postgresql in standalone mode with no High Availability
+  postgresql:
+    architecture:
+      standalone: true
+
+  # user credentials for the default realm user that will be created
+  # along with creation of the realm
+  admin: 
+    username: &adminUsername "ccsadmin"
+    password: &adminUserPass "Welcome@123"
+    firstname: &adminFirstname "CCS"
+    lastname: &adminLastname "Admin"
+    email: &adminUserEmail "info@coredge.io"
+
+  # keycloak realm to be used as the root
+  rootRealm: &rootRealm "cloud"
+
+  ## Keycloak Architecture override to enable HA or standalone
+  keycloak:
+    nodePorts:
+      http: &keycloakNodePortHTTP "32701"
+      https: &keycloakNodePortHTTPS "32702"
+
+  frontend:
+    userPortal:
+      nodePort: &frontendNodePort "32500"
+
+  # observability feature on the platform is rendered using grafana
+  # to enable observability set grafana enabled
+  grafana:
+    enabled: false
+
+  # to enable and configure container registry module for the platform
+  # that allows capability of container registry management
+  containerRegistry:
+    enabled: false
+
+  # to enable and configure baremetal module for the platform
+  # that allows capability of managing baremetal resources
+  baremetalManager:
+    enabled: false
+
+  # to enable and configure storage plugin module for the platform that
+  # allows capability of managing storage resources(volume, export path etc) 
+  # under various storage types like File storage, Object storage, Block storage etc.
+  storagePlugin:
+    enabled: false
+
+  # to enable and configure network manager service for the platform that
+  # provisions network configurations along with management of various
+  # network components including firewall, loadbalancer, PublicIP and NAT
+  # management apart from the core tenant access network rollout
+  networkManager:
+    enabled: false
+
+  adminServices:
+    enabled: true
+
+  userPortal:
+    enabled: true
+
+  coremgmtService:
+    enabled: true
+
+  computeService:
+    enabled: true
+  
+  autoscalingService:
+    enabled: false
+
+  volumeService:
+    enabled: true
+
+  neutronService:
+    enabled: true
+
+  archivalStorage:
+    enabled: false
+  
+  certificatesManager:
+    enabled: false
+  
+  notificationService:
+    enabled: false
+
+  tenantManagement:
+    # allow tenant management, providing capability to create multiple
+    # tenants enabling multi-tenancy
+    enabled: true
+
+keycloak-ha:
+  replicaCount: 1
+  ## Keycloak Image and Tag
+  image:
+    name: keycloak
+    tag: "24.0.5"
+  auth:
+    ### Keycloak administrator user
+    adminUser: "admin"
+    ### Keycloak administrator password
+    adminPass: "admin"
+  pgcluster:
+    ## No. of postgres cluster nodes. 
+    ## Minimum 3 for HA. Must be Odd number
+    replica: "1"
+    ## Persistent Volume size override
+    volume:
+      size: 5Gi
+
+betaFeatures:
+  # Note: Skip Documentation
+  # allow deployment with beta features enabled, this will allow working
+  # with features that are still under development, for which UX and
+  # feature itself can be changed without prior notification
+  # These features are not expected to be enabled in production
+  # environment, and will not be supported.
+  enabled: true
+
+baremetal-manager:
+  # add mass configuration for baremetal manager to interact with.
+  # Baremetal manager expects to work with MAAS Rest API, where it
+  # requires rest api endpoint and api key for authentication
+  # API url needs to be of the format "http://<IP>:<Port>/MAAS"
+  # where the default port usually is 5240
+  # whereas the api key are available under user preference section
+  # with sub tab api keys. refer to more details under MAAS Rest
+  # API access documentation
+  maas:
+    url: ""
+    apikey: ""
+
+controller:
+  agent:
+    # specify override image if you do not want to use default agent image of release
+    image: ""
+    # specify override image repo, specifically useful for scenarios where customer wants to
+    # position image in their own container registries
+    imageRepo: ""
+    # hostNetwork indicating to generate agent manifest with host network enabled
+    # relevant for scenarios where pod network doesnot have access to external services
+    hostNetwork: true
+  prometheus:
+    # provide endpoint at which prometheus server for controller is installed.
+    # this is used to scrape metrics information from compass controller
+    # which is then rendered using grafana dashboards
+    endpoint: ""
+
+repository-cred:
+  # container repository for which the credentials are provided
+  repository: docker.io
+  # container repository credentials
+  repositoryCred:
+    user: docker
+    password: password
+    mail: info@coredge.io
+
+container-registry:
+  replicaCount:
+    containerRegistry: 1
+  storage:
+    # prefix for bucket name for registries should be configured here
+    # default prefix will be added if nothing is configured
+    bucketPrefix: ""
+    # Ceph S3 configuration to be used for container-registry,
+    # we provide this service using a S3 backed storage, so
+    # this configuration is mandatory if containter-registry
+    # is enabled
+    #cephS3:
+    #  userId: nano
+    #  endpoint: http://192.168.100.177:8000
+    #  accessKey: 3ZU12D2N4WS0Y9MPWS5H
+    #  secretKey: F9AJPAnp6vGLKr1SzeaGxgdcuUi33A4fKVuhl7Jg
+    #s3:
+    #  endpoint: http://192.168.100.177:8000
+    #  accessKey: 3ZU12D2N4WS0Y9MPWS5H
+    #  secretKey: F9AJPAnp6vGLKr1SzeaGxgdcuUi33A4fKVuhl7Jg
+    #ecs:
+    #  endpoint: http://192.168.100.177:8000
+    #  s3Endpoint: http://192.168.100.177:9000
+    #  username: registry
+    #  password: registry
+    #  accessKey: 3ZU12D2N4WS0Y9MPWS5H
+    #  secretKey: F9AJPAnp6vGLKr1SzeaGxgdcuUi33A4fKVuhl7Jg
+    #  namespace: container-registry
+
+storage-plugin:
+  replicaCount:
+    storagePlugin: 1
+  # configuration for storage provider which is used by storage-plugin
+  # as a storage backend for respective storage type. 
+  # If storage-plugin is enabled, providing configuration for any 
+  # one storage provider for each storage type is mandatory otherwise 
+  # default storage provider configuration will be used.
+  storageProvider:
+    fileStorage:
+      id: fs-1
+      # Ceph configuration required by storage-plugin to use ceph
+      # as a storage provider. 
+      # endpoint is address and username,passwd are credentials
+      # of machine hosting ceph.
+      # nfsProto is config required for nfs protocol, where 
+      # nfsClusterId is required to manage nfs export path on buckets.
+      # rgw: endpoint,userId, accessKey and secretKey is required to
+      # manage buckets on ceph. 
+      # ceph:
+      #   endpoint: <ceph rest api endpoint (http://x.x.x.x)>
+      #   username: <ceph rest api username>
+      #   passwd: <ceph rest api password>
+      #   nfsProto:
+      #     nfsClusterId: <ceph nfs ganesha cluster id>
+      #   rgw:
+      #     endpoint: <ceph rgw endpoint>
+      #     userId: <ceph rgw user id >
+      #     accessKey: <ceph rgw access key>
+      #     secretKey: <ceph rgw secret key>
+      # dell:
+      #   endpoint: <dell endpoint address>
+      #   username: <dell username>
+      #   passwd: <dell password>
+      #   poolId: <dell storage pool id>
+      #   nasServerId: <dell nas server id on which file storage will be configured>
+      # ontap:
+      #   mgmtEndpoint: <ontap management endpoint address (http://x.x.x.x:yyyy)>
+      #   dataEndpoint: <ontap data endpoint address (x.x.x.x)>
+      #   username: <ontap username>
+      #   passwd: <ontap password>
+      #   svnName: <ontap storage virtual machine name>
+      #   svmUuid: <ontap nas storage virtual machine uuid>
+    blockStorage:
+      id: bs-1
+      #ceph:
+        # params
+      #dell:
+        # params
+    objectStorage:
+      # storage provider config required by object storage
+      # providerType - supported types "ecs", "storageGrid" and "ceph"
+      # endpoint -  is the management API endpoint for provider
+      # s3Endpoint - provider s3 endpoint
+      # accessKey - admin s3 accessKey for provider
+      # secretKey - admin s3 secretKey for provider
+      # username and password is required to authenticate for
+      # management operations
+      # for multi-tenant provider we don't need tenantId as it
+      # will be handled within the service
+      # for single tenant provider we need to provide the tenant ID
+      # to use for managing resources
+      #
+      # default id will be default-object-storage, if user will to
+      # use a different id, it can be overridden with config for id
+      # field
+      # id: os-1
+      # providerType: ecs
+      # s3Endpoint: http://192.168.100.151:9000
+      # accessKey: 3ZU12D2N4WS0Y9MPWS5H
+      # secretKey: F9AJPAnp6vGLKr1SzeaGxgdcuUi33A4fKVuhl7Jg  
+      # endpoint: https://10.13.26.198:443
+      # username: root
+      # password: password
+      # isMultiTenant: false
+      # tenantId: "35998885247589323395"
+  # This is default availability zone for storage plugin deployment
+  # Once provisioned, its value must not change in future.
+  # Volumes and providers created without availability zone should fall
+  # under default availability zone.
+  # availabilityZone: east
+
+adminServices:
+  replicaCount: '1'
+  allowedAdminUserDomain: "*"
+  adminportal:
+    image: "fluid-admin"
+    service:
+      nodePort: "32600"
+    ## Monitoring URLs
+    monitoringURL: 
+      resource: ""
+      projectResource: ""
+    ## Management URLs
+    managementURL: 
+      resource: ""
+    ## Enabled Services
+    enabledServices: "admin-action-logs,admin-user,all-user,availability-zone,block-storage,compute,compute-availability-zone,compute-snapshot,flavors,images,network,network-availability-zone,object-storage-provider,organisation,project,provider,provider-cluster,default-rule,resource-metrics,security-group,security-group-rule,subnets,volume-type,volume-availability-zone,volume-snapshot,quota-request,quota-list,default-quota,namespaces,flavor-group,admin-access-logs"
+  adminPlatform:
+    image: "fluid_admin_platform"
+    celery:
+      enabled: true
+      command: "celery -A app.celery worker --loglevel=INFO -B"
+
+userPortal:
+  replicaCount: '1'
+  image: "fluid-console"
+  ## Enabled Services
+  enabledServices: ""
+  docsURL: ""
+  additionalURLs:
+    appStoreURL: ""
+    secComplianceURL: ""
+    userRegisterURL: ""
+    pamIframeURL: ""
+    vmconsoleURL: ""
+    quartzURL: ""
+    cobaltURL: ""
+    cloudSecurityPosture: ""
+    virtualSuiteDashboard: ""
+    ticketSupport: ""
+  objectStorage:
+    maxBucketSize: ""
+  blockStorage: 
+    maxSize: ""
+  enabledServices: "compute,compute-snapshot,documentation,monitoring,network,object-storage,project-activity,quota-service,quota-utilization,security-group,volume,volume-snapshot,volume-type,availability-zone,resource-pricing"
+  ## Enable ChatBot on the GUI
+  chatbot:
+    enabled: false
+
+coremgmtService:
+  replicaCount: '1'
+  image: "fluid_platform"
+  enabledServices: "core_mgmt,tickets,api"
+  celery:
+    enabled: true
+    command: "celery -A app  worker --concurrency=2 --loglevel=debug"
+
+computeService:
+  replicaCount: '1'
+  image: "fluid_platform"
+  enabledServices: "compute,resource_metrices,api"
+  celery:
+    enabled: true
+    command: "celery -A app  worker --concurrency=2 --loglevel=debug -Q q_compute"
+
+neutronService:
+  replicaCount: '1'
+  image: "fluid_platform"
+  enabledServices: "networks,dns,certificates,api"
+  celery:
+    enabled: true
+    command: "celery -A app  worker --concurrency=2 --loglevel=debug -Q q_network"
+
+volumeService:
+  image: "fluid_platform"
+  enabledServices: "volumes,api"
+  replicaCount: '1'
+  celery:
+    enabled: true
+    command: "celery -A app  worker --concurrency=2 --loglevel=debug -Q q_volume"
+
+archivalStorage:
+  image: "fluid_platform"
+  enabledServices: "archival_storage,api"
+  replicaCount: '1'
+
+autoscalingService:
+  enabledServices: "autoscaling_group,api"
+  replicaCount: '1'
+  image: "fluid_platform"
+  celery:
+    enabled: true
+    command: "celery -A app  worker --concurrency=2 --loglevel=debug -Q q_autoscaling_group"
+
+certificatesManager:
+  replicaCount: '1'
+  image: "fluid_platform"
+  enabledServices: "certificates,api"
+  ## Vault integration for managing certificates
+  ## vault.ssl Enable SSL validation
+  ## vault.url Vault endpoint / URL
+  ## vault.token Vault root token
+  ## vault.kvPath Default vault KV Secret path 
+  vault:
+    ssl: false
+    url: ""
+    token: ""
+    kvPath: ""
+
+notificationService:
+  replicaCount: "1"
+  image: "fluid_notification"
+  smtp:
+    senderEmail: ''
+    server: ''
+    port: ''
+    username: ''
+    password: ''
+  sms:
+    sender: ''
+    apiKey: ''
+
+pgadmin:
+  enabled: true
