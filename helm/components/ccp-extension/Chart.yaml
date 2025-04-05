@@ -1,0 +1,9 @@
+apiVersion: v2
+appVersion: "0.1"
+description: CCP Extension Helm Chart
+name: ccpExtension
+version: 0.1.0
+dependencies:
+- name: helper
+  repository: "file://../helper"
+  version: 0.1.0

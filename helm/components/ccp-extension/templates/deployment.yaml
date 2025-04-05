@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ccp-extension
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: ccp-extension
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: ccp-extension
+  template:
+    metadata: 
+      labels:
+        app: ccp-extension
+    spec:
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      initContainers:
+      {{ include "helper.postgresql.pgready" . }}
+      - name: mongodb-wait-configdb
+        image: {{ .Values.global.repository }}/mongo:5.0.3
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/bash
+        - -c
+        - |
+          while true; do
+            mongosh --host $MONGODB_SERVICE_SERVICE_HOST -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --eval "rs.status()"
+            if [ $? == "0" ]; then
+              exit 0
+            fi
+            echo "waiting for mongodb to start"
+            sleep 5
+          done
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        - name: MONGODB_SERVICE_SERVICE_HOST
+          value: "compass-configdb"
+      containers:
+      - name: ccp-extension
+        image: {{ .Values.global.repository }}/{{ .Values.image }}:{{ .Values.global.releaseTag }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        resources: 
+          {{- toYaml .Values.resources | nindent 10 }}
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        env:
+          - name: POSTGRES_DB_URL
+            value: "postgresql+asyncpg://ccs:ccsdbadmin@ccs-postgresql-cluster:5432/cloud"
+          - name: MONGO_DB_URL
+            value: "mongodb://sigma:password@compass-configdb:27017"
+          - name: REDIS_URL
+            value: "redis://notification-store:6380"
+        volumeMounts:
+        - name: ccp-extension-logs
+          mountPath: /var/logs/ccp_extension
+          subPath: ccp_extension
+      volumeClaimTemplates:
+      - metadata:
+          name: ccp-extension-logs
+        spec:
+          accessModes:
+          - "ReadWriteOnce"
+          resources:
+            requests:
+              storage: 5Gi
+          {{- if .Values.global.storageClass }}
+          storageClassName: {{ .Values.global.storageClass }}
+          {{- end }}
