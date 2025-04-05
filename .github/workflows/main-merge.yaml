@@ -6,7 +6,7 @@ on:
     - 'helm/**'
 jobs:
   check-build-main-commit:
-    runs-on: self-hosted
+    runs-on: newgroup
     steps:
     - uses: actions/checkout@v2
     - name: validate helm build

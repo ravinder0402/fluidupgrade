@@ -6,7 +6,7 @@ on:
     - 'helm/**'
 jobs:
   pr-check-build:
-    runs-on: self-hosted
+    runs-on: newgroup
 
     steps:
       - name: Checkout code
