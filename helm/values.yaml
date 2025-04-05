@@ -679,7 +679,7 @@ storage-plugin:
   # availabilityZone: east
 
 adminServices:
-  replicaCount: '1'
+  replicaCount: 1
   allowedAdminUserDomain: "*"
   adminportal:
     image: "fluid-admin"
@@ -716,7 +716,7 @@ adminServices:
         memory: 200Mi
     celery:
       enabled: true
-      replicaCount: '1'
+      replicaCount: 1
       command: "celery -A app.celery worker --loglevel=INFO -B"
       resources: 
         limits:
@@ -727,7 +727,7 @@ adminServices:
           memory: 2Gi
 
 userPortal:
-  replicaCount: '1'
+  replicaCount: 1
   image: "fluid-console"
   service:
     nodePort: *frontendNodePort
@@ -762,7 +762,7 @@ userPortal:
     enabled: false
 
 coremgmtService:
-  replicaCount: '1'
+  replicaCount: 1
   image: "fluid_platform"
   enabledServices: "core_mgmt,tickets,api"
   resources: 
@@ -774,7 +774,7 @@ coremgmtService:
       memory: 200Mi
   celery:
     enabled: true
-    replicaCount: '1'
+    replicaCount: 1
     command: "celery -A app  worker --concurrency=2 --loglevel=debug"
     resources: 
       limits:
@@ -785,7 +785,7 @@ coremgmtService:
         memory: 2Gi
 
 computeService:
-  replicaCount: '1'
+  replicaCount: 1
   image: "fluid_platform"
   enabledServices: "compute,resource_metrices,api"
   resources: 
@@ -797,7 +797,7 @@ computeService:
       memory: 200Mi
   celery:
     enabled: true
-    replicaCount: '1'
+    replicaCount: 1
     command: "celery -A app  worker --concurrency=2 --loglevel=debug -Q q_compute"
     resources: 
       limits:
@@ -808,12 +808,12 @@ computeService:
         memory: 2Gi
 
 neutronService:
-  replicaCount: '1'
+  replicaCount: 1
   image: "fluid_platform"
   enabledServices: "networks,dns,certificates,api"
   celery:
     enabled: true
-    replicaCount: '1'
+    replicaCount: 1
     command: "celery -A app  worker --concurrency=2 --loglevel=debug -Q q_network"
     resources: 
       limits:
@@ -833,7 +833,7 @@ neutronService:
 volumeService:
   image: "fluid_platform"
   enabledServices: "volumes,api"
-  replicaCount: '1'
+  replicaCount: 1
   resources: 
     limits:
       cpu: 400m
@@ -843,7 +843,7 @@ volumeService:
       memory: 200Mi
   celery:
     enabled: true
-    replicaCount: '1'
+    replicaCount: 1
     command: "celery -A app  worker --concurrency=2 --loglevel=debug -Q q_volume"
     resources: 
       limits:
@@ -856,7 +856,7 @@ volumeService:
 archivalStorage:
   image: "fluid_platform"
   enabledServices: "archival_storage,api"
-  replicaCount: '1'
+  replicaCount: 1
   resources: 
     limits:
       cpu: 400m
@@ -867,7 +867,7 @@ archivalStorage:
 
 autoscalingService:
   enabledServices: "autoscaling_group,api"
-  replicaCount: '1'
+  replicaCount: 1
   image: "fluid_platform"
   resources: 
     limits:
@@ -878,7 +878,7 @@ autoscalingService:
       memory: 200Mi
   celery:
     enabled: true
-    replicaCount: '1'
+    replicaCount: 1
     command: "celery -A app  worker --concurrency=2 --loglevel=debug -Q q_autoscaling_group"
     resources: 
       limits:
@@ -889,7 +889,7 @@ autoscalingService:
         memory: 2Gi
 
 certificatesManager:
-  replicaCount: '1'
+  replicaCount: 1
   image: "fluid_platform"
   enabledServices: "certificates,api"
   resources: 
@@ -911,7 +911,7 @@ certificatesManager:
     kvPath: ""
 
 notificationService:
-  replicaCount: "1"
+  replicaCount: 1
   image: "fluid_notification"
   smtp:
     senderEmail: ''
@@ -927,7 +927,7 @@ sockets:
   replicaCount: 1
 
 ccpExtension:
-  replicaCount: "1"
+  replicaCount: 1
   image: "ccp-extension"
 
 ## Postgresql HA Configuration

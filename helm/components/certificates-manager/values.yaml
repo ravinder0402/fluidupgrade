@@ -28,7 +28,7 @@ global:
 
 nodeSelector: {} 
 
-replicaCount: '1'
+replicaCount: 1
 
 image: "fluid_platform"
 

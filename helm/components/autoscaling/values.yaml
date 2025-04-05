@@ -28,7 +28,7 @@ global:
 
 nodeSelector: {} 
 
-replicaCount: '1'
+replicaCount: 1
 
 image: "fluid_platform"
 
@@ -42,7 +42,7 @@ resources:
 
 celery:
   enabled: true
-  replicaCount: '1'
+  replicaCount: 1
   command: "celery -A app  worker --concurrency=2 --loglevel=debug -Q q_autoscaling_group"
   resources: 
     limits:
