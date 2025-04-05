@@ -65,3 +65,11 @@ spec:
             value: "mongodb://sigma:password@compass-configdb:27017"
           - name: REDIS_URL
             value: "redis://notification-store:6380"
+        volumeMounts:
+          - name: ccp-extension-logs
+            mountPath: /var/logs/ccp_extension
+            subPath: ccp_extension
+      volumes:
+        - name: ccp-extension-logs
+          persistentVolumeClaim:
+            claimName: ccp-extension-logs-data

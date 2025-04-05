@@ -311,7 +311,7 @@ storage-plugin:
   # availabilityZone: east
 
 adminServices:
-  replicaCount: '1'
+  replicaCount: 1
   allowedAdminUserDomain: "*"
   adminportal:
     image: "fluid-admin"
@@ -333,7 +333,7 @@ adminServices:
       command: "celery -A app.celery worker --loglevel=INFO -B"
 
 userPortal:
-  replicaCount: '1'
+  replicaCount: 1
   image: "fluid-console"
   ## Enabled Services
   enabledServices: ""
@@ -359,7 +359,7 @@ userPortal:
     enabled: false
 
 coremgmtService:
-  replicaCount: '1'
+  replicaCount: 1
   image: "fluid_platform"
   enabledServices: "core_mgmt,tickets,api"
   celery:
@@ -367,7 +367,7 @@ coremgmtService:
     command: "celery -A app  worker --concurrency=2 --loglevel=debug"
 
 computeService:
-  replicaCount: '1'
+  replicaCount: 1
   image: "fluid_platform"
   enabledServices: "compute,resource_metrices,api"
   celery:
@@ -375,7 +375,7 @@ computeService:
     command: "celery -A app  worker --concurrency=2 --loglevel=debug -Q q_compute"
 
 neutronService:
-  replicaCount: '1'
+  replicaCount: 1
   image: "fluid_platform"
   enabledServices: "networks,dns,certificates,api"
   celery:
@@ -385,7 +385,7 @@ neutronService:
 volumeService:
   image: "fluid_platform"
   enabledServices: "volumes,api"
-  replicaCount: '1'
+  replicaCount: 1
   celery:
     enabled: true
     command: "celery -A app  worker --concurrency=2 --loglevel=debug -Q q_volume"
@@ -393,18 +393,18 @@ volumeService:
 archivalStorage:
   image: "fluid_platform"
   enabledServices: "archival_storage,api"
-  replicaCount: '1'
+  replicaCount: 1
 
 autoscalingService:
   enabledServices: "autoscaling_group,api"
-  replicaCount: '1'
+  replicaCount: 1
   image: "fluid_platform"
   celery:
     enabled: true
     command: "celery -A app  worker --concurrency=2 --loglevel=debug -Q q_autoscaling_group"
 
 certificatesManager:
-  replicaCount: '1'
+  replicaCount: 1
   image: "fluid_platform"
   enabledServices: "certificates,api"
   ## Vault integration for managing certificates
@@ -419,7 +419,7 @@ certificatesManager:
     kvPath: ""
 
 notificationService:
-  replicaCount: "1"
+  replicaCount: 1
   image: "fluid_notification"
   smtp:
     senderEmail: ''

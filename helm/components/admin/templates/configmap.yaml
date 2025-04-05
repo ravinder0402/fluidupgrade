@@ -28,6 +28,11 @@ data:
             proxy_buffering off;
         }
 
+        location /api {
+            proxy_pass http://orbiter-auth:8060;
+            proxy_buffering off;
+        }
+
         location /socket {
             proxy_pass http://orbiter-auth:8060;
             proxy_buffering off;

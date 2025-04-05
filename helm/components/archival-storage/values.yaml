@@ -30,7 +30,7 @@ image: "fluid_platform"
 
 nodeSelector: {} 
 
-replicaCount: '1'
+replicaCount: 1
 
 resources: 
   limits:

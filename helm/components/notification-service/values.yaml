@@ -10,7 +10,7 @@ global:
   # image pull policy to be used
   imagePullPolicy: &imagePolicy Always
 
-replicaCount: "1"
+replicaCount: 1
 
 image: "fluid_notification"
 

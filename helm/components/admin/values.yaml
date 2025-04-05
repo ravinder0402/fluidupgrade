@@ -38,7 +38,7 @@ global:
 
 nodeSelector: {} 
 
-replicaCount: '1'
+replicaCount: 1
 
 allowedAdminUserDomain: ""
 
@@ -79,7 +79,7 @@ adminPlatform:
       memory: 200Mi
   celery:
     enabled: true
-    replicaCount: '1'
+    replicaCount: 1
     command: "celery -A app.celery worker --loglevel=INFO -B"
     resources: 
       limits:
