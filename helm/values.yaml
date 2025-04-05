@@ -43,7 +43,7 @@ global:
 
   # Flask Config (Development OR Production)
   # TEMPORARY
-  flaskConfig: "production"
+  flaskConfig: "development"
 
   kafkaEndpoint: ""
 
@@ -536,23 +536,6 @@ auth-service:
     # enable/disable payment method availability check in gateway server
     payment:
       enabled: false
-
-frontend:
-  replicaCount:
-    frontend: 1
-  ## Add extra routes to frontend reverse proxy config
-  ## Use below example as reference. 
-  ## [Disclaimer - Use at your own discretion. Make sure the route added is valid]
-  extraRoutes: []
-  # extraRoutes: |-
-  #   location /sample {
-  #       proxy_pass  http://orbiter-auth:8060;
-  #       proxy_http_version 1.1;
-  #       proxy_set_header Upgrade $http_upgrade;
-  #       proxy_set_header Connection $connection_upgrade;
-  #       proxy_read_timeout 3600s;
-  #       proxy_send_timeout 3600s;
-  #   }
 
 grafana:
   replicas: 1
