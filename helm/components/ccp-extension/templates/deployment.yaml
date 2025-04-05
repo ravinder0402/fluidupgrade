@@ -69,15 +69,15 @@ spec:
         - name: ccp-extension-logs
           mountPath: /var/logs/ccp_extension
           subPath: ccp_extension
-      volumeClaimTemplates:
-      - metadata:
-          name: ccp-extension-logs
-        spec:
-          accessModes:
-          - "ReadWriteOnce"
-          resources:
-            requests:
-              storage: 5Gi
-          {{- if .Values.global.storageClass }}
-          storageClassName: {{ .Values.global.storageClass }}
-          {{- end }}
+  volumeClaimTemplates:
+  - metadata:
+      name: ccp-extension-logs
+    spec:
+      accessModes:
+      - "ReadWriteOnce"
+      resources:
+        requests:
+          storage: 5Gi
+      {{- if .Values.global.storageClass }}
+      storageClassName: {{ .Values.global.storageClass }}
+      {{- end }}
