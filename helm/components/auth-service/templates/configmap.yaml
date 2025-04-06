@@ -34,6 +34,9 @@ data:
         maxEntries: 5000 # max number of entries allowed to be used for events per domain
     defaultRepos:
       enabled: {{ .Values.global.defaultRepos.enabled }}
+    tenant:
+      tenantRealmAssocType: {{ .Values.tenant.tenantRealmAssocType }}
+
 {{- if .Values.global.tenantManagement.register.enabled }}
     smtp:
       sender: {{ .Values.global.tenantManagement.register.smtp.sender }}

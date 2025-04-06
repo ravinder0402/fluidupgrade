@@ -261,6 +261,9 @@ global:
   # exists and keycloak require communication with the IDP server
   preferIPv6: false
 
+  tenant:
+    tenantRealmAssocType: ""
+
   tenantManagement:
     # allow tenant management, providing capability to create multiple
     # tenants enabling multi-tenancy

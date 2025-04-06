@@ -52,3 +52,6 @@ gateway:
   # enable/disable payment method availability check in gateway server
   payment:
     enabled: false
+
+tenant:
+  tenantRealmAssocType: "dedicated"
