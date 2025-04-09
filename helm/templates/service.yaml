@@ -235,7 +235,7 @@ spec:
       targetPort: 9100
   selector:
     app: compass-metric-server
-{{- if .Values.global.clusterManager.enabled }}
+{{- if .Values.clusterManager.enabled }}
 ---
 apiVersion: v1
 kind: Service

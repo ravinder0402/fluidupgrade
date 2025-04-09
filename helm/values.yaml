@@ -150,11 +150,6 @@ global:
   # to enable observability set grafana enabled
   grafana:
     enabled: false
-
-  # enable cluster manager module, responsible for managing lifecycle of
-  # kubernetes clusters
-  clusterManager:
-    enabled: true
     
   # to enable and configure cloud manager module for the platform
   # that allows capability of interacting with multiple public clouds
@@ -390,6 +385,15 @@ metricsDB:
 notificationStore:
   persistence:
     size: 2Gi
+
+# enable cluster manager module, responsible for managing lifecycle of
+# kubernetes clusters
+clusterManager:
+  enabled: true
+  # Reference to external cluster where tenant control plane pods will be hosted.
+  # External cluster is not used when kubeconfigSecretName is empty("")
+  externalClusterReference:
+    kubeconfigSecretName: ""
 
 baremetal-manager:
   # add mass configuration for baremetal manager to interact with.
