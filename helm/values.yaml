@@ -283,12 +283,11 @@ global:
   marketPlace:
     url: ""
 
-  global:
-    openfga:
-      enabled: false
-      endpoint: ''
-      storeId: ''
-      apiToken: ''
+  openfga:
+    enabled: false
+    endpoint: ''
+    storeId: ''
+    apiToken: ''
 
 keycloak-ha:
   replicaCount: 3
