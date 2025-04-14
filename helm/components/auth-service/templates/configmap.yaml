@@ -74,6 +74,8 @@ data:
       - prefix: /api/container-kubeapi
         endpoint: http://compass-cluster-manager:8060
         accessType: unscoped
+      - prefix: /api/cluster-admin
+        endpoint: http://compass-cluster-manager:8080
       - prefix: /api/cluster-manager/v1/domain
         endpoint: http://compass-cluster-manager:8080
         rewritePrefix: /v1/domain
@@ -92,7 +94,7 @@ data:
         endpoint: http://compass-orchestrator:8080
       - prefix: /api/auth-mgmt
         consumeLocally: true
-        allowRootTenantOnly: true
+        allowRootTenantOnly: false
       - prefix: /api/auth-service
         consumeLocally: true
       - prefix: /api/auth-service/v1/download
@@ -136,6 +138,8 @@ data:
         endpoint: http://storage-plugin:8080
 {{- end }}
 {{- if .Values.global.networkManager.enabled }}
+      - prefix: /api/network-admin
+        endpoint: http://network-manager:8080
       - prefix: /api/network-manager
         endpoint: http://network-manager:8080
         rewritePrefix: /api/network-manager
