@@ -725,8 +725,10 @@ spec:
         {{- end }}
         - name: CKP_IMAGE_REPO  # Repo hosting CKP images and Byoh bundles
           value: {{ .Values.global.repository }}
+        {{- if .Values.clusterManager.externalClusterReference.kubeconfigSecretName }}
         - name: EXTERNAL_CLUSTER_KUBECONFIG_SECRET
           value: {{ .Values.clusterManager.externalClusterReference.kubeconfigSecretName }}
+        {{- end }}
         - name: MONGO_DB_USERNAME
           valueFrom:
             secretKeyRef:

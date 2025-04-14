@@ -45,7 +45,7 @@ spec:
           value: "compass-configdb"
       containers:
       - name: baremetal-manager
-        image: {{ .Values.global.repository }}/orbiter-baremetal-manager:{{ include "helper.imageTag" . }}
+        image: {{ .Values.global.repository }}/airtel-baremetal-manager:{{ include "helper.imageTag" . }}
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8090
