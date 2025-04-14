@@ -256,9 +256,6 @@ global:
   # exists and keycloak require communication with the IDP server
   preferIPv6: false
 
-  tenant:
-    tenantRealmAssocType: ""
-
   tenantManagement:
     # allow tenant management, providing capability to create multiple
     # tenants enabling multi-tenancy
@@ -285,6 +282,13 @@ global:
   # Marketplace Integration
   marketPlace:
     url: ""
+
+  global:
+    openfga:
+      enabled: false
+      endpoint: ''
+      storeId: ''
+      apiToken: ''
 
 keycloak-ha:
   replicaCount: 3
@@ -487,6 +491,8 @@ trivy:
 auth-service:
   replicaCount:
     orbiterAuth: 1
+  tenant:
+    tenantRealmAssocType: ""
   keycloak:
     # keycloak clientID (needs to be a public client) DO NOT CHANGE
     clientId: controller
