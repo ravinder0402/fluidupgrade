@@ -309,6 +309,10 @@ storage-plugin:
   # Volumes and providers created without availability zone should fall
   # under default availability zone.
   # availabilityZone: east
+  # gatewayConfig:
+  #   isStorageClientBehindGw: false
+  #   gatewayAddr: ""
+  #   vpcAddr: ""
 
 adminServices:
   replicaCount: 1
