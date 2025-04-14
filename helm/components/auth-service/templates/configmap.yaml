@@ -28,6 +28,12 @@ data:
       rateLimiter:
         rateLimit: 200
         burstSize: 500
+{{- if .Values.global.openfga.enabled }}
+      openFGA:
+        endpoint: {{ .Values.global.openfga.endpoint }}
+        storeId: {{ .Values.global.openfga.storeId }}
+        apiToken: {{ .Values.global.openfga.apiToken }}
+{{- end }}
     events:
       limits:
         maxSize: 1000000 # max memory allowed to be used in bytes for events per domain

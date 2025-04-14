@@ -1,6 +1,13 @@
 replicaCount:
   orbiterAuth: 1
 
+global:
+  openfga:
+    enabled: false
+    endpoint:
+    storeId:
+    apiToken:
+
 keycloak:
   # keycloak clientID (needs to be a public client)
   clientId: controller
