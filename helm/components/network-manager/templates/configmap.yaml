@@ -11,3 +11,11 @@ data:
     metricsdb:
       host: compass-metricsdb
       port: 27017
+    providerinfo:
+      servicetoken: {{ .Values.providerinfo.servicetoken }}
+      providername: {{ .Values.providerinfo.providername }}
+      vnistart: {{ .Values.providerinfo.vnistart }}
+      vniend: {{ .Values.providerinfo.vniend }}
+      vlanstart: {{ .Values.providerinfo.vlanstart }}
+      vlanend: {{ .Values.providerinfo.vlanend }}
+
