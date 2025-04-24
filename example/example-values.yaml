@@ -133,6 +133,9 @@ global:
     # tenants enabling multi-tenancy
     enabled: true
 
+  slurmCluster:
+    amdGpuEnv: false
+
 keycloak-ha:
   replicaCount: 1
   ## Keycloak Image and Tag
