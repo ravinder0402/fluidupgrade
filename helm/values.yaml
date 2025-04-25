@@ -94,6 +94,7 @@ global:
 
   # keycloak realm to be used as the root
   rootRealm: &rootRealm "cloud"
+  tenantRealmAssocType: ""
 
   ## Keycloak Architecture override to enable HA or standalone
   keycloak:
@@ -112,6 +113,9 @@ global:
       # this is usally required to save usage of an extra TCP port
       disabled: false
 
+  ## Configuration for exposing frontend URLs
+  ## DNS hostnames considered only when global.dnsEnabled is 'true'
+  ## Othwerwise NodePorts considered
   frontend:
     admin:
       domain: &adminDomain ""
@@ -120,6 +124,10 @@ global:
       domain: &userDomain ""
       tlsSecret: &userTls ""
       nodePort: &frontendNodePort "32500"
+    vmconsole:
+      domain: &vmconsoleDomain ""
+      tlsSecret: &vmconsoleTls ""
+      nodePort: &vmconsoleNodePort "32700"
     # For Production environment we require kyc status validation
     # However, for dev and test environments we should be able to skip
     # these validations
@@ -205,7 +213,10 @@ global:
 
   computeService:
     enabled: true
-  
+    
+  vmconsole:
+    enabled: true
+
   autoscalingService:
     enabled: false
 
@@ -402,18 +413,6 @@ clusterManager:
     kubeconfigSecretName: ""
 
 baremetal-manager:
-  # add mass configuration for baremetal manager to interact with.
-  # Baremetal manager expects to work with MAAS Rest API, where it
-  # requires rest api endpoint and api key for authentication
-  # API url needs to be of the format "http://<IP>:<Port>/MAAS"
-  # where the default port usually is 5240
-  # whereas the api key are available under user preference section
-  # with sub tab api keys. refer to more details under MAAS Rest
-  # API access documentation
-  maas:
-    url: ""
-    apikey: ""
-
   # fabric configuration for baremetal manager is currently relevant
   # only if you are expected to provide kubernetes clusters using
   # bare metal servers provided by manager. where kube api virutal
@@ -490,8 +489,6 @@ trivy:
 auth-service:
   replicaCount:
     orbiterAuth: 1
-  tenant:
-    tenantRealmAssocType: ""
   keycloak:
     # keycloak clientID (needs to be a public client) DO NOT CHANGE
     clientId: controller
@@ -819,6 +816,22 @@ computeService:
         cpu: 100m
         memory: 2Gi
 
+vmconsole:
+  replicaCount: "1"
+  image: nginx:latest
+  service:
+    nodePort: *vmconsoleNodePort
+  ingress:
+    tlsSecret: *vmconsoleTls
+    hostname: *vmconsoleDomain
+  ## Openstack Cloud Provider Details
+  ## Currently only supports single openstack cloud
+  cloudProvider:
+    name: ""
+    protocol: ""
+    host: "" 
+    port: ""
+
 neutronService:
   replicaCount: 1
   image: "fluid_platform"
@@ -1030,6 +1043,4 @@ postgres-operator:
     name: "postgresql-operator"
 
 pgadmin:
-  enabled: false
-ccp-extension:
   enabled: false

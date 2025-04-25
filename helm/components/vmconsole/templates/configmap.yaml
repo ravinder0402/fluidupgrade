@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vm-console-conf
+  namespace: {{ .Release.Namespace }}
+data:
+  default.conf: |-
+    upstream openstackVIP {
+      server {{ .Values.cloudProvider.host }}:6080 fail_timeout=0;
+    }
+
+    log_format  proxy_log  '[$time_local] $remote_addr - $remote_user "$host$request_uri" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for"'
+                    ' Proxy: "$proxy_host" "$upstream_addr"';
+
+    server {
+        listen       80;
+        listen       [::]:80;
+        proxy_redirect off; 
+        server_tokens off;   
+
+        location /console/websockify {
+          access_log /var/log/nginx/unique.log proxy_log;
+          proxy_pass {{ .Values.cloudProvider.protocol }}://openstackVIP/websockify;
+          proxy_set_header Host openstackVIP;
+          proxy_http_version 1.1;
+          proxy_read_timeout 86400;
+          proxy_send_timeout 86400;
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header x-forwarded-proto http;
+          proxy_set_header Connection "upgrade";
+          proxy_cache_bypass $http_upgrade;
+          proxy_buffering off;
+        }
+
+        location /console/ {
+          rewrite ^/console/(.*) /$1 break;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-Host $host;
+          proxy_set_header X-Forwarded-Server $host;
+          proxy_set_header x-forwarded-proto http;
+          proxy_set_header Host $host;
+          proxy_http_version 1.1;
+          proxy_read_timeout 86400;
+          proxy_pass {{ .Values.cloudProvider.protocol }}://openstackVIP/;
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection "upgrade";
+        }
+
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   /usr/share/nginx/html;
+        }
+    }

@@ -309,6 +309,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: ccs-postgres
+  namespace: {{ .Release.Namespace }}
   labels:
     app: ccs-postgres
 spec:

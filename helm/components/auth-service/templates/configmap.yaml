@@ -41,7 +41,7 @@ data:
     defaultRepos:
       enabled: {{ .Values.global.defaultRepos.enabled }}
     tenant:
-      tenantRealmAssocType: {{ .Values.tenant.tenantRealmAssocType }}
+      tenantRealmAssocType: {{ .Values.global.tenantRealmAssocType }}
 
 {{- if .Values.global.tenantManagement.register.enabled }}
     smtp:

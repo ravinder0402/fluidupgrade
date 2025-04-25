@@ -1,0 +1,32 @@
+{{- if .Values.global.dnsEnabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vm-console-ingress
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/websocket-services: vm-console
+    nginx.org/websocket-services: vm-console
+spec:
+  ingressClassName: {{ .Values.global.ingressClass }}
+  rules:
+    - host: {{ .Values.ingress.hostname }}
+      http:
+        paths:
+          - pathType: Prefix
+            backend:
+              service:
+                name: vm-console
+                port:
+                  number: 80
+            path: /
+  tls:
+    - hosts:
+      - {{ .Values.ingress.hostname }}
+      {{ if .Values.ingress.tlsSecret }}
+      secretName: {{ .Values.ingress.tlsSecret }}
+      {{- end }}
+{{- end }}

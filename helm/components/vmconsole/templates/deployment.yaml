@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vm-console
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: vm-console
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: vm-console
+  template:
+    metadata:
+      labels:
+        app: vm-console
+    spec:
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      containers:
+      - name: vm-console
+        image: {{ .Values.global.repository }}/{{ .Values.image }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }} 
+        resources: 
+          {{- toYaml .Values.resources | nindent 10 }}
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        volumeMounts:
+        - name: conf
+          readOnly: true
+          mountPath: /etc/nginx/conf.d/default.conf
+          subPath: default.conf
+      volumes:
+      - name: conf
+        configMap:
+          name: vm-console-conf
