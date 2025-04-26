@@ -59,6 +59,7 @@ global:
 
   # keycloak realm to be used as the root
   rootRealm: &rootRealm "cloud"
+  tenantRealmAssocType: ""
 
   ## Keycloak Architecture override to enable HA or standalone
   keycloak:
@@ -69,6 +70,8 @@ global:
   frontend:
     userPortal:
       nodePort: &frontendNodePort "32500"
+    vmconsole:
+      nodePort: &vmconsoleNodePort "32700"
 
   # observability feature on the platform is rendered using grafana
   # to enable observability set grafana enabled
@@ -108,6 +111,9 @@ global:
     enabled: true
 
   computeService:
+    enabled: true
+  
+  vmconsole:
     enabled: true
   
   autoscalingService:

@@ -1,0 +1,43 @@
+global:
+  imageRegistry: ""
+  repository: &repository coredgeio
+  releaseTag: &releaseTag ""
+  imagePullPolicy: &imagePolicy Always
+  imagePullSecrets: []
+
+  ## Configuration for exposing frontend URLs
+  ## DNS hostnames considered only when global.dnsEnabled is 'true'
+  ## Othwerwise NodePorts considered
+  frontend:
+    vmconsole:
+      domain: &vmconsoleDomain ""
+      tlsSecret: &vmconsoleTls ""
+      nodePort: &vmconsoleNodePort "32700"
+      
+## Openstack Cloud Provider Details
+cloudProvider:
+  name: ""
+  protocol: 'http'
+  host: "" 
+  port: ""
+
+replicaCount: "1"
+
+image: nginx:latest
+
+service:
+  nodePort: "32700"
+
+resources: 
+  limits:
+    cpu: 400m
+    # memory: 128Mi
+  requests:
+    cpu: 10m
+    memory: 50Mi
+
+nodeSelector: {}
+
+ingress:
+  tlsSecret: ""
+  hostname: ""

@@ -99,6 +99,10 @@ dependencies:
   name: ccpExtension
   repository: 'file://components/ccp-extension'
   version: 0.1.0
+- condition: global.vmconsole.enabled
+  name: vmconsole
+  repository: 'file://components/vmconsole'
+  version: 0.1.0
 description: Helm chart for Coredge Cloud Suite
 name: ccs
 version: 0.1.0

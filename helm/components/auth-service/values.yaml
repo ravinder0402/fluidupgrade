@@ -2,6 +2,7 @@ replicaCount:
   orbiterAuth: 1
 
 global:
+  tenantRealmAssocType: "dedicated"
   openfga:
     enabled: false
     endpoint:
@@ -59,6 +60,3 @@ gateway:
   # enable/disable payment method availability check in gateway server
   payment:
     enabled: false
-
-tenant:
-  tenantRealmAssocType: "dedicated"

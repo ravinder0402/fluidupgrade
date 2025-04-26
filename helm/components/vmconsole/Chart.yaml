@@ -1,0 +1,6 @@
+apiVersion: v2
+name: vmconsole
+description: Virtual Machine console microservice to access openstack VNC console
+type: application
+version: 0.1.0 
+appVersion: "0.1"

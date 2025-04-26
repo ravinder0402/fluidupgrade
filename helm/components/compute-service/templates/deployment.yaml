@@ -54,6 +54,13 @@ spec:
             value: {{ .Values.global.flaskConfig }}
           - name: CACHING_ENABLED
             value: "false"
+          {{- if .Values.global.dnsEnabled }}
+          - name: CONSOLE_PROXY
+            value: "https://{{ .Values.global.frontend.vmconsole.domain }}"
+          {{- else }}
+          - name: CONSOLE_PROXY
+            value: "http://{{ .Values.global.externalIP }}:{{ .Values.global.frontend.vmconsole.nodePort }}"
+          {{- end }}
         volumeMounts:
           - name: platform-config
             readOnly: true
@@ -128,6 +135,11 @@ spec:
             value: {{ .Values.global.flaskConfig }}
           - name: CACHING_ENABLED
             value: "false"
+          {{- if .Values.global.dnsEnabled }}
           - name: CONSOLE_PROXY
-            value: {{ .Values.vmconsoleProxyURL | quote }}
+            value: "https://{{ .Values.global.frontend.vmconsole.domain }}"
+          {{- else }}
+          - name: CONSOLE_PROXY
+            value: "http://{{ .Values.global.externalIP }}:{{ .Values.global.frontend.vmconsole.nodePort }}"
+          {{- end }}
 {{- end }}
