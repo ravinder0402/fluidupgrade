@@ -1,2 +1,10 @@
 replicaCount:
   networkManager: 1
+
+providerinfo:
+  servicetoken: eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJkaWQiOjY5NDg0MDkxNzI0ODQ0ODU4MTgsImRzbiI6ImRldnRlc3RpbmciLCJkc3QiOiJhY2NvdW50IiwiZXhwIjoxNzUxMjIxODAxLCJpYXQiOjE3NDMwNDkwNTksIm9naSI6Njk0ODQwOTE3MjQ4NDQ3NzIwNywib2duIjoiYXJpdGVsLWFwYWMiLCJzaWQiOiJmMWM5N2M0OTdiZDM1YWZkNGQ5MDgxMjNjNjBiYzNlYjBmNzgzYmMwMmQwOTQ0NDk4YmNjYjU5NjU5NTM4NmQxLXp1U2lZNDZjRllwNElncXlRZTRmelNRQW1fQm00RnhlMF9HNVpncHQifQ.SWQXy0UhVTdKnFqoTP2Q-IA7PjjPKG-5FH0RnCWGHih1qo4VmERDplyK7NWKxltqf2GAziVC4-HC0T4cE44nSg
+  providername: arista
+  vnistart: 5000
+  vniend: 5999
+  vlanstart: 2
+  vlanend: 3000
