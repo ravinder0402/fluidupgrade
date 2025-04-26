@@ -93,6 +93,8 @@ data:
       enabled: {{ .Values.global.defaultRepos.enabled }}
     marketPlace:
       url: {{ .Values.global.marketPlace.url }}
+    slurmCluster:
+      amdGpuEnv: {{ .Values.global.slurmCluster.amdGpuEnv }}
 ---
 apiVersion: v1
 kind: ConfigMap

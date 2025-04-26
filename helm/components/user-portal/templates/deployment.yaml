@@ -38,8 +38,7 @@ spec:
           - name: VITE_OIDC_AUTH_URL 
             value: http://{{ .Values.global.externalIP }}:{{ .Values.global.keycloak.nodePorts.http }}/auth
           {{- end }}
-          - name: VITE_OIDC_REALM 
-            value: {{ .Values.global.rootRealm }}
+          - name: VITE_OIDC_REALM
           - name: VITE_OIDC_CLIENT_ID
             value: "controller"
           - name: VITE_API_URL
