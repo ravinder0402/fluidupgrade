@@ -95,6 +95,11 @@ data:
       url: {{ .Values.global.marketPlace.url }}
     slurmCluster:
       amdGpuEnv: {{ .Values.global.slurmCluster.amdGpuEnv }}
+      ingressPort: "9085"
+      restApiHost: "slurm-restapi.slurm"
+      restApiPort: 6820
+      restApiSecured: false
+      restApiUser: "slurm"
 ---
 apiVersion: v1
 kind: ConfigMap
