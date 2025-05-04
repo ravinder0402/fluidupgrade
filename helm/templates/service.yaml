@@ -115,6 +115,9 @@ spec:
     - name: grafana
       port: 8081
       targetPort: 8081
+    - name: slurmrest
+      port: 9085
+      targetPort: 9085
   selector:
     app: compass-api
 ---
