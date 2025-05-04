@@ -54,16 +54,37 @@ spec:
             value: {{ .Values.global.releaseTag | quote }}
           - name: VITE_INCLUDE_SERVICES
             value: {{ .Values.adminportal.enabledServices | quote }}
-      {{- if not .Values.global.dnsEnabled }}
+        {{- if not .Values.global.dnsEnabled }}
         volumeMounts:
         - name: portal-rev-proxy
           readOnly: true
           mountPath: /etc/nginx/conf.d/default.conf
           subPath: default.conf
+        {{- end }}
+        {{- if and ( .Values.global.dnsEnabled) (eq .Values.global.serviceExposure.type "loadbalancer") }}
+        volumeMounts:
+        - name: portal-rev-proxy
+          readOnly: true
+          mountPath: /etc/nginx/conf.d/default.conf
+          subPath: default.conf
+        - name: admin-portal-certs-vol
+          readOnly: true
+          mountPath: /etc/nginx/certs/ingress
+        {{- end }}
+      {{- if not .Values.global.dnsEnabled }}
       volumes:
       - name: portal-rev-proxy
         configMap:
           name: admin-portal-nginx-conf
+      {{- end }}
+      {{- if and ( .Values.global.dnsEnabled) (eq .Values.global.serviceExposure.type "loadbalancer") }}
+      volumes:
+      - name: portal-rev-proxy
+        configMap:
+          name: admin-portal-nginx-conf
+      - name: admin-portal-certs-vol
+        secret:
+          secretName: {{ .Values.global.frontend.admin.tlsSecret }}
       {{- end }}
 ---
 apiVersion: apps/v1

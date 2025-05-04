@@ -1,10 +1,17 @@
 global:
-  # indicates usage of external ingress, currently also acts as a
+  # indicates enabling use of DNS hostnames via Ingress
   # switch to indicate use of domain configuration
   dnsEnabled: &dnsEnabled false
 
-  # Ingress claas to be defined to Ingress configuration 
-  ingressClass: &ingressClass ""
+  # Type to expose UI services with
+  # Supported: ingress / loadbalancer
+  serviceExposure:
+    type: "ingress"
+
+  # Ingress claas to be defined to inngress configuration when using Ingress controller
+  # Only used when supports Nginx Ingress Controller
+  # Only used when global.serviceExposure.type==ingress
+  ingressClass: &ingressClass "nginx"
 
   # repository from where the controller images are pulled for
   # controller

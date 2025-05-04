@@ -6,7 +6,7 @@ metadata:
 data:
   default.conf: |-
     upstream openstackVIP {
-      server {{ .Values.cloudProvider.host }}:6080 fail_timeout=0;
+      server {{ .Values.cloudProvider.host }}:{{ .Values.cloudProvider.port }} fail_timeout=0;
     }
 
     log_format  proxy_log  '[$time_local] $remote_addr - $remote_user "$host$request_uri" '
@@ -15,8 +15,19 @@ data:
                     ' Proxy: "$proxy_host" "$upstream_addr"';
 
     server {
+        {{- if and ( .Values.global.dnsEnabled) (eq .Values.global.serviceExposure.type "loadbalancer") }}
+        listen       443 ssl;
+        listen       [::]:443 ssl;
+        {{- else }}
         listen       80;
         listen       [::]:80;
+        {{- end }}
+        
+        {{- if and ( .Values.global.dnsEnabled) (eq .Values.global.serviceExposure.type "loadbalancer") }}
+        ssl_certificate /etc/nginx/certs/ingress/tls.crt;
+        ssl_certificate_key /etc/nginx/certs/ingress/tls.key;
+        {{- end }}
+
         proxy_redirect off; 
         server_tokens off;   
 

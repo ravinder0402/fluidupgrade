@@ -9,12 +9,17 @@ global:
   saas:
     enabled: false
 
-  # indicates usage of external ingress, currently also acts as a
-  # switch to indicate use of domain configuration
+  # Global flag to indicate use of domain configuration throughout the application
   dnsEnabled: &dnsEnabled false
 
+  # Type to expose UI services with
+  # Supported: ingress / loadbalancer
+  serviceExposure:
+    type: "ingress"
+
   # Ingress claas to be defined to inngress configuration when using Ingress controller
-  # Only supports Nginx Ingress Controller for now
+  # Only used when supports Nginx Ingress Controller
+  # Only used when global.serviceExposure.type==ingress
   ingressClass: &ingressClass "nginx"
 
   # repository from where the controller images are pulled for
@@ -118,14 +123,14 @@ global:
   ## Othwerwise NodePorts considered
   frontend:
     admin:
-      domain: &adminDomain ""
+      domain: &adminDomain "x.com"
       tlsSecret: &adminTls ""
     userPortal:
-      domain: &userDomain ""
+      domain: &userDomain "y.com"
       tlsSecret: &userTls ""
       nodePort: &frontendNodePort "32500"
     vmconsole:
-      domain: &vmconsoleDomain ""
+      domain: &vmconsoleDomain "z.com"
       tlsSecret: &vmconsoleTls ""
       nodePort: &vmconsoleNodePort "32700"
     # For Production environment we require kyc status validation
@@ -215,7 +220,7 @@ global:
     enabled: true
     
   vmconsole:
-    enabled: true
+    enabled: false
 
   autoscalingService:
     enabled: false
@@ -304,7 +309,7 @@ global:
     amdGpuEnv: false
 
 keycloak-ha:
-  replicaCount: 3
+  replicaCount: 1
   ## Keycloak Image and Tag
   image:
     name: keycloak
