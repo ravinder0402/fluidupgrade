@@ -6,12 +6,19 @@ metadata:
   labels:
     app: admin-portal
 spec:
-  {{- if .Values.global.dnsEnabled }}
+  {{- if and ( .Values.global.dnsEnabled) (eq .Values.global.serviceExposure.type "ingress") }}
   type: ClusterIP
   ports:
   - port: 80
     targetPort: 80
     protocol: TCP
+  {{- else if and ( .Values.global.dnsEnabled) (eq .Values.global.serviceExposure.type "loadbalancer") }}
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    nodePort: {{ .Values.adminportal.service.nodePort }}
   {{- else }}
   type: NodePort
   ports:

@@ -5,6 +5,21 @@ global:
   imagePullPolicy: &imagePolicy Always
   imagePullSecrets: []
 
+
+  # indicates enabling use of DNS hostnames via Ingress
+  # switch to indicate use of domain configuration
+  dnsEnabled: &dnsEnabled false
+
+  # Type to expose UI services with
+  # Supported: ingress / loadbalancer
+  serviceExposure:
+    type: "ingress"
+
+  # Ingress claas to be defined to inngress configuration when using Ingress controller
+  # Only used when supports Nginx Ingress Controller
+  # Only used when global.serviceExposure.type==ingress
+  ingressClass: &ingressClass "nginx"
+  
   ## Configuration for exposing frontend URLs
   ## DNS hostnames considered only when global.dnsEnabled is 'true'
   ## Othwerwise NodePorts considered

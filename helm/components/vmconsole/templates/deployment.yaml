@@ -15,7 +15,7 @@ spec:
       labels:
         app: vm-console
     spec:
-      dnsPolicy: ClusterFirst
+      dnsPolicy: ClusterFirst 
       nodeSelector:
         {{- toYaml .Values.nodeSelector | nindent 8 }}
       containers:
@@ -33,7 +33,21 @@ spec:
           readOnly: true
           mountPath: /etc/nginx/conf.d/default.conf
           subPath: default.conf
+        {{- if and ( .Values.global.dnsEnabled) (eq .Values.global.serviceExposure.type "loadbalancer") }}
+        {{- if .Values.global.frontend.vmconsole.tlsSecret }}
+        - name: vmconsole-certs-vol
+          readOnly: true
+          mountPath: /etc/nginx/certs/ingress
+        {{- end }}
+        {{- end }}
       volumes:
       - name: conf
         configMap:
           name: vm-console-conf
+      {{- if and ( .Values.global.dnsEnabled) (eq .Values.global.serviceExposure.type "loadbalancer") }}
+      {{- if .Values.global.frontend.vmconsole.tlsSecret }}
+      - name: vmconsole-certs-vol
+        secret:
+          secretName: {{ .Values.global.frontend.vmconsole.tlsSecret }}
+      {{- end }}
+      {{- end }}

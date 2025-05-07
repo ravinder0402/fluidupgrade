@@ -1,4 +1,4 @@
-{{- if .Values.global.dnsEnabled }}
+{{- if and ( .Values.global.dnsEnabled) (eq .Values.global.serviceExposure.type "ingress") }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
