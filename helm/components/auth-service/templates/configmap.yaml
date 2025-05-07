@@ -58,10 +58,10 @@ metadata:
   namespace: {{ .Release.Namespace }}
 data:
   config.yml: |
-{{- if .Values.gateway.payment.enabled }}
+    {{- if .Values.gateway.payment.enabled }}
     conditions:
       disableIfNoPayment: true
-{{- end }}
+    {{- end }}
     http:
       locations:
       - prefix: /api/cloud-manager
@@ -114,13 +114,13 @@ data:
         rewritePrefix: /
       - prefix: /ws/compass
         endpoint: http://compass-api:9080
-{{- if .Values.global.containerRegistry.enabled }}
+      {{- if .Values.global.containerRegistry.enabled }}
       - prefix: /api/container-registry
         endpoint: http://container-registry:8080
       - prefix: /ws/container-registry
         endpoint: http://container-registry:9080
-{{- end }}
-{{- if .Values.global.baremetalManager.enabled }}
+      {{- end }}
+      {{- if .Values.global.baremetalManager.enabled }}
       - prefix: /api/baremetal-manager
         endpoint: http://baremetal-manager:8080
       - prefix: /api/baremetal-admin
@@ -130,26 +130,26 @@ data:
       - prefix: /api/baremetal-mgmt
         endpoint: http://baremetal-manager:8080
         allowRootTenantOnly: true
-{{- end }}
-{{- if .Values.global.storagePlugin.enabled }}
+      {{- end }}
+      {{- if .Values.global.storagePlugin.enabled }}
       - prefix: /api/storage-plugin
         endpoint: http://storage-plugin:8080
       - prefix: /api/storage-admin
         endpoint: http://storage-plugin:8080
-{{- end }}
-{{- if .Values.global.networkManager.enabled }}
+      {{- end }}
+      {{- if .Values.global.networkManager.enabled }}
       - prefix: /api/network-admin
         endpoint: http://network-manager:8080
       - prefix: /api/network-manager
         endpoint: http://network-manager:8080
         rewritePrefix: /api/network-manager
-{{- end }}
-{{- if .Values.global.metering.enabled }}
+      {{- end }}
+      {{- if .Values.global.metering.enabled }}
       - prefix: /api/license
         endpoint: http://orbiter-metering:8080
       - prefix: /api/metering
         endpoint: http://orbiter-metering:8080
-{{- end }}
+      {{- end }}
       - prefix: /v1/download
         endpoint: http://compass-api:8085
         accessType: public
@@ -161,11 +161,15 @@ data:
       - prefix: /api/myaccount
         consumeLocally: true
         accessType: unscoped
-{{- if .Values.global.tenantManagement.register.enabled }}
+      {{- if .Values.global.tenantManagement.register.enabled }}
       - prefix: /api/register
         endpoint: http://orbiter-auth:8081
         accessType: public
-{{- end }}
+      {{- end }}
+      {{- if .Values.global.tcpwaveExtension.enabled }}
+      - prefix: /api/v1/zones
+        endpoint: http://tcpwave:8000
+      {{- end }}
       - prefix: /adminapi
         endpoint: http://admin-platform:5000
         accessType: unscoped
