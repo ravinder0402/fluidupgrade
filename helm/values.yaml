@@ -766,7 +766,6 @@ userPortal:
     secComplianceURL: ""
     userRegisterURL: ""
     pamIframeURL: ""
-    vmconsoleURL: ""
     quartzURL: ""
     cobaltURL: ""
     cloudSecurityPosture: ""
@@ -776,7 +775,9 @@ userPortal:
     maxBucketSize: ""
   blockStorage: 
     maxSize: ""
-  enabledServices: ""
+  ## Accommodate large uploads for the container registry
+  ## Default value: 10G
+  clientMaxBodySize: '10G'
   ## Enable ChatBot on the GUI
   chatbot:
     enabled: false
