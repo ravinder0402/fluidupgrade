@@ -46,3 +46,14 @@ export OPENFGA_NODEPORT=$(kubectl get --namespace openfga -o jsonpath="{.spec.po
 
 fga store create --name "Fluid Auth Store" --api-url=http://${NODE_IP}:${OPENFGA_NODEPORT}
 ```
+OR
+4. Create store using fga CLI (`RHEL`)
+```
+wget https://github.com/openfga/cli/releases/download/v0.6.6/fga_0.6.6_linux_amd64.rpm
+rpm -i fga_0.6.6_linux_amd64.rpm 
+
+export NODE_IP=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")
+export OPENFGA_NODEPORT=$(kubectl get --namespace openfga -o jsonpath="{.spec.ports[?(@.name=='http')].nodePort}" services openfga)
+
+fga store create --name "Fluid Auth Store" --api-url=http://${NODE_IP}:${OPENFGA_NODEPORT}
+```
