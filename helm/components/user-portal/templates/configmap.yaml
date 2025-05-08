@@ -98,7 +98,7 @@ data:
             
             # Setting client_max_body_size to a high value (10G) 
             # to accommodate large uploads for the container registry.
-            client_max_body_size 10G;
+            client_max_body_size {{ .Values.clientMaxBodySize }};
         }
 
         location /api/registry/auth {
