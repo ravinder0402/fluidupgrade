@@ -167,8 +167,14 @@ data:
         accessType: public
       {{- end }}
       {{- if .Values.global.tcpwaveExtension.enabled }}
-      - prefix: /api/v1/zones
-        endpoint: http://tcpwave:8000
+      - endpoint: http://tcpwave:8000
+        prefix: /api/v1/zones
+      - endpoint: http://tcpwave:8000
+        prefix: /api/v1/ipam
+      - endpoint: http://tcpwave:8000
+        prefix: /api/v1/ipam_organisation
+      - endpoint: http://tcpwave:8000
+        prefix: /api/v1/ipam_quota
       {{- end }}
       - prefix: /adminapi
         endpoint: http://admin-platform:5000
