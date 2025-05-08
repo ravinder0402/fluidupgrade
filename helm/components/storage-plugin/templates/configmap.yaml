@@ -56,3 +56,7 @@ data:
       {{- end }}
     default:
       availabilityZone: {{ .Values.availabilityZone | default "" }}
+    gatewayConfig:
+      isStorageClientBehindGw: {{ .Values.isStorageClientBehindGw | default false }}
+      gatewayAddr: {{ .Values.gatewayAddr | default "" }}
+      vpcAddr: {{ .Values.vpcAddr | default "" }}
