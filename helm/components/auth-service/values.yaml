@@ -2,12 +2,21 @@ replicaCount:
   orbiterAuth: 1
 
 global:
-  tenantRealmAssocType: "dedicated"
   openfga:
     enabled: false
     endpoint:
     storeId:
     apiToken:
+  preOnboardedTenant:
+    enabled: false
+    name: ""
+    admin:
+      firstname: ""
+      lastname: ""
+      email: ""
+      username: ""
+      password: ""
+
 
 keycloak:
   # keycloak clientID (needs to be a public client)

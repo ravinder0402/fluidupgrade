@@ -41,8 +41,16 @@ data:
     defaultRepos:
       enabled: {{ .Values.global.defaultRepos.enabled }}
     tenant:
-      tenantRealmAssocType: {{ .Values.global.tenantRealmAssocType }}
-
+{{- if .Values.global.preOnboardedTenant.enabled }}
+    preOnboardedTenant:
+      name: {{ .Values.global.preOnboardedTenant.name }}
+      admin:
+        firstname: {{ .Values.global.preOnboardedTenant.admin.firstname }}
+        lastname: {{ .Values.global.preOnboardedTenant.admin.lastname }}
+        email: {{ .Values.global.preOnboardedTenant.admin.email }}
+        username: {{ .Values.global.preOnboardedTenant.admin.username }}
+        password: {{ .Values.global.preOnboardedTenant.admin.password }}
+{{- end }}
 {{- if .Values.global.tenantManagement.register.enabled }}
     smtp:
       sender: {{ .Values.global.tenantManagement.register.smtp.sender }}
