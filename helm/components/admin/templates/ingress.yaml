@@ -9,8 +9,6 @@ metadata:
     nginx.ingress.kubernetes.io/affinity: cookie
     nginx.ingress.kubernetes.io/proxy-buffering: "off"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-    nginx.org/websocket-services: orbiter-auth
-    nginx.ingress.kubernetes.io/websocket-services: orbiter-auth
     nginx.ingress.kubernetes.io/server-snippet: |
       location /adminapi/v1/swagger {
             deny all;
@@ -22,27 +20,6 @@ spec:
     - host: {{ .Values.adminportal.ingress.hostname }}
       http:
         paths:
-          - pathType: Prefix
-            backend:
-              service:
-                name: orbiter-auth
-                port:
-                  number: 8060
-            path: /adminapi
-          - pathType: Prefix
-            backend:
-              service:
-                name: orbiter-auth
-                port:
-                  number: 8060
-            path: /api
-          - backend:
-              service:
-                name: orbiter-auth
-                port:
-                  number: 8060
-            path: /socket
-            pathType: Prefix
           - pathType: Prefix
             backend:
               service:

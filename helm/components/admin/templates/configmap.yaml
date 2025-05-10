@@ -1,4 +1,3 @@
-{{- if and ( .Values.global.dnsEnabled) (eq .Values.global.serviceExposure.type "loadbalancer") }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -7,8 +6,13 @@ metadata:
 data: 
   default.conf: |-
     server {
+        {{- if and ( .Values.global.dnsEnabled) (eq .Values.global.serviceExposure.type "loadbalancer") }}
         listen       443 ssl;
         listen       [::]:443 ssl;
+        {{- else }}
+        listen       80;
+        listen       [::]:80;
+        {{- end }}
         
         server_name  _;
         client_max_body_size 2M;
@@ -16,23 +20,33 @@ data:
         proxy_buffers   64 64k;
         proxy_buffer_size   128k;
         
+        {{- if and ( .Values.global.dnsEnabled) (eq .Values.global.serviceExposure.type "loadbalancer") }}
         ssl_certificate /etc/nginx/certs/ingress/tls.crt;
         ssl_certificate_key /etc/nginx/certs/ingress/tls.key;
+        {{- end }}
 
         proxy_set_header X-Forwarded-For $proxy_protocol_addr; # To forward the original client's IP address
         proxy_set_header X-Forwarded-Proto $scheme; # to forward the  original protocol (HTTP or HTTPS)
         proxy_set_header Host $host; # to forward the original host requested by the client
+        {{- if not .Values.global.dnsEnabled }}
+        proxy_set_header Host $host:{{ .Values.adminportal.service.nodePort }}; # to forward the original host requested by the client 
+        {{- end }}
 
         proxy_redirect off;
         server_tokens off;
         proxy_set_header X-Real-IP $http_x_forwarded_for;
 
-        location / {
-            root   /usr/share/nginx/html;
-            index  index.html index.htm;
-            try_files $uri /index.html;
+        {{- if eq .Values.global.application "acp" }}
+        location /api/auth-service-admin/v1/tenant {
+            if ($request_uri = /api/auth-service-admin/v1/tenant) {
+                rewrite ^ /api/auth-service/v1/domain/unscoped break;
+            }
+
+            proxy_pass http://orbiter-auth:8060;
+            add_header 'Cache-Control' 'no-store, no-cache, max-age=10';
         }
-        
+        {{- end }}
+
         location /adminapi {
             proxy_pass http://orbiter-auth:8060;
             proxy_buffering off;
@@ -51,59 +65,14 @@ data:
             proxy_read_timeout 86400;
         }
 
-        error_page   500 502 503 504  /50x.html;
-        location = /50x.html {
-            root   /usr/share/nginx/html;
-        }
-    }
-{{- end }}
----
-{{- if not .Values.global.dnsEnabled }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: admin-portal-nginx-conf
-  namespace: {{ .Release.Namespace }}
-data: 
-  default.conf: |-
-    server {
-        listen       80;
-        listen       [::]:80;
-
-        proxy_set_header X-Forwarded-For $proxy_protocol_addr; # To forward the original client's IP address
-        proxy_set_header X-Forwarded-Proto $scheme; # to forward the  original protocol (HTTP or HTTPS)
-        proxy_set_header Host $host:{{ .Values.adminportal.service.nodePort }}; # to forward the original host requested by the client  
-        proxy_redirect off;
-        server_tokens off;
-        proxy_set_header X-Real-IP $http_x_forwarded_for;
-
         location / {
             root   /usr/share/nginx/html;
             index  index.html index.htm;
             try_files $uri /index.html;
         }
-        
-        location /adminapi {
-            proxy_pass http://orbiter-auth:8060;
-            proxy_buffering off;
-        }
-
-        location /api {
-            proxy_pass http://orbiter-auth:8060;
-            proxy_buffering off;
-        }
-
-        location /socket {
-            proxy_pass http://orbiter-auth:8060;
-            proxy_buffering off;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection "upgrade";
-            proxy_read_timeout 86400;
-        }
 
         error_page   500 502 503 504  /50x.html;
         location = /50x.html {
             root   /usr/share/nginx/html;
         }
     }
-{{- end }}
