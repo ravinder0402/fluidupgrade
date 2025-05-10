@@ -8,3 +8,5 @@ providerinfo:
   vniend: 5999
   vlanstart: 2
   vlanend: 3000
+  customername: airtel
+  skipvpccreation: true

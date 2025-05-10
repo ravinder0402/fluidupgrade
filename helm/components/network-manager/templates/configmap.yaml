@@ -18,4 +18,5 @@ data:
       vniend: {{ .Values.providerinfo.vniend }}
       vlanstart: {{ .Values.providerinfo.vlanstart }}
       vlanend: {{ .Values.providerinfo.vlanend }}
-
+      customername: {{ .Values.providerinfo.customername }}
+      skipvpccreation: {{ .Values.providerinfo.skipvpccreation }}
