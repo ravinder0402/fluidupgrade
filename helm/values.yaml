@@ -57,6 +57,7 @@ global:
 
   # Default application type: "ccp"
   application: "ccp"
+  projectLabel: "" # value could be "Cell" in Airtel otherwise is null
 
   ## Override for PostgresDB architecture
   ## global.postgresql.architecture.standalone Set to 'false' deploys a postgresql as a cluster with High Availability
@@ -307,6 +308,16 @@ global:
     endpoint: ''
     storeId: ''
     apiToken: ''
+
+  preOnboardedTenant:
+    enabled: false
+    name: ""
+    admin:
+      firstname: ""
+      lastname: ""
+      email: ""
+      username: ""
+      password: ""
 
   slurmCluster:
     amdGpuEnv: false
