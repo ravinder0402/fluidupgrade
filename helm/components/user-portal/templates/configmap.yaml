@@ -38,7 +38,7 @@ data:
         listen       [::]:443 ssl{{- if .Values.global.proxyProtocol.enabled }} proxy_protocol{{- end }};
         {{- end }}
         server_name  _;
-        client_max_body_size 2M;
+        client_max_body_size {{ .Values.clientMaxBodySize }};
         proxy_busy_buffers_size   128k;
         proxy_buffers   64 64k;
         proxy_buffer_size   128k;

@@ -38,12 +38,13 @@ spec:
           - name: VITE_OIDC_AUTH_URL 
             value: http://{{ .Values.global.externalIP }}:{{ .Values.global.keycloak.nodePorts.http }}/auth
           {{- end }}
-          {{- if eq .Values.global.tenantRealmAssocType "shared" }}
+          {{- if .Values.global.preOnboardedTenant.enabled }}
+          - name: VITE_OIDC_REALM
+            value: {{ .Values.global.preOnboardedTenant.name | quote }}   
+          {{- else }} 
           - name: VITE_OIDC_REALM
             value: {{ .Values.global.rootRealm | quote }}
-          {{- else }}
-          - name: VITE_OIDC_REALM
-          {{- end }}
+          {{- end }}   
           - name: VITE_OIDC_CLIENT_ID
             value: "controller"
           - name: VITE_API_URL
@@ -88,6 +89,16 @@ spec:
             value: {{ .Values.additionalURLs.virtualSuiteDashboard | quote }}
           - name: VITE_TICKET_SUPPORT_URL
             value: {{ .Values.additionalURLs.ticketSupport | quote }}
+          {{- if eq .Values.global.application "acp" }}
+          - name: VITE_APP_PROJECT_LABEL
+            value: {{ .Values.global.projectLabel | quote }}
+          {{- else }}
+          - name: VITE_APP_PROJECT_LABEL
+          {{- end }}
+          - name: VITE_SKIP_VPC_ONBOARDING
+            value: {{ .Values.skipVpcOnboarding | quote }}
+          - name: VITE_SKIP_LANDING_PAGE
+            value: {{ .Values.skipLandingPage | quote }}
         volumeMounts:
         - mountPath: /etc/nginx/tcp_conf.d
           readOnly: true

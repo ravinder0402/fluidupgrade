@@ -93,6 +93,10 @@ objectStorage:
 blockStorage: 
   maxSize: ""
 
+skipLandingPage: false
+
+skipVpcOnboarding: false
+
 ## Accommodate large uploads for the container registry
 ## Default value: 10G
 clientMaxBodySize: '10G'
