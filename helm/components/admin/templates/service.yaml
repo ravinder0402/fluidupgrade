@@ -15,8 +15,8 @@ spec:
   {{- else if and ( .Values.global.dnsEnabled) (eq .Values.global.serviceExposure.type "loadbalancer") }}
   type: LoadBalancer
   ports:
-  - port: 80
-    targetPort: 80
+  - port: 443
+    targetPort: 443
     protocol: TCP
     nodePort: {{ .Values.adminportal.service.nodePort }}
   {{- else }}
