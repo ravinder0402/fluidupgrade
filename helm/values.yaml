@@ -89,6 +89,9 @@ global:
     https_proxy: ""
     no_proxy: "localhost,127.0.0.1,cluster.local,.svc,.svc.cluster.local"
 
+  # keycloak realm to be used as the root
+  rootRealm: &rootRealm "cloud"
+
   # user credentials for the default realm user that will be created
   # along with creation of the realm
   admin: 
@@ -98,9 +101,24 @@ global:
     lastname: &adminLastname "Admin"
     email: &adminUserEmail "info@coredge.io"
 
-  # keycloak realm to be used as the root
-  rootRealm: &rootRealm "cloud"
-  tenantRealmAssocType: ""
+  # Pre Onboarded tenant configuration
+  # Will create a seperate realm in keycloak for this tenant
+  # Will only be accessible from user portal. NOT ADMIN PORTAL
+  preOnboardedTenant:
+    enabled: false
+    name: ""
+    admin:
+      firstname: ""
+      lastname: ""
+      email: ""
+      username: ""
+      password: ""
+
+  openfga:
+    enabled: false
+    endpoint: ''
+    storeId: ''
+    apiToken: ''
 
   ## Keycloak Architecture override to enable HA or standalone
   keycloak:
@@ -302,22 +320,6 @@ global:
   # Marketplace Integration
   marketPlace:
     url: ""
-
-  openfga:
-    enabled: false
-    endpoint: ''
-    storeId: ''
-    apiToken: ''
-
-  preOnboardedTenant:
-    enabled: false
-    name: ""
-    admin:
-      firstname: ""
-      lastname: ""
-      email: ""
-      username: ""
-      password: ""
 
   slurmCluster:
     amdGpuEnv: false
@@ -786,6 +788,10 @@ userPortal:
     maxBucketSize: ""
   blockStorage: 
     maxSize: ""
+  ## Skip Landing Page on the user portal
+  skipLandingPage: false
+  ## Skip VPC onboarding flow
+  skipVpcOnboarding: false
   ## Accommodate large uploads for the container registry
   ## Default value: 10G
   clientMaxBodySize: '10G'
