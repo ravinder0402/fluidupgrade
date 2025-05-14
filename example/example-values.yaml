@@ -48,6 +48,9 @@ global:
     architecture:
       standalone: true
 
+  # keycloak realm to be used as the root
+  rootRealm: &rootRealm "cloud"
+
   # user credentials for the default realm user that will be created
   # along with creation of the realm
   admin: 
@@ -57,10 +60,25 @@ global:
     lastname: &adminLastname "Admin"
     email: &adminUserEmail "info@coredge.io"
 
-  # keycloak realm to be used as the root
-  rootRealm: &rootRealm "cloud"
-  tenantRealmAssocType: ""
+  # Pre Onboarded tenant configuration
+  # Will create a seperate realm in keycloak for this tenant
+  # Will only be accessible from user portal. NOT ADMIN PORTAL
+  preOnboardedTenant:
+    enabled: false
+    name: ""
+    admin:
+      firstname: ""
+      lastname: ""
+      email: ""
+      username: ""
+      password: ""
 
+  openfga:
+    enabled: false
+    endpoint: ''
+    storeId: ''
+    apiToken: ''
+    
   ## Keycloak Architecture override to enable HA or standalone
   keycloak:
     nodePorts:

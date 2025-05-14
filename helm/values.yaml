@@ -142,14 +142,14 @@ global:
   ## Othwerwise NodePorts considered
   frontend:
     admin:
-      domain: &adminDomain "x.com"
+      domain: &adminDomain ""
       tlsSecret: &adminTls ""
     userPortal:
-      domain: &userDomain "y.com"
+      domain: &userDomain ""
       tlsSecret: &userTls ""
       nodePort: &frontendNodePort "32500"
     vmconsole:
-      domain: &vmconsoleDomain "z.com"
+      domain: &vmconsoleDomain ""
       tlsSecret: &vmconsoleTls ""
       nodePort: &vmconsoleNodePort "32700"
     # For Production environment we require kyc status validation
