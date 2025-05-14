@@ -292,6 +292,7 @@ data:
   AUTOSCALING_API_URL: 'http://autoscaling-service:7181/api/v1'
   BACKUP_API_URL: 'http://commvault:7030/api/v1'
   NOTIFICATION_URL: 'http://notification:5000'
+  ORBITER_EVENT_ENABLED: {{ .Values.global.metering.enabled | quote }}
   SCHEDULER_URL: 'http://scheduler:5003'
   TENANT_FIREWALL_API_URL: 'http://ccp-firewall:7180/api/v1'
   ADMIN_API_URL: 'http://admin-platform:5000'
