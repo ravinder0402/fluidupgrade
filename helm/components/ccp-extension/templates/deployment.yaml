@@ -65,6 +65,12 @@ spec:
             value: "mongodb://sigma:password@compass-configdb:27017"
           - name: REDIS_URL
             value: "redis://notification-store:6380"
+          {{- if .Values.global.proxy.enabled }}
+          - name: HTTP_PROXY_URL
+            value: {{ .Values.global.proxy.http_proxy | quote }}
+          - name: HTTPS_PROXY_URL
+            value: {{ .Values.global.proxy.http_proxy | quote }}
+          {{- end }}
         volumeMounts:
           - name: ccp-extension-logs
             mountPath: /var/logs/ccp_extension

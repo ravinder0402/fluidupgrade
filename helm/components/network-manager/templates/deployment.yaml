@@ -62,6 +62,12 @@ spec:
             secretKeyRef:
               name: configdb-secret
               key: password
+        {{- if .Values.global.proxy.enabled }}
+        - name: HTTP_PROXY_URL
+          value: {{ .Values.global.proxy.http_proxy | quote }}
+        - name: HTTPS_PROXY_URL
+          value: {{ .Values.global.proxy.http_proxy | quote }}
+        {{- end }}
         volumeMounts:
         - name: network-config-vol
           mountPath: /opt/config.yml
