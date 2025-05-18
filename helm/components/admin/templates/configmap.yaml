@@ -1,4 +1,4 @@
-{{- if and ( .Values.global.dnsEnabled) (eq .Values.global.serviceExposure.type "loadbalancer") }}
+{{- if .Values.global.dnsEnabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -7,17 +7,24 @@ metadata:
 data: 
   default.conf: |-
     server {
+        {{- if eq .Values.global.serviceExposure.type "loadbalancer" }}
         listen       443 ssl;
         listen       [::]:443 ssl;
+        {{- else }}
+        listen       80;
+        listen       [::]:80;
+        {{- end }}
         
+        {{- if eq .Values.global.serviceExposure.type "loadbalancer" }}
         server_name  _;
         client_max_body_size 2M;
         proxy_busy_buffers_size   128k;
         proxy_buffers   64 64k;
         proxy_buffer_size   128k;
-        
+
         ssl_certificate /etc/nginx/certs/ingress/tls.crt;
         ssl_certificate_key /etc/nginx/certs/ingress/tls.key;
+        {{- end }}
 
         proxy_set_header X-Forwarded-For $proxy_protocol_addr; # To forward the original client's IP address
         proxy_set_header X-Forwarded-Proto $scheme; # to forward the  original protocol (HTTP or HTTPS)
@@ -40,11 +47,13 @@ data:
 
         location /adminapi {
             proxy_pass http://orbiter-auth:8060;
+            add_header 'Cache-Control' 'no-store, no-cache, max-age=10';
             proxy_buffering off;
         }
 
         location /api {
             proxy_pass http://orbiter-auth:8060;
+            add_header 'Cache-Control' 'no-store, no-cache, max-age=10';
             proxy_buffering off;
         }
 
@@ -60,6 +69,7 @@ data:
             root   /usr/share/nginx/html;
             index  index.html index.htm;
             try_files $uri /index.html;
+            add_header 'Cache-Control' 'no-store, no-cache, max-age=10';
         }
 
         error_page   500 502 503 504  /50x.html;
