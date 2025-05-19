@@ -43,7 +43,6 @@ spec:
             value: {{ .Values.global.preOnboardedTenant.name | quote }}   
           {{- else }} 
           - name: VITE_OIDC_REALM
-            value: {{ .Values.global.rootRealm | quote }}
           {{- end }}   
           - name: VITE_OIDC_CLIENT_ID
             value: "controller"
