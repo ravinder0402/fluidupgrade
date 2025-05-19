@@ -1,0 +1,9 @@
+apiVersion: v1
+appVersion: "0.1"
+description: Tenant Management Service Helm Chart
+name: tenant-management-service
+version: 0.1.0
+dependencies:
+  - name: helper
+    version: 0.1.0
+    repository: 'file://../helper'

@@ -1,0 +1,34 @@
+replicaCount:
+  tenantManagementService: 1
+
+client:
+  name: "core42"
+
+pollingTime: 60  # in seconds
+
+tenantMetadata:
+  enabled: true
+  stopUpdateOnceSet: true
+  endpointDetails:
+    baseUrl: "https://api.dev.cloud42.ai/user/v1/admin/tenants"
+    httpMethod: "GET"
+    defaultHeaders:
+      apikey: "7Z4lXwekKnKNIO4VCFznjqgMs3lj91MT"
+
+tenantUserMetadata:
+  enabled: false
+  stopUpdateOnceSet: true
+  endpointDetails:
+    baseUrl: "https://api.dev.cloud42.ai/user/v1/admin/tenants"
+    httpMethod: "GET"
+    defaultHeaders:
+      apikey: "7Z4lXwekKnKNIO4VCFznjqgMs3lj91MT"
+
+publishMeteringInfo:
+  enabled: false
+  endpointDetails:
+    baseUrl: "https://api.dev.cloud42.ai/billing/v1/webhook/instance/events"
+    httpMethod: "POST"
+    defaultHeaders:
+      contentType: "application/json"
+

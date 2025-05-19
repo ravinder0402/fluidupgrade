@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tenant-management-service-config
+  namespace: {{ .Release.Namespace }}
+data:
+  config.yml: |
+    mongodb:
+      host: compass-configdb
+      port: 27017
+    metricsdb:
+      host: compass-metricsdb
+      port: 27017
+    client:
+      name: {{ .Values.client.name }}
+    pollingTime: {{ .Values.pollingTime }}
+    tenantMetadata:
+      enabled: {{ .Values.tenantMetadata.enabled }}
+      stopUpdateOnceSet: {{ .Values.tenantMetadata.stopUpdateOnceSet }}
+      endpointDetails:
+        baseUrl: {{ .Values.tenantMetadata.endpointDetails.baseUrl }}
+        httpMethod: {{ .Values.tenantMetadata.endpointDetails.httpMethod }}
+        defaultHeaders:
+          apikey: {{ .Values.tenantMetadata.endpointDetails.defaultHeaders.apikey }}
+    tenantUserMetadata:
+      enabled: {{ .Values.tenantUserMetadata.enabled }}
+      stopUpdateOnceSet: {{ .Values.tenantUserMetadata.stopUpdateOnceSet }}
+      endpointDetails:
+        baseUrl: {{ .Values.tenantUserMetadata.endpointDetails.baseUrl }}
+        httpMethod: {{ .Values.tenantUserMetadata.endpointDetails.httpMethod }}
+        defaultHeaders:
+          apikey: {{ .Values.tenantUserMetadata.endpointDetails.defaultHeaders.apikey }}
+    publishMeteringInfo:
+      enabled: {{ .Values.publishMeteringInfo.enabled }}
+      endpointDetails:
+        baseUrl: {{ .Values.publishMeteringInfo.endpointDetails.baseUrl }}
+        httpMethod: {{ .Values.publishMeteringInfo.endpointDetails.httpMethod }}
+        defaultHeaders:
+          contentType: {{ .Values.publishMeteringInfo.endpointDetails.defaultHeaders.contentType }}
+
+
