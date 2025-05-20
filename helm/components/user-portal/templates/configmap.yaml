@@ -170,6 +170,11 @@ data:
             proxy_send_timeout 3600s;
         }
 
+        location /ext/api {
+            proxy_pass  http://orbiter-auth:8060;
+            add_header 'Cache-Control' 'no-store, no-cache, max-age=10';
+        }
+        
         location /api {
             proxy_pass  http://orbiter-auth:8060;
             add_header 'Cache-Control' 'no-store, no-cache, max-age=10';
