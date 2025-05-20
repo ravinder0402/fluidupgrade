@@ -57,6 +57,11 @@ data:
             proxy_buffering off;
         }
 
+        location /ext/admin {
+            proxy_pass  http://orbiter-auth:8060;
+            add_header 'Cache-Control' 'no-store, no-cache, max-age=10';
+        }
+
         location /socket {
             proxy_pass http://orbiter-auth:8060;
             proxy_buffering off;
@@ -122,6 +127,11 @@ data:
         {{- end }}
 
         location /api {
+            proxy_pass  http://orbiter-auth:8060;
+            add_header 'Cache-Control' 'no-store, no-cache, max-age=10';
+        }
+
+        location /ext/admin {
             proxy_pass  http://orbiter-auth:8060;
             add_header 'Cache-Control' 'no-store, no-cache, max-age=10';
         }
