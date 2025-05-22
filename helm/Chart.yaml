@@ -42,6 +42,10 @@ dependencies:
   name: network-manager
   repository: file://components/network-manager
   version: 0.1.0
+- condition: global.tenantManagementService.enabled
+  name: tenant-management-service
+  repository: file://components/tenant-management-service
+  version: 0.1.0
 #####
 - condition: global.userPortal.enabled
   name: userPortal

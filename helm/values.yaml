@@ -262,6 +262,9 @@ global:
   tcpwaveExtension:
     enabled: false
 
+  tenantManagementService:
+    enabled: false
+
   # enable loading default repositories for better user experience with
   # preconfigured helm repositories
   defaultRepos:
@@ -996,6 +999,38 @@ tcpwaveExtension:
     tcp_auth_key: "LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2QUlCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktZd2dnU2lBZ0VBQW9JQkFRRFBOcjF3SHhQbTdVREgKRDA4OUZOVUhZVlhNSGlUSXpDdTZPVmQyRzA4TUZqaS9rS3BWcTB4ZEhnL1F6S0ZvQzI1Mm11LzhNclhUSXF6Sgp5bEF6QkVnenRGRExkazNWV3pBWXYyWnBtOWg2N2EzY1l6OEE0ZURSSUlnc1dKUlJBcFlXUkRTQ1VyaUV5MkN6ClpPQlp4Nm56ZENxUE5kYllaejJEa0pWV25kTWZRN0hGdzdlL1N1QWtkaDlraDd5UzBWZkxRM3FRNUtXU3lJaWMKajFFQzMxWDF0UHVnbWhJdFJNKytRMFEvK1dtbjhCYytuTHNSTUZCZGpGQ01INmt5L1AvWHIvUXlkWVF4cXVmQgo0YURYeXdRUzQ3SE05ejU5aGlKZ0NnWkJVMStWYk04d09DNVNCaUdtYWxHZk8zSVlZcUxhWFpiOXAxUkRwZE1LCmNINW5nUy90QWdNQkFBRUNnZ0VBQnVMWGtFeU93dGVZYXhVVWxIVW5CWVZaVG56T1N2aFNyVnEwVC9TUDM2NWYKQ1Q5ZVBjQnIwUDRMckt3WmpXV0YyMU5Yb3RRRTdBVGt1a1JWZm5YZERXVFNZNG5sV1JxeGw1SklHR2lKWE9weQorRURrYWpFc3pBa0QrczlMSElHL2FaMkV6ak9WWUxVSk1XVC81S2s5NUxLSlZkN2JsUytoeThlOVdCWjJHcExtCnVpNTRNbTZGYkNjV08rV3I1TGd3WFNnTm1BWHluVDMwc3JFc1poNzlZRU9US3YyQ2R5Wjl1dDdVVHdqWHNmSmMKMk40RHQzdmxPWWxscElLem5heGx1cWl1Q3NQVW43cjZDRFJJMFBNcjR1d2JGOU44dyt1UlR1RHNINUViWnR4VApCTlRzVjh3dUpaNGNYcTJmazd2T3ZzYTFxYXpHbmhPTmdmZmo1NGsyNFFLQmdRRFVaZmJOdHo2MUtUdk1SdmE0CmwxRXludTB5MUd4SWNrVVRFRnBjWTFDVkt2ajV1aExQdXpRNUphVHY5djZ5SU1kdkh1SzJwRkZRSFpoaW1NM0kKQ3dubjBXZjVLcCtqSkc5eERHSFFJR2s3ZUJZZTl2VGIwY1lBOFZjVEw0d25VSElWTGNVdDAxUzBqUC92Z1BoLwo1TWo4K1AyVHpxSlN4eFlpdmFDNS8zNm9UUUtCZ1FENXdGSFp3T055Ujh2cVo5cjBtTmV0Q3RQSmkxVUVHRWw2Clk0WEVEWS9qd3J6SGl0TFRYaUx3YW1xNTVkcFJBLzQzNXRBSmV0WDIrMDJManN5Y0JwaFZFbTJoTWRWRDZJNkIKdWgxbVN0VDhWNXUwTk8wUjVtVWRnc1daZVNGeXJEd0J2ZU9VQzNwa2wySFMyNEhqMlVNUFlDa3MvbWNtVUl6MApxSzhRM2dKMklRS0JnREQ5UTZ1M05GTjhxem8ycy9sbmpXYnJtVEk4SksyaERhV1VCQU9ETkxiekxuSUxKUU9jCjNqTEFLQWJoSldYWWdhZHpyRDhNTDJVWExtcXZhK2RVQkhqZnArZWttU1Y3NWVoaFByNU9lM2NuLzVJc3k5VlgKMFIrdWlyTDJLSkY0MEpkcDh5emFyWkxuWXJEUFFvSGROeTZDRDVyajhqUzlqckY4bzNIREtHZVJBb0dBQWc3UApuZGUxQ0JBSFloc1E5c3I3bS9WbTRWWkFrUlFTSnV3REFpYUtkUG41ekRzY21abEErSElvQnZnWjRHa0VBem5uCnBPeGFMdnJMSE1kRWNGU3RsS1hlT1dITHZBK0NmUmNuZnR4Ry9QMUx6eVJRZjhGQ1BBZ0QwTXZxdHFNc3EyY0IKSlFzakt3a0VTVlI5c1g3c3lvZWtUemFaYXZ0bTdlMGw1Q0d3SzRFQ2dZQWhidUcvNlNmR1BjRWRDM0RZR1d3ego0cWRLb3haME44dk5SZDZGNHlLR09IQmdNK2JFMUZVcmxXN09yY1gyWGxpWlAyNndMZ2VTMEt6UkRkUmFRczFYCnkwNm8vays4NG9CSG5hd1dZTTRYdnFURkVzamZoVW9WRlJWMjVuQktEdWUyV3dKRnhDTS94N0MxdFNkU1d6UXAKNk1WRm5nbXlYL0toQUg4VXpnNzBWZz09Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K"
     tcp_zone_template: "airtelcloud-zonetemplate"
     mongo_db_name: "ccp_tcpwave_plugin"
+
+tenant-management-service:
+  replicaCount:
+    tenantManagementService: 1
+  client:
+    name: ""
+  pollingTime: 60  # in seconds
+  tenantMetadata:
+    enabled: true
+    stopUpdateOnceSet: true
+    endpointDetails:
+      baseUrl: ""
+      httpMethod: ""
+      defaultHeaders:
+        apikey: ""
+  tenantUserMetadata:
+    enabled: false
+    stopUpdateOnceSet: true
+    endpointDetails:
+      baseUrl: ""
+      httpMethod: ""
+      defaultHeaders:
+        apikey: ""
+  publishMeteringInfo:
+    enabled: false
+    endpointDetails:
+      baseUrl: ""
+      httpMethod: ""
+      defaultHeaders:
+        contentType: ""
+
+
 
 ## Postgresql HA Configuration
 ## Deploys a postgresql cluster in HA configuration

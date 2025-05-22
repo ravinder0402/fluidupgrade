@@ -152,6 +152,11 @@ data:
         endpoint: http://network-manager:8080
         rewritePrefix: /api/network-manager
       {{- end }}
+      {{- if .Values.global.tenantManagement.enabled }}
+      - prefix: /api/tenant-management
+        endpoint: http://tenant-managment-service:8080
+        rewritePrefix: /
+      {{- end }}
       {{- if .Values.global.metering.enabled }}
       - prefix: /api/license
         endpoint: http://orbiter-metering:8080
