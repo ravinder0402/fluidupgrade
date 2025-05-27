@@ -43,6 +43,7 @@ spec:
               key: password
         - name: MONGODB_SERVICE_SERVICE_HOST
           value: "compass-configdb"
+        
       containers:
       - name: network-manager
         image: {{ .Values.global.repository }}/orbiter-network-manager:{{ include "helper.imageTag" . }}
@@ -68,6 +69,10 @@ spec:
         - name: HTTPS_PROXY_URL
           value: {{ .Values.global.proxy.http_proxy | quote }}
         {{- end }}
+        - name: COMPASS_API_URL
+          value: "{{ .Values.apiEndpoint.compassEndpoint }}"
+        - name: ADMIN_PLATFORM_URL
+          value: "{{ .Values.apiEndpoint.adminPlatformEndpoint }}"
         volumeMounts:
         - name: network-config-vol
           mountPath: /opt/config.yml
