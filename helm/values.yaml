@@ -986,6 +986,10 @@ sockets:
 ccpExtension:
   replicaCount: 1
   image: "ccp-extension"
+  app:
+    csg_flavor_name: "nw.Large"
+    fsg_flavor_name: "nw.Med"
+    fortigate_image_name: "fortios.qcow2"
 
 tcpwaveExtension:
   replicaCount: 1
