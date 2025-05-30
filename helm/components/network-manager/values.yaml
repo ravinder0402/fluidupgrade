@@ -10,3 +10,8 @@ providerinfo:
   vlanend: 3000
   customername: airtel
   skipvpccreation: true
+
+apiEndpoint:
+  compassEndpoint: compass-api:8085
+  adminPlatformEndpoint: admin-platform:5000
+ 
