@@ -6,7 +6,7 @@ on:
     - 'helm/**'
 jobs:
   pr-check-build:
-    runs-on: newgroup
+    runs-on: lab-runners
 
     steps:
       - name: Checkout code
