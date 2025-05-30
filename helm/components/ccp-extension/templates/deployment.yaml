@@ -58,6 +58,9 @@ spec:
         - name: http
           containerPort: 8000
           protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: platform-api-config
         env:
           - name: POSTGRES_DB_URL
             value: "postgresql+asyncpg://ccs:ccsdbadmin@ccs-postgresql-cluster:5432/cloud"
@@ -71,6 +74,12 @@ spec:
           - name: HTTPS_PROXY_URL
             value: {{ .Values.global.proxy.http_proxy | quote }}
           {{- end }}
+          - name: CSG_FLAVOR_NAME
+            value: {{ .Values.app.csg_flavor_name | quote }}
+          - name: FSG_FLAVOR_NAME
+            value: {{ .Values.app.fsg_flavor_name | quote }}
+          - name: FORTIGATE_IMAGE_NAME
+            value: {{ .Values.app.fortigate_image_name | quote }}
         volumeMounts:
           - name: ccp-extension-logs
             mountPath: /var/logs/ccp_extension
