@@ -15,3 +15,13 @@ data:
       limits:
         maxSize: 1000000 # max memory allowed to be used in bytes for events per domain
         maxEntries: 5000 # max number of entries allowed to be used for events per domain
+    ordersConfig:
+      enabled: {{ .Values.ordersConfig.enabled }}
+      payment:
+        enabled: {{ .Values.ordersConfig.payment.enabled }}
+        endpointDetails:
+          baseUrl: {{ .Values.ordersConfig.payment.endpointDetails.baseUrl }}
+          httpMethod: {{ .Values.ordersConfig.payment.endpointDetails.httpMethod }}
+          defaultHeaders:
+            apikey: {{ .Values.ordersConfig.payment.endpointDetails.defaultHeaders.apikey }}
+    tenantQuotaInitEnabled: {{ .Values.tenantQuotaInitEnabled }}

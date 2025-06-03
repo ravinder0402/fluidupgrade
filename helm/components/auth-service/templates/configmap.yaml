@@ -162,6 +162,10 @@ data:
         endpoint: http://orbiter-metering:8080
       - prefix: /api/metering
         endpoint: http://orbiter-metering:8080
+      - prefix: /api/catalog
+        endpoint: http://orbiter-metering:8080
+      - prefix: /api/quota
+        endpoint: http://orbiter-metering:8080
       {{- end }}
       - prefix: /v1/download
         endpoint: http://compass-api:8085

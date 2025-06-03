@@ -1,2 +1,15 @@
 replicaCount:
   metering: 1
+
+ordersConfig:
+  enabled: true
+  payment:
+    enabled: true
+    endpointDetails:
+      baseUrl: "https://api.dev.cloud42.ai/billing/v1/admin/instance/hold/wallet/balance"
+      httpMethod: "POST"
+      defaultHeaders:
+        apikey: "7Z4lXwekKnKNIO4VCFznjqgMs3lj91MT"
+
+
+tenantQuotaInitEnabled: true
