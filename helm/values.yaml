@@ -1011,24 +1011,24 @@ tenant-management-service:
   replicaCount:
     tenantManagementService: 1
   client:
-    name: ""
+    name: "core42"
   pollingTime: 60  # in seconds
   tenantMetadata:
     enabled: true
     stopUpdateOnceSet: true
     endpointDetails:
-      baseUrl: ""
-      httpMethod: ""
+      baseUrl: "https://api.dev.cloud42.ai/user/v1/admin/tenants"
+      httpMethod: "GET"
       defaultHeaders:
-        apikey: ""
+        apikey: "7Z4lXwekKnKNIO4VCFznjqgMs3lj91MT"
   tenantUserMetadata:
     enabled: false
     stopUpdateOnceSet: true
     endpointDetails:
-      baseUrl: ""
-      httpMethod: ""
+      baseUrl: "https://api.dev.cloud42.ai/user/v1/admin/tenants"
+      httpMethod: "GET"
       defaultHeaders:
-        apikey: ""
+        apikey: "7Z4lXwekKnKNIO4VCFznjqgMs3lj91MT"
   publishMeteringInfo:
     enabled: false
     endpointDetails:
