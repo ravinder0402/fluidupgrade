@@ -475,7 +475,7 @@ controller:
     imageRepo: ""
     # hostNetwork indicating to generate agent manifest with host network enabled
     # relevant for scenarios where pod network doesnot have access to external services
-    hostNetwork: true
+    hostNetwork: false
   prometheus:
     # provide endpoint at which prometheus server for controller is installed.
     # this is used to scrape metrics information from compass controller
