@@ -34,8 +34,6 @@ spec:
         - configMapRef:
             name: platform-api-config   
         - configMapRef:
-            name: ccp-monitoring-config
-        - configMapRef:
             name: redis-config
         {{- if .Values.global.events.enabled }}
         - configMapRef:
