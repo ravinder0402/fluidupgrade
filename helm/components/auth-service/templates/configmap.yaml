@@ -51,6 +51,8 @@ data:
         username: {{ .Values.global.preOnboardedTenant.admin.username }}
         password: {{ .Values.global.preOnboardedTenant.admin.password }}
 {{- end }}
+    resourceAlias:
+{{ toYaml .Values.resourceAlias | indent 6 }}
 {{- if .Values.global.tenantManagement.register.enabled }}
     smtp:
       sender: {{ .Values.global.tenantManagement.register.smtp.sender }}

@@ -17,6 +17,15 @@ global:
       username: ""
       password: ""
 
+resourceAlias:
+  - name: domain
+    alias: domain
+  - name: project
+    alias: project
+  - name: computes
+    alias: computes
+  - name: file-storage
+    alias: file-storage
 
 keycloak:
   # keycloak clientID (needs to be a public client)

@@ -526,6 +526,15 @@ trivy:
       - ""
 
 auth-service:
+  resourceAlias:
+    - name: domain
+      alias: domain
+    - name: project
+      alias: project
+    - name: computes
+      alias: computes
+    - name: file-storage
+      alias: file-storage
   replicaCount:
     orbiterAuth: 1
   keycloak:
