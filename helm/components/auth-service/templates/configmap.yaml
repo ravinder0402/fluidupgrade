@@ -98,7 +98,7 @@ data:
         rewritePrefix: /v1/download
         accessType: public
       - prefix: /api/slurmrest
-        endpoint: http://compass-cluster-manager:9085
+        endpoint: http://compass-api:9085
         rewritePrefix: /
       - prefix: /api/orchestrator
         endpoint: http://compass-orchestrator:8080
