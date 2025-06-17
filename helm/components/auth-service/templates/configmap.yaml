@@ -34,6 +34,7 @@ data:
         storeId: {{ .Values.global.openfga.storeId }}
         apiToken: {{ .Values.global.openfga.apiToken }}
 {{- end }}
+      authModel: {{ .Values.authModel | quote }}
     events:
       limits:
         maxSize: 1000000 # max memory allowed to be used in bytes for events per domain
@@ -53,6 +54,8 @@ data:
 {{- end }}
     resourceAlias:
 {{ toYaml .Values.resourceAlias | indent 6 }}
+    roleNameAlias:
+{{ toYaml .Values.roleNameAlias | indent 6 }}
 {{- if .Values.global.tenantManagement.register.enabled }}
     smtp:
       sender: {{ .Values.global.tenantManagement.register.smtp.sender }}
