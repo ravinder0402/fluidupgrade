@@ -17,6 +17,8 @@ global:
       username: ""
       password: ""
 
+authModel: "basic"
+
 resourceAlias:
   - name: domain
     alias: domain
@@ -26,6 +28,14 @@ resourceAlias:
     alias: computes
   - name: file-storage
     alias: file-storage
+
+roleNameAlias:
+  - name: admin
+    alias: admin
+  - name: manager
+    alias: manager
+  - name: member
+    alias: member
 
 keycloak:
   # keycloak clientID (needs to be a public client)

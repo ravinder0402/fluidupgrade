@@ -526,6 +526,7 @@ trivy:
       - ""
 
 auth-service:
+  authModel: basic
   resourceAlias:
     - name: domain
       alias: domain
@@ -535,6 +536,13 @@ auth-service:
       alias: computes
     - name: file-storage
       alias: file-storage
+  roleNameAlias:
+    - name: admin
+      alias: admin
+    - name: manager
+      alias: manager
+    - name: member
+      alias: member
   replicaCount:
     orbiterAuth: 1
   keycloak:
