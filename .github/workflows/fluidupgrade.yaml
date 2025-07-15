@@ -22,5 +22,5 @@ jobs:
       - name: Helm upgrade/install fluid chart
         working-directory: ./helm  
         run: |
-          helm upgrade --install fluid . -f values-new.yaml -n fluid-new --create-namespace
+          helm upgrade --install fluid-new . -f values-new.yaml -n fluid-new --create-namespace
           helm list -A
