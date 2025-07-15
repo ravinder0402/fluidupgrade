@@ -196,7 +196,7 @@ global:
   # to enable and configure container registry module for the platform
   # that allows capability of container registry management
   containerRegistry:
-    enabled: true
+    enabled: false
 
   # to enable and configure baremetal module for the platform
   # that allows capability of managing baremetal resources
@@ -221,10 +221,10 @@ global:
   # network components including firewall, loadbalancer, PublicIP and NAT
   # management apart from the core tenant access network rollout
   networkManager:
-    enabled: true
+    enabled: false
 
   ccpExtension:
-    enabled: false
+    enabled: true
 
   adminServices:
     enabled: true
@@ -616,7 +616,7 @@ grafana:
   # persistence is enabled to ensure we don't have to worry
   # about grafana restarts, please don not change this configuration
   persistence:
-    enabled: false
+    enabled: true
     # storageClassName: default
     accessModes:
       - ReadWriteOnce
@@ -769,7 +769,7 @@ adminServices:
     managementURL: 
       resource: ""
     ## Enabled Services
-    enabledServices: "admin-action-logs,admin-user,all-user,availability-zone,block-storage,compute,compute-availability-zone,compute-snapshot,flavors,images,network,network-availability-zone,object-storage-provider,organisation,project,provider,provider-cluster,default-rule,region,resource-metrics,security-group,security-group-rule,subnets,storage-provider,volume-type,volume-availability-zone,volume-snapshot,quota-request,quota-list,default-quota,namespaces,flavor-group,admin-access-logs"
+    enabledServices: "bare-metal-server,admin-access-logs,admin-action-logs,admin-user,all-user,autoscaling-group,availability-zone,block-storage,compute,compute-availability-zone,file-storage,firewall,load-balancer,network,network-availability-zone,object-storage-provider,organisation,project,provider,provider-cluster,default-rule,public-ip,security-group,security-group-rule,subnets,user-access-logs,user-action-logs,volume-type,volume-availability-zone,volume-snapshot,quota-request,quota-list,storage-provider,default-quota,region"
   adminPlatform:
     image: "fluid_admin_platform"
     resources: 
@@ -804,7 +804,7 @@ userPortal:
       cpu: 100m
       memory: 200Mi
   ## Enabled Services
-    enabledServices: "scaling-group,dbaas-mongo,managed-database,nas,archive,backup,public-ip,managed-database,container,caas,compute,compute-snapshot,documentation,tenant-firewall,load-balancer,monitoring,network,object-storage,pam,project-activity,security-group,support,volume,volume-snapshot,servicenow,volume-type,availability-zone,storage-provider,registry,resource-pricing,vpn,key-pair,cluster,zone,nat-gateway,create-access-point"
+    enabledServices: "bare-metal-server,admin-access-logs,admin-action-logs,admin-user,all-user,autoscaling-group,availability-zone,block-storage,compute,compute-availability-zone,file-storage,firewall,load-balancer,network,network-availability-zone,object-storage-provider,organisation,project,provider,provider-cluster,default-rule,public-ip,security-group,security-group-rule,subnets,user-access-logs,user-action-logs,volume-type,volume-availability-zone,volume-snapshot,quota-request,quota-list,storage-provider,default-quota,region"
   docsURL: ""
   additionalURLs:
     appStoreURL: ""

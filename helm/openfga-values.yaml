@@ -1,0 +1,16 @@
+replicaCount: 1
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: password
+    database: postgres
+datastore:
+  engine: postgres
+  uri: "postgres://postgres:password@openfga-postgresql:5432/postgres?sslmode=disable"
+authn:
+  method:
+  preshared:
+    keys:
+    - MYPreSharedToken1
+service:
+  type: NodePort

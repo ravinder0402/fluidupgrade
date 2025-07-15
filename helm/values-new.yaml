@@ -31,8 +31,8 @@ global:
   UseDailyBuilds: &useDailyBuilds false
 
   # this field is considered only when UseDailyBuilds is set to be false
-  # provides configuration of build tag to be used for container images
-  releaseTag: &releaseTag 2025-06-17
+  # provides configuration of build tag to be used for container images 2025-06-17
+  releaseTag: &releaseTag 2025-07-10
 
   # image pull policy to be used
   imagePullPolicy: &imagePolicy Always
@@ -117,7 +117,7 @@ global:
   openfga:
     enabled: true
     endpoint: 'http://openfga.openfga:8080'
-    storeId: '01JY0P82WNYJJPEAPJMJ09D22S'
+    storeId: '01JYS0AAFZA0YJPMB12VVXT6KZ'
     apiToken: 'MYPreSharedToken1'
 
   ## Keycloak Architecture override to enable HA or standalone
@@ -126,8 +126,8 @@ global:
     domain: &keycloakDomain ""
     tlsSecret: &keycloakTls ""
     nodePorts:
-      http: &keycloakNodePortHTTP "32701"
-      https: &keycloakNodePortHTTPS "32702"
+      http: &keycloakNodePortHTTP "31701"
+      https: &keycloakNodePortHTTPS "31702"
 
   controller:
     mtls:
@@ -147,11 +147,11 @@ global:
     userPortal:
       domain: &userDomain ""
       tlsSecret: &userTls ""
-      nodePort: &frontendNodePort "32500"
+      nodePort: &frontendNodePort "31500"
     vmconsole:
       domain: &vmconsoleDomain ""
       tlsSecret: &vmconsoleTls ""
-      nodePort: &vmconsoleNodePort "32700"
+      nodePort: &vmconsoleNodePort "31700"
     # For Production environment we require kyc status validation
     # However, for dev and test environments we should be able to skip
     # these validations
@@ -196,7 +196,7 @@ global:
   # to enable and configure container registry module for the platform
   # that allows capability of container registry management
   containerRegistry:
-    enabled: true
+    enabled: false
 
   # to enable and configure baremetal module for the platform
   # that allows capability of managing baremetal resources
@@ -221,10 +221,10 @@ global:
   # network components including firewall, loadbalancer, PublicIP and NAT
   # management apart from the core tenant access network rollout
   networkManager:
-    enabled: true
+    enabled: false
 
   ccpExtension:
-    enabled: false
+    enabled: true
 
   adminServices:
     enabled: true
@@ -616,7 +616,7 @@ grafana:
   # persistence is enabled to ensure we don't have to worry
   # about grafana restarts, please don not change this configuration
   persistence:
-    enabled: false
+    enabled: true
     # storageClassName: default
     accessModes:
       - ReadWriteOnce
@@ -749,7 +749,7 @@ adminServices:
   adminportal:
     image: "fluid-admin"
     service:
-      nodePort: "32600"
+      nodePort: "31600"
     resources: 
       limits:
         cpu: 400m
@@ -769,7 +769,7 @@ adminServices:
     managementURL: 
       resource: ""
     ## Enabled Services
-    enabledServices: "admin-action-logs,admin-user,all-user,availability-zone,block-storage,compute,compute-availability-zone,compute-snapshot,flavors,images,network,network-availability-zone,object-storage-provider,organisation,project,provider,provider-cluster,default-rule,region,resource-metrics,security-group,security-group-rule,subnets,storage-provider,volume-type,volume-availability-zone,volume-snapshot,quota-request,quota-list,default-quota,namespaces,flavor-group,admin-access-logs"
+    enabledServices: "bare-metal-server,admin-access-logs,admin-action-logs,admin-user,all-user,autoscaling-group,availability-zone,block-storage,compute,compute-availability-zone,file-storage,firewall,load-balancer,network,network-availability-zone,object-storage-provider,organisation,project,provider,provider-cluster,default-rule,public-ip,security-group,security-group-rule,subnets,user-access-logs,user-action-logs,volume-type,volume-availability-zone,volume-snapshot,quota-request,quota-list,storage-provider,default-quota,region"
   adminPlatform:
     image: "fluid_admin_platform"
     resources: 
@@ -804,7 +804,7 @@ userPortal:
       cpu: 100m
       memory: 200Mi
   ## Enabled Services
-    enabledServices: "scaling-group,dbaas-mongo,managed-database,nas,archive,backup,public-ip,managed-database,container,caas,compute,compute-snapshot,documentation,tenant-firewall,load-balancer,monitoring,network,object-storage,pam,project-activity,security-group,support,volume,volume-snapshot,servicenow,volume-type,availability-zone,storage-provider,registry,resource-pricing,vpn,key-pair,cluster,zone,nat-gateway,create-access-point"
+    enabledServices: "cluster,compute,slurm,registry"
   docsURL: ""
   additionalURLs:
     appStoreURL: ""
@@ -1117,7 +1117,7 @@ postgresqlHA:
 ## Postgresql Operator configuration
 ## This operator will manage the lifecycle of the above postgresql cluster
 postgres-operator:
-  enabled: true
+  enabled: false
   registry: docker.io
   repository: coredgeio/postgres-operator
   tag: v1.12.2

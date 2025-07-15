@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orbiter-auth-config
+  namespace: fluid-new
+data:
+  config.yml: |
+    allowCors: true
+    keycloak:
+      clientId: controller
+      introspect:
+        clientId:
+        clientSecret:
+    mongoDb:
+      host: compass-configdb
+      port: 27017
+    metricsDb:
+      host: compass-metricsdb
+      port: 27017
+    accessLogs:
+      limits:
+        maxSize: 1000000
+        maxEntries: 5000
+    geolocation:
+      host:
+      port:
+    gateway:
+      rateLimiter:
+        rateLimit: 200
+        burstSize: 500
+      openFGA:
+        endpoint: http://openfga.openfga:8080
+        storeId: 01JYS0AAFZA0YJPMB12VVXT6KZ
+        apiToken: MYPreSharedToken1
+      authModel: "basic"
+    events:
+      limits:
+        maxSize: 1000000
+        maxEntries: 5000
+    defaultRepos:
+      enabled: true
+    tenant:
+      name: default
+    resourceAlias:
+      - alias: domain
+        name: domain
+      - alias: project
+        name: project
+      - alias: computes
+        name: computes
+      - alias: file-storage
+        name: file-storage
+    roleNameAlias:
+      - alias: admin
+        name: admin
+      - alias: manager
+        name: manager
+      - alias: member
+        name: member
+
