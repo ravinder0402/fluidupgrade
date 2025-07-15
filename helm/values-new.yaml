@@ -32,7 +32,7 @@ global:
 
   # this field is considered only when UseDailyBuilds is set to be false
   # provides configuration of build tag to be used for container images 2025-06-17
-  releaseTag: &releaseTag 2025-06-22
+  releaseTag: &releaseTag 2025-06-23
 
   # image pull policy to be used
   imagePullPolicy: &imagePolicy Always
