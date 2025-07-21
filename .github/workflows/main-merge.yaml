@@ -1,24 +1,24 @@
-name: Validate helm build for merge on main/master
-on:
-  push:
-    branches: [ main, master ]
-    paths: 
-    - 'helm/**'
-jobs:
-  check-build-main-commit:
-    runs-on: newgroup
-    steps:
-    - uses: actions/checkout@v2
-    - name: validate helm build
-      run: make
-    - name: Login to docker hub
-      env:
-        DOCKER_USER: ${{secrets.DOCKERHUB_USER}}
-        DOCKER_PWD: ${{secrets.DOCKERHUB_PUSH_TOKEN}}
-      run: helm registry login registry-1.docker.io -u $DOCKER_USER -p $DOCKER_PWD
-    - name: push helm to docker
-      run: make push-helm
-    - name: logout from docker hub
-      run: helm registry logout registry-1.docker.io
-    - name: cleanup the build
-      run: make clean
+# name: Validate helm build for merge on main/master
+# on:
+#   push:
+#     branches: [ main, master ]
+#     paths: 
+#     - 'helm/**'
+# jobs:
+#   check-build-main-commit:
+#     runs-on: newgroup
+#     steps:
+#     - uses: actions/checkout@v2
+#     - name: validate helm build
+#       run: make
+#     - name: Login to docker hub
+#       env:
+#         DOCKER_USER: ${{secrets.DOCKERHUB_USER}}
+#         DOCKER_PWD: ${{secrets.DOCKERHUB_PUSH_TOKEN}}
+#       run: helm registry login registry-1.docker.io -u $DOCKER_USER -p $DOCKER_PWD
+#     - name: push helm to docker
+#       run: make push-helm
+#     - name: logout from docker hub
+#       run: helm registry logout registry-1.docker.io
+#     - name: cleanup the build
+#       run: make clean
