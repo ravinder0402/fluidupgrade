@@ -1,4 +1,4 @@
-name: Deploying Nginx and Helm upgrade
+name: Ugrading fluid using helm
 
 on:
   push:
@@ -27,6 +27,10 @@ jobs:
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
           cp values.yaml "$BACKUP_DIR/values.yaml.$TIMESTAMP"
           echo "Backup saved to $BACKUP_DIR/values.yaml.$TIMESTAMP"
+
+      - name: Helm registry login
+        run: |
+          helm registry login docker.io -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Helm dependency build
         working-directory: ./helm
