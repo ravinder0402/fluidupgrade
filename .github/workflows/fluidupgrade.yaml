@@ -22,7 +22,7 @@ jobs:
       - name: Backup values.yaml file
         working-directory: ./helm
         run: |
-          BACKUP_DIR="../backup"
+          BACKUP_DIR="$HOME/backup"
           mkdir -p "$BACKUP_DIR"
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
           cp values.yaml "$BACKUP_DIR/values.yaml.$TIMESTAMP"
