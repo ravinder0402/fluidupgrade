@@ -1,4 +1,4 @@
-name:  Helm upgrade
+name: Deploying Nginx and Helm upgrade
 
 on:
   push:
@@ -19,22 +19,21 @@ jobs:
           export KUBECONFIG=$PWD/kubeconfig
           kubectl config get-contexts
 
-      - name: Backup values.yaml to home directory backup folder
+      - name: Backup values.yaml to /home/ubuntu/ccs-helm-charts/backup
+        working-directory: ./ccs-helm-charts/helm
         run: |
           BACKUP_DIR="/home/ubuntu/ccs-helm-charts/backup"
           mkdir -p "$BACKUP_DIR"
-          TIMESTAMP=$(date +%Y%m%d)
-          cp ./ccs-helm-charts/helm/values.yaml "$BACKUP_DIR/values.yaml.$TIMESTAMP"
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          cp values.yaml "$BACKUP_DIR/values.yaml.$TIMESTAMP"
           echo "Backup saved to $BACKUP_DIR/values.yaml.$TIMESTAMP"
 
-      - name: Add required Helm repo
-        run: |
-          helm repo add grafana https://grafana.github.io/helm-charts
-          helm repo update
+      - name: Helm dependency build
+        working-directory: ./ccs-helm-charts/helm
+        run: helm dependency build
 
       - name: Helm upgrade/install fluid chart
-        working-directory: ./ccs-helm-charts/helm  
+        working-directory: ./ccs-helm-charts/helm
         run: |
-          helm dependency build
           helm upgrade --install fluid . -f values.yaml -n fluid --create-namespace
           helm list -A
