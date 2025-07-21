@@ -1,4 +1,4 @@
-name: Upgrading fluid using the helm
+name: Fluid upgrade using helm
 
 on:
   push:
@@ -19,14 +19,16 @@ jobs:
           export KUBECONFIG=$PWD/kubeconfig
           kubectl config get-contexts
 
-      - name: Backup values.yaml before helm upgrade/install
-        working-directory: ./helm
+      - name: Backup values.yaml before upgrade
+        working-directory: ./ccs-helm-charts/helm
         run: |
           mkdir -p backup
           cp values.yaml backup/values.yaml.$(date +%Y%m%d%H%M%S)
+          echo "Backup created:"
+          ls -l backup
 
       - name: Helm upgrade/install fluid chart
-        working-directory: ./helm
+        working-directory: ./ccs-helm-charts/helm
         run: |
           helm dependency build
           helm upgrade --install fluid . -f values.yaml -n fluid --create-namespace
@@ -36,4 +38,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: helm-values-backup
-          path: ./helm/backup/
+          path: ./ccs-helm-charts/helm/backup
