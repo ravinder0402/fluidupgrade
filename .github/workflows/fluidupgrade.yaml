@@ -1,4 +1,4 @@
-name: Ugrading fluid using helm
+name: Upgrading fluid using helm
 
 on:
   push:
@@ -18,6 +18,15 @@ jobs:
           echo "${{ secrets.KUBECONFIG_RAW }}" > kubeconfig
           export KUBECONFIG=$PWD/kubeconfig
           kubectl config get-contexts
+
+      - name: Backup PostgreSQL database
+        run: |
+          BACKUP_DIR="$HOME/backup"
+          mkdir -p "$BACKUP_DIR"
+          # Dump database 'cloud' using user 'ccs' and password from secrets
+          kubectl exec -n fluid ccs-postgresql-cluster-0 -- \
+            env PGPASSWORD="${{ secrets.POSTGRES_PASSWORD }}" pg_dump -U ccs cloud > "$BACKUP_DIR/cloud_backup.sql"
+          echo "PostgreSQL backup saved to $BACKUP_DIR/cloud_backup.sql"
 
       - name: Backup values.yaml file
         working-directory: ./helm
