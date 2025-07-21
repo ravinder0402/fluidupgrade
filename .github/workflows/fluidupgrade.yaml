@@ -1,4 +1,4 @@
-name: Fluid upgrade using helm
+name: Deploying Nginx and Helm upgrade
 
 on:
   push:
@@ -13,19 +13,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Copy Helm charts folder to workspace
+        run: cp -r ~/ccs-helm-charts $GITHUB_WORKSPACE/ccs-helm-charts
+
       - name: Set up kubeconfig
         run: |
           echo "${{ secrets.KUBECONFIG_RAW }}" > kubeconfig
           export KUBECONFIG=$PWD/kubeconfig
           kubectl config get-contexts
 
-      - name: Backup values.yaml before upgrade
+      - name: Backup values.yaml inside ccs-helm-charts/helm/backup
         working-directory: ./ccs-helm-charts/helm
         run: |
           mkdir -p backup
           cp values.yaml backup/values.yaml.$(date +%Y%m%d%H%M%S)
-          echo "Backup created:"
-          ls -l backup
 
       - name: Helm upgrade/install fluid chart
         working-directory: ./ccs-helm-charts/helm
@@ -33,9 +34,3 @@ jobs:
           helm dependency build
           helm upgrade --install fluid . -f values.yaml -n fluid --create-namespace
           helm list -A
-
-      - name: Upload backup artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: helm-values-backup
-          path: ./ccs-helm-charts/helm/backup
