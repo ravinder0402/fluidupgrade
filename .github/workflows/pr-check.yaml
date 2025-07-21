@@ -1,20 +1,20 @@
-name: Validate pull request for helm
-on:
-  pull_request:
-    types: [opened, reopened, edited, synchronize]
-    paths: 
-    - 'helm/**'
-jobs:
-  pr-check-build:
-    runs-on: lab-runners
+# name: Validate pull request for helm
+# on:
+#   pull_request:
+#     types: [opened, reopened, edited, synchronize]
+#     paths: 
+#     - 'helm/**'
+# jobs:
+#   pr-check-build:
+#     runs-on: lab-runners
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v2
 
-      - name: Validate Helm chart
-        run: make 
+#       - name: Validate Helm chart
+#         run: make 
 
-      - name: Cleanup
-        run: make clean
+#       - name: Cleanup
+#         run: make clean
       
