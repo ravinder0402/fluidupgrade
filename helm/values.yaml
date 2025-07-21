@@ -32,7 +32,7 @@ global:
 
   # this field is considered only when UseDailyBuilds is set to be false
   # provides configuration of build tag to be used for container images
-  releaseTag: &releaseTag latest
+  releaseTag: &releaseTag 2025-06-18
 
   # image pull policy to be used
   imagePullPolicy: &imagePolicy Always
@@ -44,7 +44,7 @@ global:
   # external IP for controller, relevant, when domain is not
   # configured to allow generation of server certificate validity using
   # this IP address
-  externalIP: &controllerIP 127.0.0.1
+  externalIP: &controllerIP 172.16.108.223
 
   # Flask Config (Development OR Production)
   # TEMPORARY
@@ -115,10 +115,10 @@ global:
       password: ""
 
   openfga:
-    enabled: false
-    endpoint: ''
-    storeId: ''
-    apiToken: ''
+    enabled: true
+    endpoint: 'http://openfga.openfga:8080'
+    storeId: '01JY1C2JQNCPQHCBJ2YR18WMGP'
+    apiToken: 'MYPreSharedToken1'
 
   ## Keycloak Architecture override to enable HA or standalone
   keycloak:
@@ -201,7 +201,7 @@ global:
   # to enable and configure baremetal module for the platform
   # that allows capability of managing baremetal resources
   baremetalManager:
-    enabled: false
+    enabled: true
 
   # to enable and configure metering module for the platform that
   # allows capability for metering the resource usage
@@ -499,8 +499,8 @@ repository-cred:
   repository: docker.io
   # container repository credentials
   repositoryCred:
-    user: docker
-    password: password
+    user: kubedrona
+    password: b0d2dd30-cca5-48ee-aa01-45a94fdc8751
     mail: info@coredge.io
 
 # certs:
@@ -769,7 +769,7 @@ adminServices:
     managementURL: 
       resource: ""
     ## Enabled Services
-    enabledServices: ""
+    enabledServices: "bare-metal-server,admin-access-logs,admin-action-logs,admin-user,all-user,autoscaling-group,availability-zone,block-storage,compute,compute-availability-zone,file-storage,firewall,load-balancer,network,network-availability-zone,object-storage-provider,organisation,project,provider,provider-cluster,default-rule,public-ip,security-group,security-group-rule,subnets,user-access-logs,user-action-logs,volume-type,volume-availability-zone,volume-snapshot,quota-request,quota-list,storage-provider,default-quota,region"
   adminPlatform:
     image: "fluid_admin_platform"
     resources: 
@@ -804,7 +804,7 @@ userPortal:
       cpu: 100m
       memory: 200Mi
   ## Enabled Services
-  enabledServices: ""
+  enabledServices: "cluster,compute,slurm,registry"
   docsURL: ""
   additionalURLs:
     appStoreURL: ""
