@@ -1,4 +1,4 @@
-name: Upgrading FLuid using the Helm Upgrade
+name: Fluid upgrade using helm 
 
 on:
   push:
@@ -22,14 +22,14 @@ jobs:
       - name: Helm upgrade/install fluid chart with values.yaml backup
         working-directory: ./helm
         run: |
-          # Create backup directory if not exists
           mkdir -p backup
-
-          # Backup values.yaml with timestamp
           cp values.yaml backup/values.yaml.$(date +%Y%m%d%H%M%S)
-
-          # Build dependencies and upgrade/install
           helm dependency build
-          helm upgrade  fluid . -f values.yaml -n fluid --create-namespace
-
+          helm upgrade --install fluid . -f values.yaml -n fluid --create-namespace
           helm list -A
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: helm-values-backup
+          path: ./helm/backup/
