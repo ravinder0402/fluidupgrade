@@ -28,6 +28,15 @@ jobs:
             env PGPASSWORD="${{ secrets.POSTGRES_PASSWORD }}" pg_dump -U ccs cloud > "$BACKUP_DIR/cloud_backup.sql"
           echo "PostgreSQL backup saved to $BACKUP_DIR/cloud_backup.sql"
 
+      - name: Backup MongoDB full dump
+        run: |
+          BACKUP_DIR="$HOME/backup"
+          mkdir -p "$BACKUP_DIR"
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          kubectl exec -n fluid configdb-0 -- \
+            mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive --gzip > "$BACKUP_DIR/mongodb_backup_$TIMESTAMP.gz"
+          echo "MongoDB backup saved to $BACKUP_DIR/mongodb_backup_$TIMESTAMP.gz"
+
       - name: Backup values.yaml file
         working-directory: ./helm
         run: |
