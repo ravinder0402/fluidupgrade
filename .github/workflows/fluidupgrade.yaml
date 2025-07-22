@@ -29,8 +29,8 @@ jobs:
           mkdir -p ~/.aws
           cat <<EOF > ~/.aws/credentials
           [default]
-          aws_access_key_id = minioadmin
-          aws_secret_access_key = minioadmin123
+          aws_access_key_id = ${{ secrets.MINIO_ACCESS_KEY }}
+          aws_secret_access_key = ${{ secrets.MINIO_SECRET_KEY }}
           EOF
 
           cat <<EOF > ~/.aws/config
@@ -42,26 +42,29 @@ jobs:
       - name: Backup PostgreSQL and upload to MinIO
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          FILE="cloud_backup_$TIMESTAMP.sql"
           kubectl exec -n fluid ccs-postgresql-cluster-0 -- \
-            env PGPASSWORD="${{ secrets.POSTGRES_PASSWORD }}" pg_dump -U ccs cloud > cloud_backup_$TIMESTAMP.sql
-          aws --endpoint-url http://172.16.109.86:9000 s3 cp cloud_backup_$TIMESTAMP.sql s3://minio-bucket/cloud_backup_$TIMESTAMP.sql
-          rm cloud_backup_$TIMESTAMP.sql
+            env PGPASSWORD="${{ secrets.POSTGRES_PASSWORD }}" pg_dump -U ccs cloud > $FILE
+          aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
+          rm $FILE
 
       - name: Backup MongoDB and upload to MinIO
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          FILE="mongodb_backup_$TIMESTAMP.gz"
           kubectl exec -n fluid configdb-0 -- \
-            mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive --gzip > mongodb_backup_$TIMESTAMP.gz
-          aws --endpoint-url http://172.16.109.86:9000 s3 cp mongodb_backup_$TIMESTAMP.gz s3://minio-bucket/mongodb_backup_$TIMESTAMP.gz
-          rm mongodb_backup_$TIMESTAMP.gz
+            mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive --gzip > $FILE
+          aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
+          rm $FILE
 
       - name: Backup values.yaml and upload to MinIO
         working-directory: ./helm
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          cp values.yaml values.yaml.$TIMESTAMP
-          aws --endpoint-url http://172.16.109.86:9000 s3 cp values.yaml.$TIMESTAMP s3://minio-bucket/values.yaml.$TIMESTAMP
-          rm values.yaml.$TIMESTAMP
+          FILE="values.yaml.$TIMESTAMP"
+          cp values.yaml $FILE
+          aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
+          rm $FILE
 
       - name: Helm registry login
         run: |
