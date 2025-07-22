@@ -1,61 +1,61 @@
-name: Upgrading fluid using helm
+# name: Upgrading fluid using helm
 
-on:
-  push:
-    branches:
-      - main
+# on:
+#   push:
+#     branches:
+#       - main
 
-jobs:
-  deploy:
-    runs-on: self-hosted
+# jobs:
+#   deploy:
+#     runs-on: self-hosted
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
 
-      - name: Set up kubeconfig
-        run: |
-          echo "${{ secrets.KUBECONFIG_RAW }}" > kubeconfig
-          export KUBECONFIG=$PWD/kubeconfig
-          kubectl config get-contexts
+#       - name: Set up kubeconfig
+#         run: |
+#           echo "${{ secrets.KUBECONFIG_RAW }}" > kubeconfig
+#           export KUBECONFIG=$PWD/kubeconfig
+#           kubectl config get-contexts
 
-      - name: Backup PostgreSQL database
-        run: |
-          BACKUP_DIR="$HOME/backup"
-          mkdir -p "$BACKUP_DIR"
-          # Dump database 'cloud' using user 'ccs' and password from secrets
-          kubectl exec -n fluid ccs-postgresql-cluster-0 -- \
-            env PGPASSWORD="${{ secrets.POSTGRES_PASSWORD }}" pg_dump -U ccs cloud > "$BACKUP_DIR/cloud_backup.sql"
-          echo "PostgreSQL backup saved to $BACKUP_DIR/cloud_backup.sql"
+#       - name: Backup PostgreSQL database
+#         run: |
+#           BACKUP_DIR="$HOME/backup"
+#           mkdir -p "$BACKUP_DIR"
+#           # Dump database 'cloud' using user 'ccs' and password from secrets
+#           kubectl exec -n fluid ccs-postgresql-cluster-0 -- \
+#             env PGPASSWORD="${{ secrets.POSTGRES_PASSWORD }}" pg_dump -U ccs cloud > "$BACKUP_DIR/cloud_backup.sql"
+#           echo "PostgreSQL backup saved to $BACKUP_DIR/cloud_backup.sql"
 
-      - name: Backup MongoDB full dump
-        run: |
-          BACKUP_DIR="$HOME/backup"
-          mkdir -p "$BACKUP_DIR"
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          kubectl exec -n fluid configdb-0 -- \
-            mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive --gzip > "$BACKUP_DIR/mongodb_backup_$TIMESTAMP.gz"
-          echo "MongoDB backup saved to $BACKUP_DIR/mongodb_backup_$TIMESTAMP.gz"
+#       - name: Backup MongoDB full dump
+#         run: |
+#           BACKUP_DIR="$HOME/backup"
+#           mkdir -p "$BACKUP_DIR"
+#           TIMESTAMP=$(date +%Y%m%d%H%M%S)
+#           kubectl exec -n fluid configdb-0 -- \
+#             mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive --gzip > "$BACKUP_DIR/mongodb_backup_$TIMESTAMP.gz"
+#           echo "MongoDB backup saved to $BACKUP_DIR/mongodb_backup_$TIMESTAMP.gz"
 
-      - name: Backup values.yaml file
-        working-directory: ./helm
-        run: |
-          BACKUP_DIR="$HOME/backup"
-          mkdir -p "$BACKUP_DIR"
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          cp values.yaml "$BACKUP_DIR/values.yaml.$TIMESTAMP"
-          echo "Backup saved to $BACKUP_DIR/values.yaml.$TIMESTAMP"
+#       - name: Backup values.yaml file
+#         working-directory: ./helm
+#         run: |
+#           BACKUP_DIR="$HOME/backup"
+#           mkdir -p "$BACKUP_DIR"
+#           TIMESTAMP=$(date +%Y%m%d%H%M%S)
+#           cp values.yaml "$BACKUP_DIR/values.yaml.$TIMESTAMP"
+#           echo "Backup saved to $BACKUP_DIR/values.yaml.$TIMESTAMP"
 
-      - name: Helm registry login
-        run: |
-          helm registry login docker.io -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+#       - name: Helm registry login
+#         run: |
+#           helm registry login docker.io -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Helm dependency build
-        working-directory: ./helm
-        run: helm dependency build
+#       - name: Helm dependency build
+#         working-directory: ./helm
+#         run: helm dependency build
 
-      - name: Helm upgrade/install fluid chart
-        working-directory: ./helm
-        run: |
-          helm upgrade --install fluid . -f values.yaml -n fluid --create-namespace
-          helm list -A
+#       - name: Helm upgrade/install fluid chart
+#         working-directory: ./helm
+#         run: |
+#           helm upgrade --install fluid . -f values.yaml -n fluid --create-namespace
+#           helm list -A
