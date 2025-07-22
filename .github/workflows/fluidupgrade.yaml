@@ -39,23 +39,48 @@ jobs:
           output = json
           EOF
 
-      - name: Backup PostgreSQL and upload to MinIO
+      - name: Backup CCS PostgreSQL and upload to MinIO
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          FILE="cloud_backup_$TIMESTAMP.sql"
+          FILE="ccs_pg_backup$TIMESTAMP.sql"
           kubectl exec -n fluid ccs-postgresql-cluster-0 -- \
             env PGPASSWORD="${{ secrets.POSTGRES_PASSWORD }}" pg_dump -U ccs cloud > $FILE
           aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
           rm $FILE
-
-      - name: Backup MongoDB and upload to MinIO
+          
+      - name: Backup Keycloak PostgreSQL cluster and upload to MinIO
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          FILE="mongodb_backup_$TIMESTAMP.gz"
+          FILE="keycloak_pg_backup_$TIMESTAMP.sql"
+          kubectl exec -n fluid keycloak-postgresql-cluster-0 -- sh -c "
+            export PGPASSWORD='${{ secrets.KEYCLOAK_DB_PASSWORD }}';
+            pg_dump -U keycloak keycloak > /tmp/keycloak.sql &&
+            pg_dump -U keycloak keycloak_postgresql_cluster > /tmp/keycloak_cluster.sql &&
+            pg_dump -U postgres postgres > /tmp/postgres.sql &&
+            cat /tmp/keycloak.sql /tmp/keycloak_cluster.sql /tmp/postgres.sql
+          " > $FILE
+          aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
+          rm $FILE
+
+
+      - name: Backup MongoDB and upload to MinIO ( Config-db)
+        run: |
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          FILE="config-db_mongodb_backup_$TIMESTAMP.gz"
           kubectl exec -n fluid configdb-0 -- \
             mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive --gzip > $FILE
           aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
           rm $FILE
+          
+      - name: Backup MongoDB and upload to MinIO ( Metrics-db)
+        run: |
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          FILE="metricsdb_mongodb_backup_$TIMESTAMP.gz"
+          kubectl exec -n fluid metricsdb-0 -- \
+            mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive --gzip > $FILE
+          aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
+          rm $FILE
+  
 
       - name: Backup values.yaml and upload to MinIO
         working-directory: ./helm
