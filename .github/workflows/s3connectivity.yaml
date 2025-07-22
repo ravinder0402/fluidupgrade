@@ -1,48 +1,48 @@
-name: Test MinIO Connectivity
+# name: Test MinIO Connectivity
 
-on:
-  push:
-    branches:
-      - main
+# on:
+#   push:
+#     branches:
+#       - main
 
-jobs:
-  test-minio:
-    runs-on: self-hosted
+# jobs:
+#   test-minio:
+#     runs-on: self-hosted
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
 
-      - name: Install AWS CLI
-        run: |
-          sudo apt update
-          sudo apt install -y awscli
+#       - name: Install AWS CLI
+#         run: |
+#           sudo apt update
+#           sudo apt install -y awscli
 
-      - name: Configure AWS CLI with hardcoded MinIO credentials
-        run: |
-          mkdir -p ~/.aws
+#       - name: Configure AWS CLI with hardcoded MinIO credentials
+#         run: |
+#           mkdir -p ~/.aws
 
-          cat <<EOF > ~/.aws/credentials
-          [default]
-          aws_access_key_id = minioadmin
-          aws_secret_access_key = minioadmin123
-          EOF
+#           cat <<EOF > ~/.aws/credentials
+#           [default]
+#           aws_access_key_id = minioadmin
+#           aws_secret_access_key = minioadmin123
+#           EOF
 
-          cat <<EOF > ~/.aws/config
-          [default]
-          region = us-east-1
-          output = json
-          EOF
+#           cat <<EOF > ~/.aws/config
+#           [default]
+#           region = us-east-1
+#           output = json
+#           EOF
 
-      - name: List Buckets (MinIO)
-        run: |
-          aws --endpoint-url http://172.16.109.86:9000 s3 ls
+#       - name: List Buckets (MinIO)
+#         run: |
+#           aws --endpoint-url http://172.16.109.86:9000 s3 ls
 
-      - name: Upload test file to MinIO
-        run: |
-          echo "This is a test file from GitHub Actions" > testfile.txt
-          aws --endpoint-url http://172.16.109.86:9000 s3 cp testfile.txt s3://minio-bucket/testfile.txt
+#       - name: Upload test file to MinIO
+#         run: |
+#           echo "This is a test file from GitHub Actions" > testfile.txt
+#           aws --endpoint-url http://172.16.109.86:9000 s3 cp testfile.txt s3://minio-bucket/testfile.txt
 
-      - name: Confirm upload by listing bucket contents
-        run: |
-          aws --endpoint-url http://172.16.109.86:9000 s3 ls s3://minio-bucket/
+#       - name: Confirm upload by listing bucket contents
+#         run: |
+#           aws --endpoint-url http://172.16.109.86:9000 s3 ls s3://minio-bucket/
