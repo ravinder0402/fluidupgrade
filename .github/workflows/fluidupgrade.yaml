@@ -61,6 +61,20 @@ jobs:
           " > $FILE
           aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
           rm $FILE
+          
+      - name: Backup Keycloak PostgreSQL cluster and upload to MinIO(corobots)
+        run: |
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          FILE="corobots_keycloak_pg_backup_$TIMESTAMP.sql"
+          kubectl exec -n corobots keycloak-pg-0 -- sh -c "
+            export PGPASSWORD='${{ secrets.KEYCLOAK_DB_PASSWORD }}';
+            pg_dump -U root -d keycloak > /tmp/keycloak_backup.sql &&
+            pg_dump -U root -d postgres > /tmp/postgres_backup.sql &&
+            cat /tmp/keycloak_backup.sql /tmp/postgres_backup.sql
+          " > $FILE
+          aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
+          rm $FILE
+
 
 
       - name: Backup MongoDB and upload to MinIO ( Config-db)
@@ -80,7 +94,24 @@ jobs:
             mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive --gzip > $FILE
           aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
           rm $FILE
-  
+          
+      - name: Backup MongoDB and upload to MinIO ( Config-db corobots)
+        run: |
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          FILE="corobots_config-db_mongodb_backup_$TIMESTAMP.gz"
+          kubectl exec -n fluid configdb-0 -- \
+            mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive --gzip > $FILE
+          aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
+          rm $FILE
+          
+      - name: Backup MongoDB and upload to MinIO ( Metrics-db corobots)
+        run: |
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          FILE="corobots_metricsdb_mongodb_backup_$TIMESTAMP.gz"
+          kubectl exec -n fluid metricsdb-0 -- \
+            mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive --gzip > $FILE
+          aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
+          rm $FILE
 
       - name: Backup values.yaml and upload to MinIO
         working-directory: ./helm
