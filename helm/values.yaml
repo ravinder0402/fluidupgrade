@@ -117,7 +117,7 @@ global:
   openfga:
     enabled: true
     endpoint: 'http://openfga.openfga:8080'
-    storeId: '01JY1C2JQNCPQHCBJ2YR18WMGP'
+    storeId: '01K0RTESNN60TF880W6MYAH4G0'
     apiToken: 'MYPreSharedToken1'
 
   ## Keycloak Architecture override to enable HA or standalone
