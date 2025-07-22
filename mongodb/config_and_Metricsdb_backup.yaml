@@ -1,0 +1,260 @@
+---
+# Source: nks-portal-backup/templates/pvc-backup-config.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: config-mongodb-backup-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+---
+# Source: nks-portal-backup/templates/pvc-backup-metric.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: metric-mongodb-backup-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+---
+# Source: nks-portal-backup/templates/config-mongo-backup.yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: config-mongo-backup
+spec:
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - args:
+              - -ec
+              # the script wait untill the snapshot file is available
+              # then upload to s3
+              # for folks using non-aws S3 like IBM Cloud Object Storage service, add a `--endpoint-url` option
+              # run `aws --endpoint-url <https://your_s3_endpoint> s3 cp ...`
+              # change the s3://<path> to your desired location
+              - |
+                # set variables for filename
+                cd /backups
+                filename=$(ls *.gz | tail -n 1)
+          
+                # Upload file to S3 bucket
+                /s5cmd  cp ${filename} s3://$S3_BUCKET/$S3_PREFIX/compass-configdb/${filename}              
+                
+                # List all files in the bucket
+                file_list=$(/s5cmd ls s3://$S3_BUCKET/$S3_PREFIX/compass-configdb/ | awk '{print $NF}')
+                
+                # Count the number of files in the bucket
+                file_count=$(echo "${file_list}" | wc -l)
+                
+                # If there are more than RETAIN_COUNT files, delete the oldest ones
+                if [ "${file_count}" -gt "$RETAIN_COUNT" ]; then
+                  files_to_delete=$((file_count - $RETAIN_COUNT))
+                  echo "Deleting ${files_to_delete} old files..."
+                  echo "${file_list}" | head -n "${files_to_delete}" | while read -r file; do
+                    echo ${file}
+                    /s5cmd rm "s3://$S3_BUCKET/$S3_PREFIX/compass-configdb/${file}"
+                  done
+                fi  
+                #If there are more than RETAIN_COUNT files, delete the oldest ones for pv
+                
+                find /backups/* -mtime +3 -exec rm -f {} \; 2> /dev/null
+
+            command:
+            - /bin/sh
+            env:
+            - name: S3_PREFIX
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: S3_PREFIX              
+            - name: RETAIN_COUNT
+              value: "15"
+            - name: S3_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: S3_BUCKET
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: S3_ENDPOINT_URL
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: S3_ENDPOINT_URL
+            image: peakcom/s5cmd
+            imagePullPolicy: IfNotPresent
+            name: upload
+            volumeMounts:
+            - mountPath: /backups
+              name: backup-volume
+          initContainers:
+          - args:
+            - |
+              oplog_timestamp=$(mongo --username=$MONGODB_USERNAME --password=$MONGODB_PASSWORD --authenticationDatabase admin --host=$MONGODB_URI --quiet --eval "rs.status().optimes.lastCommittedOpTime")
+              timestamp=$(date +%Y-%m-%d_%H-%M-%S)
+              echo "Oplog Timestamp: $oplog_timestamp" > /tmp/oplog_info.txt
+              mongodump --username=$MONGODB_USERNAME --password=$MONGODB_PASSWORD --authenticationDatabase admin  --host=$MONGODB_URI --archive=/tmp/$timestamp.gz --gzip
+              tar -czf /backups/configdb_$timestamp.tar.gz -C /tmp oplog_info.txt $timestamp.gz            
+            command:
+            - bash
+            - -c
+            env:
+            - name: MONGODB_URI
+              value: "compass-configdb"
+            - name: MONGODB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: configdb-secret
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                   name: configdb-secret
+                   key: password
+            image: coredgeio/mongo:5.0.3
+            imagePullPolicy: IfNotPresent
+            name: mongo-dump
+            volumeMounts:
+            - mountPath: /backups
+              name: backup-volume
+          restartPolicy: OnFailure
+          volumes:
+          - name: backup-volume
+            persistentVolumeClaim:
+              claimName: config-mongodb-backup-pvc
+  schedule: 0 1 * * *
+---
+# Source: nks-portal-backup/templates/metrics-mongo-backup.yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: metrics-mongo-backup
+spec:
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - args:
+              - -ec
+              # the script wait untill the snapshot file is available
+              # then upload to s3
+              # for folks using non-aws S3 like IBM Cloud Object Storage service, add a `--endpoint-url` option
+              # run `aws --endpoint-url <https://your_s3_endpoint> s3 cp ...`
+              # change the s3://<path> to your desired location
+              - |
+                # set variables for filename
+                cd /backups
+                filename=$(ls *.gz | tail -n 1)
+          
+                # Upload file to S3 bucket
+                /s5cmd  cp ${filename} s3://$S3_BUCKET/$S3_PREFIX/compass-metricsdb/${filename}              
+                
+                # List all files in the bucket
+                file_list=$(/s5cmd ls s3://$S3_BUCKET/$S3_PREFIX/compass-metricsdb/ | awk '{print $NF}')
+                
+                # Count the number of files in the bucket
+                file_count=$(echo "${file_list}" | wc -l)
+                
+                # If there are more than RETAIN_COUNT files, delete the oldest ones
+                if [ "${file_count}" -gt "$RETAIN_COUNT" ]; then
+                  files_to_delete=$((file_count - $RETAIN_COUNT))
+                  echo "Deleting ${files_to_delete} old files..."
+                  echo "${file_list}" | head -n "${files_to_delete}" | while read -r file; do
+                    echo ${file}
+                    /s5cmd rm "s3://$S3_BUCKET/$S3_PREFIX/compass-metricsdb/${file}"
+                  done
+                fi
+                #If there are more than RETAIN_COUNT files, delete the oldest ones for pv
+                
+                find /backups/* -mtime +3 -exec rm -f {} \; 2> /dev/null
+
+            command:
+            - /bin/sh
+            env:
+            - name: S3_PREFIX
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: S3_PREFIX              
+            - name: RETAIN_COUNT
+              value: "15"
+            - name: S3_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: S3_BUCKET
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: S3_ENDPOINT_URL
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: S3_ENDPOINT_URL
+            image: peakcom/s5cmd
+            imagePullPolicy: IfNotPresent
+            name: upload
+            volumeMounts:
+            - mountPath: /backups
+              name: backup-volume
+          initContainers:
+          - args:
+            - |
+              oplog_timestamp=$(mongo --username=$MONGODB_USERNAME --password=$MONGODB_PASSWORD --authenticationDatabase admin --host=$MONGODB_URI --quiet --eval "rs.status().optimes.lastCommittedOpTime")
+              timestamp=$(date +%Y-%m-%d_%H-%M-%S)
+              echo "Oplog Timestamp: $oplog_timestamp" > /tmp/oplog_info.txt
+              mongodump --username=$MONGODB_USERNAME --password=$MONGODB_PASSWORD --authenticationDatabase admin  --host=$MONGODB_URI --archive=/tmp/$timestamp.gz --gzip --numParallelCollections=1
+              tar -czf /backups/metricsdb_$timestamp.tar.gz -C /tmp oplog_info.txt $timestamp.gz     
+            command:
+            - bash
+            - -c
+            env:
+            - name: MONGODB_URI
+              value: "compass-metricsdb"
+            - name: MONGODB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: configdb-secret
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                   name: configdb-secret
+                   key: password
+            image: coredgeio/mongo:5.0.3
+            imagePullPolicy: IfNotPresent
+            name: mongo-dump
+            volumeMounts:
+            - mountPath: /backups
+              name: backup-volume
+          restartPolicy: OnFailure
+          volumes:
+          - name: backup-volume
+            persistentVolumeClaim:
+              claimName: metric-mongodb-backup-pvc
+  schedule:  30 1 * * *
