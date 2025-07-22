@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: {{ .Release.Namespace }}
+{{- if eq "AWS" .Values.global.environment }}
+{{- if .Values.global.proxyProtocol.enabled  }}
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"
+{{- end }}
+{{- end }}
+spec:
+  ports:
+  - name: http
+{{ if not .Values.global.domain  }}
+    port: 80
+    targetPort: 8080
+    nodePort: {{ .Values.global.frontend.nodePort  }}
+  type: NodePort
+{{ else }}
+    port: 443
+    targetPort: 8443
+    nodePort: {{ .Values.global.frontend.nodePort  }}
+  type: LoadBalancer
+{{ end }}
+  selector:
+    io.kompose.service: frontend

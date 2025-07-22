@@ -1,0 +1,6 @@
+mongodb:
+  host: compass-configdb
+  port: 27017
+metricsdb:
+  host: compass-metricsdb
+  port: 27017

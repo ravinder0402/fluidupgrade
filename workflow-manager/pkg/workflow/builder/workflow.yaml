@@ -1,0 +1,108 @@
+{{- $httpProxy := .HttpProxy }}
+{{- $httpsProxy := .HttpsProxy }}
+{{- $noProxy := .NoProxy }}
+{{- $enforceResourceLimits := .EnforceResourceLimits }}
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  name: {{ .Name }}
+  namespace: {{ .Namespace }}
+spec:
+  entrypoint: workflow-executor
+  serviceAccountName: {{ .ServiceAccount }}
+  {{- if .UserInputs }}
+  arguments:
+    parameters:
+    {{- range $key, $value := .UserInputs }}
+    - name: {{ $key }}
+      value: '{{ $value }}'
+    {{- end }}
+  {{- end }}
+  templates:
+  - name: workflow-executor
+    steps:
+    {{- range $i1, $step := .Steps }}
+      {{- range $i, $node := $step.Nodes }}
+      {{- if eq $i 0 }}
+    - - name: {{ $node.NodeId }}
+      {{- else }}
+      - name: {{ $node.NodeId }}
+      {{- end }}
+        template: {{ $node.Module }}
+        {{- if $node.Inputs }}
+        arguments:
+          parameters:
+          {{- range $i11, $inp := $node.Inputs }}
+          - name: {{ $inp.Name }}
+            {{- if $inp.Source }}
+            value: '{{ "{{" }}steps.{{ $inp.Source.Source }}.outputs.parameters.{{ $inp.Source.SourceVar }}{{ "}}" }}'
+            {{- else }}
+            value: '{{ $inp.Value }}'
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+  {{- range $module, $node := .Nodes }}
+  - name: {{ $node.ModuleName }}
+    {{- if $node.Inputs }}
+    inputs:
+      parameters:
+      {{- range $j, $in := $node.Inputs }}
+      - name: {{ $in.Name }}
+        value: '{{ $in.Value }}'
+      {{- end }}
+    {{- end }}
+    container:
+      {{- if or $node.Inputs .ProxyEnabled }}
+      env:
+      {{- if ne $httpProxy "" }}
+      - name: http_proxy
+        value: {{ $httpProxy }}
+      {{- end }}
+      {{- if ne $httpsProxy "" }}
+      - name: https_proxy
+        value: {{ $httpsProxy }}
+      {{- end }}
+      {{- if ne $noProxy "" }}
+      - name: no_proxy
+        value: {{ $noProxy }}
+      {{- end }}
+      {{- range $j, $in := $node.Inputs }}
+      - name: {{ $in.Name }}
+        value: "{{ "{{" }} inputs.parameters.{{ $in.Name }} {{ "}}" }}"
+      {{- end }}
+      {{- end }}
+      image: {{ $node.Image }}
+      imagePullPolicy: Always
+      {{- if $enforceResourceLimits }}
+      resources:
+        requests:
+          memory: "20Mi"
+          cpu: "20m"
+        limits:
+          memory: "8Gi"
+          cpu: "4"
+      {{- end }}
+      {{- if $node.Command }}
+      command:
+      {{- range $j, $str := $node.Command }}
+      - {{ $str }}
+      {{- end }}
+      {{- end }}
+      {{- if $node.Args }}
+      args:
+      {{- range $j, $str := $node.Args }}
+      - {{ $str }}
+      {{- end }}
+      {{- end }}
+    {{- if $node.Outputs }}
+    outputs:
+      parameters:
+      {{- range $j, $out := $node.Outputs }}
+      - name: {{ $out.Name }}
+        valueFrom:
+          path: {{ $out.ValueFrom }}
+      {{- end }}
+    {{- end }}
+  {{- end }}

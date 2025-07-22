@@ -1,0 +1,392 @@
+# For dev environments we may want to deploy workflow automation platform
+# in insecure / non-TLS based deployment. which can be done by setting
+# domain name in this file as empty string
+
+global:
+  # deployment environment indication for deployer to enable relevant
+  # environment specific configuration, currentely only environment
+  # supported is AWS
+  # default value is empty string indicating no special requirements
+  # for the environment
+  # Openshift is a supported type which allows enabling certain
+  # constructs that are important and relevant while running on
+  # Openshift cluster
+  environment: ""
+
+  # Note: we do not program DNS server as part of this configuration
+  # Set domain it indicate where the controller API is hosted, this
+  # configuration is used to enable cross-origin and access security
+  # unused in dev environment, while ingress is disabled
+  domain: &workflowDomain ""
+
+  # repository from where the controller images are pulled for
+  # controller
+  repository: &repository coredgeio
+
+  # use build using the tag generated based on the date of deployment
+  # this is relevant for enabling some of the CI/CD platforms
+  UseDailyBuilds: &useDailyBuilds true
+
+  # this field is considered only when UseDailyBuilds is set to be false
+  # provides configuration of build tag to be used for container images
+  ReleaseTag: &releaseTag latest
+
+  # image pull policy to be used
+  imagePullPolicy: &imagePolicy Always
+
+  # storage class to use for persistent volumes, if empty fallback to
+  # default storage class
+  storageClass: &storageclass ""
+
+  # external IP for controller, relevant, when controllerDNSName is not
+  # configured to allow generation of server certificate validity using
+  # this IP address
+  externalIP: &controllerIP 127.0.0.1
+
+  #Set this to true for environments without internet and update the proxy details
+  proxy:
+    enabled: false
+    http_proxy: ""
+    https_proxy: ""
+    no_proxy: "localhost,127.0.0.1,cluster.local,.svc,.svc.cluster.local"
+
+  ## Enable Keycloak to be deployed as part of Cloud Orbiter (default setting)
+  ## OR use external Keycloak Overrides
+  ## If keycloak.internal is 'true', overrides will be ignored
+  ## If keycloak.internal is 'false', external overrides will be considered
+  keycloak:
+    internal: true
+    # Following section is only picked if internal keycloak is not used
+    # it specifies the override configuration corresponding to external
+    # keycloak used
+    # Please make sure that you uncomment the below section when an
+    # external keycloak is in use
+    # override:
+    #   # Frontend URL example: "https://auth.coredge.io"
+    #   # DNS on which the auth/keycloak login page would be rendered
+    #   frontendUrl: ""
+    #   # internal reference for microservices to interact with the
+    #   # keycloak service as given HTTP and HTTPS port
+    #   service:
+    #     name: "keycloak"
+    #     httpPort: "80"
+    #     httpsPort: "8443"
+    #   # external keycloak creds to be used for management operation
+    #   creds:
+    #     user: "admin"
+    #     pass: "admin"
+
+  frontend:
+    # Theme override for Cloud Orbiter GUI
+    theme: ""
+    certs:
+      # provide name of the TLS secret object configured providing
+      # certificates for frontend, this configuration is usually used
+      # with in combination of cert-manager, which would allow
+      # preiodically refreshing the CA issued certificates, before
+      # thier expiry
+      external: ""
+    nodePort: 31210
+    # For Production environment we require kyc status validation
+    # However, for dev and test environments we should be able to skip
+    # these validations
+    # Setting skipKyc true will bypass this validation
+    # Note: This configuration should not be used for Production env
+    skipKyc: false
+
+  # proxy protocol is used to enable tracking client's IP both for API
+  # access by user and controller access by infrastructure components
+  # this allow enabling capability of geoloaction tracking for users
+  # and infrastructure components using thier public IP information
+  proxyProtocol:
+    enabled: false
+
+  # to enable and configure container registry module for the platform
+  # that allows capability of container registry management
+  containerRegistry:
+    enabled: false
+
+  # this configuration is used for integrating geolocation component
+  # with compass, the geolocation component is used for all location
+  # services like conversion between coordinates and geolocation &
+  # conversion from IP to location, the geolocation component exposes its
+  # functionality via gRPC services so compass requires this config info
+  # to connect with the geolocation component, currently we DO NOT support
+  # encrypted connections using certificates or any other mechanism
+  # hence it is expected that the geolocation component reside
+  # within the same cluster as the compass deployment
+  geolocation:
+    # grpc host name used to connect with geolocation component
+    # if deployed within the same cluster as compass, this will be
+    # of the form: <svc>.<namespace>
+    host: ""
+    # grpc port used to connect with geolocation component
+    # if deployed within the same cluster as compass, this will be
+    # geolocation component's svc port
+    port: ""
+
+  # preferIPv6 is used to indicate the stack if it needs to prefer
+  # using IPv6 over IPv4 network, right now this is being consumed
+  # only by keycloak stack to indicate the options for jvm env.
+  # default value for this is false, since most of the environments
+  # rely in ipv4 stack causing issues while IDP/SSO configuration
+  # exists and keycloak require communication with the IDP server
+  preferIPv6: false
+
+  # keycloak realm to be used as the root
+  rootRealm: &rootRealm "default"
+
+  # user credentials for the default realm user that will be created
+  # along with creation of the realm
+  admin:
+    username: &defaultUser "admin"
+    password: &defaultUserPass "Welcome@123"       
+
+replicaCount:
+  workflowManager: 1
+betaFeatures:
+  # Note: Skip Documentation
+  # allow deployment with beta features enabled, this will allow working
+  # with features that are still under development, for which UX and
+  # feature itself can be changed without prior notification
+  # These features are not expected to be enabled in production
+  # environment, and will not be supported.
+  enabled: false
+
+metering:
+  replicaCount:
+    metering: 1
+  resources:
+    limits:
+      cpu: 300m
+      memory: 2Gi
+    requests:
+      cpu: 50m
+      memory: 100Mi  
+
+## ConfigDB configuration overrides
+## configDB.replicaCount [default: 1] Override number of configDB replicas. Recommended Odd number. Scale down not supported.
+## configDB.service.type [default: ClusterIP] Override service type to expose ConfigDB - set to NodePort OR LoadBalancer (Disclaimer - Use at your own discretion; no guarantees or liabilities are assumed when exposing ConfigDB)
+## configDB.persistence.size [default: 2Gi] Override ConfigDB PVC Storage Request for data volume
+## configDB.metrics.enable [default: false] Enable mongo exporter to expose ConfigDB metrics
+configDB:
+  replicaCount: 1
+  service:
+    type: ClusterIP
+  persistence:
+    size: 2Gi
+  metrics:
+    enabled: false
+  resources:
+    limits:
+      cpu: 300m
+      memory: 2Gi
+    requests:
+      cpu: 50m
+      memory: 100Mi  
+
+## MetricsDB configuration overrides
+## metricsDB.replicaCount [default: 1] Override number of MetricsDB replicas. Recommended Odd number. Scale down not supported.
+## metricsDB.service.type [default: ClusterIP] Override service type to expose MetricsDB - set to NodePort OR LoadBalancer (Disclaimer - Use at your own discretion; no guarantees or liabilities are assumed when exposing ConfigDB)
+## metricsDB.persistence.size [default: 2Gi] Override MetricsDB PVC Storage Request for data volume
+## metricsDB.metrics.enable [default: false] Enable mongo exporter to expose MetricsDB metrics
+metricsDB:
+  replicaCount: 1
+  service:
+    type: ClusterIP
+  persistence:
+    size: 2Gi
+  ## Set to metrics.enabled=true in order to expose metricsdb metrics
+  metrics:
+    enabled: false 
+  resources:
+    limits:
+      cpu: 300m
+      memory: 2Gi
+    requests:
+      cpu: 50m
+      memory: 100Mi  
+
+repository-cred:
+  # container repository for which the credentials are provided
+  repository: docker.io
+  # container repository credentials
+  repositoryCred:
+    user: docker
+    password: docker
+    mail: info@coredge.io
+
+certs:
+  # rootCA certificate to be used by controller
+  # this will be used to generate controller server certs for connections other than controller api
+  # client certs for infrastructure and user for mTLS connections
+  rootCA:
+    cert: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUYvVENDQStXZ0F3SUJBZ0lVTmQ3N1BQUlhtejhkaU5hdTUxM1dMRnVsYXRjd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2dZMHhDekFKQmdOVkJBWVRBa2xPTVJJd0VBWURWUVFJREFsTFlYSnVZWFJoYTJFeEVqQVFCZ05WQkFjTQpDVUpoYm1kaGJHOXlaVEVUTUJFR0ExVUVDZ3dLUTI5eVpXUm5aUzVwYnpFUU1BNEdBMVVFQ3d3SFEyOXRjR0Z6CmN6RVBNQTBHQTFVRUF3d0dVbTl2ZEVOQk1SNHdIQVlKS29aSWh2Y05BUWtCRmc5cGJtWnZRR052Y21Wa1oyVXUKYVc4d0hoY05Nakl3TVRJM01EVXhNekU1V2hjTk16SXdNVEkxTURVeE16RTVXakNCalRFTE1Ba0dBMVVFQmhNQwpTVTR4RWpBUUJnTlZCQWdNQ1V0aGNtNWhkR0ZyWVRFU01CQUdBMVVFQnd3SlFtRnVaMkZzYjNKbE1STXdFUVlEClZRUUtEQXBEYjNKbFpHZGxMbWx2TVJBd0RnWURWUVFMREFkRGIyMXdZWE56TVE4d0RRWURWUVFEREFaU2IyOTAKUTBFeEhqQWNCZ2txaGtpRzl3MEJDUUVXRDJsdVptOUFZMjl5WldSblpTNXBiekNDQWlJd0RRWUpLb1pJaHZjTgpBUUVCQlFBRGdnSVBBRENDQWdvQ2dnSUJBTHhRVlhZSWVhTWhPT2pXNXY3MWc5VnVSeWpmcXBJK2VhUmcyTWR0CmMzclBPUFV0SHhETkZWdlBoUWU5N2x6NGEyeStkTWEvTXpKd0lqT05VVVlPSjdMMC9STkxVM3lkeHpSb0NnMmkKdUk2VnBNZERRUEFodnQ2U21xS1dva1lPaEJCckI0M1FUUFZHdERjUzIvRllYaTNsU2FVa0FQWTdXV0FiSmVHWApBQkZkS1cxWmtoZHE4RUl0bm5HZXNBSEZuVFVoQnJCUjJwdVlJOUNES3JtVUFZRzEzdFM0WmFIZjJobXhBcmVjCjhkRmRrczlMbmtpWEtCSjdsNGo4QnB4d2Q3bzhic01vRVZ4ZGZpZjZBOG1hMmhIMzNrK1hPK3d5U29idERVRG4KUU1IZGxoVVRXRGVZVFhrMzR6UENzT1RBN3g2NS9FZlVvdWNUR1c1QVJycEZ6TUhLUkNlQzU3c0FSS2hTdVI3Tgp3SEpsRldPRXRlU3R5VkdZOFR1NHBqYkkzdXJiVWN1UTYvMnRHVUU5WGhucGZOUkZMellaQ0xrV0t4KzdOSGlSCnhjelAyd0daYmNQdkxFSkJvUFNycFBjSG5JQ3l0dVA1K2E2bnNFTkpFWkFUUzdBQUZ4Wmp5c3RNZGVQTjNPdmwKWVA0eVp6TFYycHlaT1dMYXlWQ2F1RTVnWmlmTENPdXlLditIWCt1aHNscTRBaXV2NXROM1Y2ZTRJZzA1ZFRVTAp6eEJlUjM4aEJJMjlmOHc1aDdDNHY5TXRxMGhiSStMdyszbGVkUFlzSkpRbU50U0hTOEp0SlU2aWdOeUl0NzBzCllxOHY4YWR1ejFrV0dEK2s4TU5QZy9kWldXd3FLelV5dmcrNk42NkdQemZtMUJHMjdPN3FTMEVuaTZrNW9tUk4KOTBYekFnTUJBQUdqVXpCUk1CMEdBMVVkRGdRV0JCVFByZ0ljd2VqRnZxK1RnTWQzMW1FZ0ZLb2xpakFmQmdOVgpIU01FR0RBV2dCVFByZ0ljd2VqRnZxK1RnTWQzMW1FZ0ZLb2xpakFQQmdOVkhSTUJBZjhFQlRBREFRSC9NQTBHCkNTcUdTSWIzRFFFQkN3VUFBNElDQVFBa01sYXBod0Y5c3krdHpPVXpxKzAvSXlDOENubE9ZM2h6cXg2RXkrckYKRWsyMjBCUGgvWlFsK1FCM3BENzFubjh3SlJGbEVTa0N2UUY0NC9SUEdJbUlwWEREQ2NMa29rS01aTW5EaHkvbgpLdGdWZ1JCNTNUcWtrOHNTQVhaSzY5UEVNd05KdkZkV1RoYzhTbzh4L1owZDlnS2xTT2RQTC9SS2k2NkIrOE9CCmdNRWJ3ekxhVjhXR3ZYWHZpZXBDRGxnU005NjFGNlg5T3hCTG85V0dFQkVoVjd1aXIwV3VhVEt6QitVTmxsUTAKRE53V2F2VUFTN2E2Z1RrSVp0dGF3TnpZWXl1UkNwM1ZJSEVBRnNzM2xYVlFwUm5tdkg4My96TTlNbVRSb1NKQQppVE93Nno4cU1nZUMzSmdzWml6bWdSY1Zxa2QrVTRkS25ULzcyR25rK29BUUhEQmttbEx2enJSd2RBREd1YVVTCjF3ckR5WDlySVBoZVVpY3BRQVJSSWVsMkt6Q1dIUnlmdE16VktTS0w0Z2p4aHhtT1E5MkVmZWhUOGlkUnlVMWoKaFRVOFlmMzJuUXkxRXdEMEdwdzhYVW84a1RZL3F2U1pXR28reGVpWmZuTHRXWDBEb2dhUHFpNzFvMU1UazZxRgpKMXo0UzF4cVc3TDNCeEtVaE91a2dvck1EYmIzKzYxaDJlNGk1YUsvUmZ4UWRPYzM1ek1weFhYSTRIWnhvT1MrClVwSnZaT3VCUEZRQW9iald5a0F3M2lVaTl3V2Y3Qm9GbXBTbGRsa0E3WEFIS09hdEZ0d2JOV2twazJCL3JFTWoKMW50YWFvdEVGbjAzRVNRZ0NvTEdwS2tnYkJzWjRjdWJXdklDUDJ6MVZyWUFpNGwvenZacDhUYXh1N3lUMExONApkZz09Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+    privKey: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUpSQUlCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQ1M0d2dna3FBZ0VBQW9JQ0FRQzhVRlYyQ0htaklUam8KMXViKzlZUFZia2NvMzZxU1BubWtZTmpIYlhONnp6ajFMUjhRelJWYno0VUh2ZTVjK0d0c3ZuVEd2ek15Y0NJegpqVkZHRGlleTlQMFRTMU44bmNjMGFBb05vcmlPbGFUSFEwRHdJYjdla3BxaWxxSkdEb1FRYXdlTjBFejFSclEzCkV0dnhXRjR0NVVtbEpBRDJPMWxnR3lYaGx3QVJYU2x0V1pJWGF2QkNMWjV4bnJBQnhaMDFJUWF3VWRxYm1DUFEKZ3lxNWxBR0J0ZDdVdUdXaDM5b1pzUUszblBIUlhaTFBTNTVJbHlnU2U1ZUkvQWFjY0hlNlBHN0RLQkZjWFg0bgorZ1BKbXRvUjk5NVBsenZzTWtxRzdRMUE1MERCM1pZVkUxZzNtRTE1TitNendyRGt3TzhldWZ4SDFLTG5FeGx1ClFFYTZSY3pCeWtRbmd1ZTdBRVNvVXJrZXpjQnlaUlZqaExYa3JjbFJtUEU3dUtZMnlON3EyMUhMa092OXJSbEIKUFY0WjZYelVSUzgyR1FpNUZpc2Z1elI0a2NYTXo5c0JtVzNEN3l4Q1FhRDBxNlQzQjV5QXNyYmorZm11cDdCRApTUkdRRTB1d0FCY1dZOHJMVEhYanpkenI1V0QrTW1jeTFkcWNtVGxpMnNsUW1yaE9ZR1lueXdqcnNpci9oMS9yCm9iSmF1QUlycitiVGQxZW51Q0lOT1hVMUM4OFFYa2QvSVFTTnZYL01PWWV3dUwvVExhdElXeVBpOFB0NVhuVDIKTENTVUpqYlVoMHZDYlNWT29vRGNpTGU5TEdLdkwvR25iczlaRmhnL3BQRERUNFAzV1Zsc0tpczFNcjRQdWpldQpoajgzNXRRUnR1enU2a3RCSjR1cE9hSmtUZmRGOHdJREFRQUJBb0lDQUZvQ1YrYjBCQmZxQUVhaXVZU3lHMUovCnhIbVA5dnF4Ni9pYTVlTGt1T2JCZDZzUTV5Rmp0VXJOOVBzUFdJaU5vT000WVo3QnN4bnZxUmxVK2J6dmRTQS8KbzF0K2pLZ3F6aFdKaVF5ZGMzT0xxVmdwR0RmdkdVbFBiNlE1TmRVZ2lSVkQ0emR3a2VoRzVFclNzOWcyOGNVawpMRUJINWtITGVsdktmaC9HeWh5Q21CT1JWWmZsNEhMeFZTTmZ3eWNGcXEvRFdtd2FvOC90TjJrcDJOa2RHbDlDCmJBRG5Kb1RwOTFpQ1dCY2xhQnczaXIyVW1sSitGWVJJR05VOENYanE5UDlLZFhMSWl3dklFRTNSWGRBV09SZVAKajI0aGpsM0dhQUwzK1hiRlVobVg3VzJqY200WVdTZVFoQU93a2xhMHRWYk5kUDFzY0hUY2x6SXdmTjM2RVBUWQo1Q0wzdDVURTdnaWlRR1JPbEhsdVNQNlJkVjl5VmpqYUZvRHdnNVdpNXNLY1JyaDAxZVM2QzRST1NXRzQ3ekM0CjhKeDcvZS8wYW8rbGdvMTFDRUZMN0ZjR1NxQVZGVXkxQTNwNHhLc3hBc2NldTF4ZE8rcU9PTHNXZnlCcUY3R20KYXAwS0xVS0JtYWg3c2pyUVpqVW1EK1Z5Nk5BTjdHcnNRbHB2ZVhkQU10OURRTHROSUVFbEVRYkFoNGNwT0pqbAplUGswanFaNGdxWEFib0NmbDFWVXY3eS9LblNQQmZLYzZoV1RpZ0NlU2JQaS9UVHlleXpvaHF4ckdTSmoxNkE3CnZaUHJHaVNWSWhFbHdOV25BaExZYmgvY05FY2FMVThDczV2aHhxUVVzcktYc09ORTEzMjNPM2pCbENmUDNDSzcKZVRGQ3E5ZXJjaXV4REtiVmVZYTVBb0lCQVFEeXAwNTN2Wm9oU1dvbHZLS242VEx0VXI2L0RwbG5lVG9EL2JwRQpCbFJqOGxCWFNMZW5RRm53VmtkTUZnRE9JNjFJT1ZSYi9Pb0UyWHVoMVlGeTV0SytBZUo0dG9qTFozQ01LZVp6ClJRZk93dnE2SnMweVhiNzlua2dHckRlR3QzclhBUVk5T003eDRPNDJJWGorS0hveTQ4WThkMUNwWHdJUlRPNmoKYWt3V1pzYnNNOUhIYzBGQ2FVaDBJL0ZNbCtZeGx3OUg5QjFaR2ZFeWE2bk9ZTkFsdkVveHVxc0ZISXE2TTJ6Ygpvc2doQi9tdGZsNVFLUVM5MHhpWUg0bUpYS3Z0RUxQN0wxd2F0YysyZkp6T0RtbXhRNmFWN0dHejhCZy8yeXk1CmJ3U2U4ODZCb20wUEFYWUZDVktIVmxxblZjZ1RyUDAwRkY1bEVqNlVRR1duTVVGM0FvSUJBUURHcStUenRKQ00KK1I4aWVmTjNBci9ibzhjWnYzRzRUZE9xc2V3TVFDODZIMGpYTkFCWDhoOHducHM1NVZXdnB6dnN1alkwRElsZworcWRUblNwbHhOQjRoMm9jeWFZRlJEQUI2SFcwZ3h2V2RteUVtZFo5cWIvT1EyNFlpeGhKc2Z0VTcrTGFVOTY2CjVuaFU1cHBnL1RoeE12YUFhVEtIK0ZDVmQyUlFHMDlJcWhxY2haQWp4KzQyMHVTVHQ0M2FxTnpnekU3WGRwdEIKQ2IzbnpPTlVVRTdRNnRnYStmNmdBM1pNNEJVYXVuL09UZlFaSE5mMjd2dHhERU1sZi8vSzYzZVQwU0QxVG92NwpLRTJLTVFlOCtkQUJKdStYdGU4WjRIMGJWT2N5RGtPcUp1eFFleWlrTHgrcDRJelhlR3prMkhzL1RWZEZhUHptCm1QZ1RWdVhJSjU1bEFvSUJBUURLU2RYdGx0L21QaGpDcXZhQ3VyTWRDKzArdzhINWRDTjhia3FaS1JtelZLL0wKaERDdXVzUC95ejJXM1lVQVZOZkJyU0Y1cW1mQmNUbFRHZlhYdnp3UzhPbEhMd3p0WFNlRGdlNi9TOTROYlppdQpGV2pkUXkvVXFONXN5YWRrcEpOQXFIYjJGT1RZMm1aY05CMTA3SE9xOXg0dERGN3ZRK2dxV2hOYm9tTWFEY1pwCjVXMU9NL1JFbEJhMTA3ejIyRzhzQ2ozUUExOXdCMk4vWUNmb2grY2VmbER3RWlrK2txUElSTlRNYVhFanNFMWkKYUVYaDE4QS9LN3VHSGt4L2VnVk9GYTJsaXI3aStZelhHaDF5M3FzWC8wamlGWFVDRi9kdlRKMkZYVnJoMUdqawp3Mjdkb3A4cjViQ3FhTUFjWGpQMHl6TXU5b2dYQkZXdEs5NVN1b3BUQW9JQkFRQ2FZUXlDUzdkZnRGMzdQbVJ3CkFGVHg2ZXhYRjZyWW1yRjJITmZlRlNvZHNoMjZESkNQeG5keUltMWdxZExSc2RRZytmb1FyQVU4dE1tOWNZMTIKazEranFTWk54R3diLzRhR2xRcVNBS2RyR1k3dDQxVUhSUmJrd3dVVVVWSElRbU9ZOXVlQzNGVmhTcUlLNXo3agpTeUhHNU9Fam01dEdpVENsVktkQWtGZ2xrUGtvMDZqVUJSSVl5L3dPeFQyWHdrd1E2dklCQUF0WW1LZFhMcUVmCjdWK3hmQ3Y5bW5IQUNiQ3R3QnJtTURJTU1Bc1VVSk9KTU45MlV4OENUdHFINWoxL1FheW9zaWFZUGhNeTVUS3MKS0RyNENqZDMza28wQTN0ejk1L0lCOG1RdUxvOU45YTI3bDllZEQwOVdqalVBMXlTTGhrNHVJSjg5alVmWWhFZwpYWmo1QW9JQkFRQ3ZRdjBNUXc4dUs5UEVHbnA3Yk5MTkViYkdlWWVPR3NEVms3WjI3SGlEOVhOUXd3WEppZWcvCkROOEZjZkdpS2k2VVlyTytRZysxV25IYkhCVVRQYjhHN0p3Yjc5Q0NnaXNjaU1SV2dlVThwYzJObDBBWndGNisKZDFZZnJJUmxIWkgvemZoeXY2MFN4TGMyQVBUUUxJczZ2RVNuV3IzMm1VazJKNkhtek5pMTNla2dxL05iODNESgp5T0RXKzJCVnRPUGRvVC80RHMwcXR2Qm5NQkQwVHA2cEdpRGNOdStXeTFvaTJ5Y2JmaFBFcjRSR1l4OVFYYnY3ClEyNjdueDFpeGtLaWRFVklkQ3pOZ2dWVkNUc1dHWEFCWnN6Qi9ONGROVFl1eHhibTdOM0hOYmcrK0JlYXR3L2oKd3BuQVpzcXQzWUlxOGxCS3Juei9KbTRsMzIvRDFST0QKLS0tLS1FTkQgUFJJVkFURSBLRVktLS0tLQo=
+
+keycloak:
+  images:
+    # keycloak images with coredge theme for login
+    keycloak: coredgeio/kg-keycloak:19.0.3-8
+  # note endpoint to login on this master keycloak instance is disabled by
+  # default for security concerns. However it is being used internally by
+  # controller to interact with keycloak API
+  adminCredentials:
+    # keycloak master username
+    username: admin
+    # keycloak master password
+    password: admin@kg
+  resources:
+    limits:
+      cpu: 300m
+      memory: 2Gi
+    requests:
+      cpu: 50m
+      memory: 100Mi
+  postgres:
+    resources:
+      limits:
+        cpu: 300m
+        memory: 2Gi
+      requests:
+        cpu: 50m
+        memory: 100Mi
+
+auth-service:
+  replicaCount:
+    orbiterAuth: 1
+  resources:
+    limits:
+      cpu: 300m
+      memory: 2Gi
+    requests:
+      cpu: 50m
+      memory: 100Mi 
+  keycloak:
+    # keycloak clientID (needs to be a public client)
+    clientId: controller
+    # introspection client credentials
+    introspect:
+      clientId: ""
+      clientSecret: ""
+    # keycloak URL used in OIDC for fetching well-known config
+    url: https://keycloak:8443
+    # list of public clients that need to be created at deploy time
+    clients:
+    - controller
+    # name of the realm that needs to be created at deploy time
+    realm: *rootRealm
+    # DNS for the origin that we want to allow when accessing the client
+    dns: ""
+    # user credentials for the default realm user that will be created
+    # along with creation of the realm
+    admin:
+      username: *defaultUser
+      password: *defaultUserPass
+      firstname: ""
+      lastname: ""
+      email: ""
+    # IDP config for the IDP that needs to be created
+    # at deploy time in the realm created at deploy time
+    idpConfig:
+      enabled: false
+      name: ""
+      # auto onboarding allows users to directly use the IDP and create a new account
+      # instead of requiring the user to exist in the system beforehand
+      allowAutoOnboarding: true
+      # provider ID can either be OIDC or of type facebook, microsoft, google etc.
+      providerId: "oidc"
+      clientId: ""
+      clientSecret: ""
+      clientAuthMethod: ""
+      authorizationUrl: ""
+      tokenUrl: ""
+
+    # enable below section while having the need to work with multiple
+    # redirect uris and web origins
+    # usually this case is more relevant while having the need to work
+    # with different dns for auth, regular portal and admin portal
+    # or even if a different tenat url is needed
+    # redirectURIs:
+    # - https://example.com/*
+    #
+    # always used in conjection with redirectURIs config
+    # webOrigins:
+    # - https://example.com
+
+  gateway:
+    # additional enpoint forwarding configuration
+    #locations:
+    #- prefix: /api/demo
+    #  endpoint: http://cloud-manager:8080
+    #  rewritePrefix: /
+    #  accessType: unscoped
+    locations: {}
+
+frontend:
+  # usev1 is no longer supported, TODO needs cleanup
+  usev1: false
+  images:
+    frontend: coredgeio/workflow-frontend:latest
+  replicaCount:
+    frontend: 1
+  resources:
+    limits:
+      cpu: 300m
+      memory: 2Gi
+    requests:
+      cpu: 50m
+      memory: 100Mi
+
+container-registry:
+  replicaCount:
+    containerRegistry: 1
+  resources:
+    limits:
+      cpu: 300m
+      memory: 2Gi
+    requests:
+      cpu: 50m
+      memory: 100Mi   
+  storage:
+    # prefix for bucket name for registries should be configured here
+    # default prefix will be added if nothing is configured
+    bucketPrefix: ""
+    # Ceph S3 configuration to be used for container-registry,
+    # we provide this service using a S3 backed storage, so
+    # this configuration is mandatory if containter-registry
+    # is enabled
+    #cephS3:
+    #  userId: nano
+    #  endpoint: http://192.168.100.177:8000
+    #  accessKey: 3ZU12D2N4WS0Y9MPWS5H
+    #  secretKey: F9AJPAnp6vGLKr1SzeaGxgdcuUi33A4fKVuhl7Jg
+    #s3:
+    #  endpoint: http://192.168.100.177:8000
+    #  accessKey: 3ZU12D2N4WS0Y9MPWS5H
+    #  secretKey: F9AJPAnp6vGLKr1SzeaGxgdcuUi33A4fKVuhl7Jg
+    #ecs:
+    #  endpoint: http://192.168.100.177:8000
+    #  s3Endpoint: http://192.168.100.177:9000
+    #  username: registry
+    #  password: registry
+    #  accessKey: 3ZU12D2N4WS0Y9MPWS5H
+    #  secretKey: F9AJPAnp6vGLKr1SzeaGxgdcuUi33A4fKVuhl7Jg
+    #  namespace: container-registry
+argo-workflows:
+   server:
+     extraArgs:
+      - --auth-mode=server
+      # Override below for air-gapped installations
+   image:
+     registry: quay.io
+     repository: argoproj/argocli
+
+workflowManager:
+  resources:
+    limits:
+      cpu: 300m
+      memory: 2Gi
+    requests:
+      cpu: 50m
+      memory: 100Mi

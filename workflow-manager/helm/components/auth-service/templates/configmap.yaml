@@ -1,0 +1,69 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orbiter-auth-config
+  namespace: {{ .Release.Namespace }}
+data:
+  config.yml: |
+    allowCors: true
+    keycloak:
+      clientId: {{ .Values.keycloak.clientId }}
+      introspect:
+        clientId: {{ .Values.keycloak.introspect.clientId }}
+        clientSecret: {{ .Values.keycloak.introspect.clientSecret }}
+    mongoDb:
+      host: workflow-configdb
+      port: 27017
+    metricsDb:
+      host: workflow-metricsdb
+      port: 27017
+    accessLogs:
+      limits:
+        maxSize: 1000000 # max memory allowed to be used in bytes for access logs
+        maxEntries: 5000 # max number of entries allowed to be used for access logs
+    geolocation:
+      host: {{ .Values.global.geolocation.host }}
+      port: {{ .Values.global.geolocation.port }}
+    gateway:
+      rateLimiter:
+        rateLimit: 200
+        burstSize: 500
+    events:
+      limits:
+        maxSize: 1000000 # max memory allowed to be used in bytes for events per domain
+        maxEntries: 5000 # max number of entries allowed to be used for events per domain
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-config
+  namespace: {{ .Release.Namespace }}
+data:
+  config.yml: |
+    http:
+      locations:
+      - prefix: /api/workflow
+        endpoint: http://workflow-manager:8080
+      - prefix: /ws/workflow
+        endpoint: http://workflow-manager:9080
+      - prefix: /api/auth-service
+        consumeLocally: true
+      - prefix: /api/accessibility
+        consumeLocally: true
+        accessType: unscoped
+{{- if .Values.global.containerRegistry.enabled }}
+      - prefix: /api/container-registry
+        endpoint: http://container-registry:8080
+      - prefix: /ws/container-registry
+        endpoint: http://container-registry:9080
+{{- end }}
+      - prefix: /api/license
+        endpoint: http://orbiter-metering:8080
+      - prefix: /api/metering
+        endpoint: http://orbiter-metering:8080
+      - prefix: /api/myaccount
+        consumeLocally: true
+        accessType: unscoped
+{{- if .Values.gateway.locations }}
+{{ toYaml .Values.gateway.locations | indent 6 }}
+{{- end }}

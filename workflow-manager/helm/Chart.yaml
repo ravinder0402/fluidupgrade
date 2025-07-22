@@ -1,0 +1,33 @@
+apiVersion: v2
+appVersion: "0.1"
+description: Coredge Workflow Automation Platform deployment Helm Chart
+name: workflow-automation-platform
+version: 0.1.0-dev
+dependencies:
+  - name: helper
+    version: 0.1.0
+    repository: 'file://components/helper'
+  - name: repository-cred
+    version: 0.1.0
+    repository: 'file://components/repository-cred'
+  - condition: global.keycloak.internal
+    name: keycloak
+    version: 0.1.0
+    repository: 'file://components/keycloak'
+  - name: frontend
+    version: 0.1.0
+    repository: 'file://components/frontend'
+  - condition: global.containerRegistry.enabled
+    name: container-registry
+    version: 0.1.0
+    repository: 'file://components/container-registry'
+  - name: metering
+    version: 0.1.0
+    repository: 'file://components/metering'
+  - condition: global.authService.enabled
+    name: auth-service
+    version: 0.1.0
+    repository: 'file://components/auth-service'
+  - name: argo-workflows
+    version: 0.42.3
+    repository: 'https://argoproj.github.io/argo-helm'

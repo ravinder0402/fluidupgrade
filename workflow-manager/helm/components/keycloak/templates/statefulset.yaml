@@ -1,0 +1,57 @@
+apiVersion: apps/v1  
+kind: StatefulSet
+metadata:
+  name: keycloak-pg
+  namespace: {{ .Release.Namespace }}
+spec:
+  serviceName: "keycloak-pg"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak-pg
+  template:
+    metadata:
+      labels:
+        app: keycloak-pg
+    spec:
+      containers:
+      - name: postgres
+        image: {{ .Values.images.postgres }}
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+          subPath: pgdata
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-pg
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-pg
+              key: password
+        - name: POSTGRES_DB
+          value: keycloak
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        ports:
+        - containerPort: 5432
+        resources:
+          {{- toYaml .Values.postgres.resources | nindent 10 }}
+      imagePullSecrets:
+      - name: {{ .Release.Name }}-docker-registry-key
+      terminationGracePeriodSeconds: 60
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-data
+    spec:
+      accessModes:
+      - "ReadWriteOnce"
+      resources:
+        requests:
+          storage: 2Gi
+      {{- if .Values.global.storageClass }}
+      storageClassName: {{ .Values.global.storageClass }}
+      {{- end }}

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orbiter-metering-config
+  namespace: {{ .Release.Namespace }}
+data:
+  config.yml: |
+    mongodb:
+      host: workflow-configdb
+      port: 27017
+    metricsdb:
+      host: workflow-metricsdb
+      port: 27017
+    events:
+      limits:
+        maxSize: 1000000 # max memory allowed to be used in bytes for events per domain
+        maxEntries: 5000 # max number of entries allowed to be used for events per domain

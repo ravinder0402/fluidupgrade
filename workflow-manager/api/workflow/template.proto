@@ -1,0 +1,323 @@
+// Copyright 2024, Coredge.io Inc.
+// All Rights reserved.
+//
+// Author Prabhjot Singh Sethi (prabhjot@coredge.io)
+
+syntax = "proto3";
+
+package workflow;
+
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option go_package = "github.com/coredgeio/workflow-manager/api/workflow";
+
+// These annotations are used when generating the OpenAPI file.
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    version: "1.0"
+    title: "Workflow manager API spec"
+  }
+  external_docs: {
+    description: "Workflow manager api specification for CoRobots"
+  }
+};
+
+service WorkflowTemplateApi {
+  // List Workflow Templates in a project
+  rpc ListTemplates(TemplateListReq) returns (TemplateListResp) {
+    option (google.api.http) = {
+      get: "/api/workflow/v1/domain/{domain}/project/{project}/templates"
+    };
+  }
+
+  // create a new workflow template
+  rpc CreateTemplate(TemplateCreateReq) returns (TemplateCreateResp) {
+    option (google.api.http) = {
+      post: "/api/workflow/v1/domain/{domain}/project/{project}/template"
+      body: "*"
+    };
+  }
+
+  // get workflow template
+  rpc GetTemplate(TemplateGetReq) returns (TemplateGetResp) {
+    option (google.api.http) = {
+      get: "/api/workflow/v1/domain/{domain}/project/{project}/template/{name}"
+    };
+  }
+
+  // update an existing workflow template
+  rpc UpdateTemplate(TemplateUpdateReq) returns (TemplateUpdateResp) {
+    option (google.api.http) = {
+      put: "/api/workflow/v1/domain/{domain}/project/{project}/template/{name}"
+      body: "*"
+    };
+  }
+
+  // delete an existing workflow template
+  rpc DeleteTemplate(TemplateDeleteReq) returns (TemplateDeleteResp) {
+    option (google.api.http) = {
+      delete: "/api/workflow/v1/domain/{domain}/project/{project}/template/{name}"
+    };
+  }
+
+  // execute a workflow template
+  rpc ExecuteTemplate(TemplateExecuteReq) returns (TemplateExecuteResp) {
+    option (google.api.http) = {
+      post: "/api/workflow/v1/domain/{domain}/project/{project}/template/{name}/execute"
+      body: "*"
+    };
+  }
+}
+
+message TemplateListReq {
+  // domain under consideration
+  string domain = 1;
+
+  // project under consideration
+  string project = 2;
+
+  // offset for pagination
+  int32 offset = 3;
+
+  // limit for pagination
+  int32 limit = 4;
+
+  // search text
+  string search = 5;
+}
+
+message TemplateListEntry {
+  // name of the template
+  string name = 1;
+
+  // id of the template entry
+  string id = 2;
+
+  // description for the template entry
+  string desc = 3;
+
+  // created by
+  string createdBy = 4;
+
+  // create time
+  int64 createTime = 5;
+
+  // last update time
+  int64 lastUpdate = 6;
+
+  // optional tags
+  repeated string tags = 7;
+
+  // is this entry being deleted
+  bool isDeleted = 8;
+}
+
+message TemplateListResp {
+  // count of templates available in project
+  int32 count = 1;
+
+  // list of templates as part of this response
+  repeated TemplateListEntry items = 2;
+}
+
+message TemplateUserInputNodeData {
+  // name of the input field
+  string name = 1;
+
+  // description for the input field
+  string desc = 2;
+
+  // default value of the field
+  string defaultVal = 3;
+
+  // is value input optional or mandatory for the user
+  bool opt = 4;
+}
+
+message TemplateNode {
+  // node type
+  enum NodeType {
+    // module node, where domain and project is assumed
+    // same as template
+    Module = 0;
+
+    // module from catalog, where the domain is assumed
+    // same as template, and project is considered empty
+    Catalog = 1;
+
+    // user input, where user will be prompted for input
+    // at the time of executing the workflow template
+    UserInput = 100;
+  }
+
+  // type of the node
+  NodeType type = 1;
+
+  // node unique id in the template
+  // to identify links
+  string nodeId = 2;
+
+  // unique id of the module or catalog entry
+  string moduleId = 3;
+
+  // name of the node
+  string name = 4;
+
+  // position x
+  double x = 5;
+
+  // position y
+  double y = 6;
+
+  // node data for user inputs
+  TemplateUserInputNodeData userData = 7;
+}
+
+message TemplateLink {
+  // source - nodeid of one of the nodes above
+  string source = 1;
+
+  // source variable - output from the source
+  string sourceVar = 2;
+
+  // target - nodeid of one of the nodes above
+  string target = 3;
+
+  // target variable - input of the target
+  string targetVar = 4;
+}
+
+message TemplateCreateReq {
+  // domain under consideration
+  string domain = 1;
+
+  // project under consideration
+  string project = 2;
+
+  // name of the template
+  string name = 3;
+
+  // descriptive information for the workflow template
+  string desc = 4;
+
+  // optional tags
+  repeated string tags = 5;
+
+  // template nodes
+  repeated TemplateNode nodes = 6;
+
+  // template links
+  repeated TemplateLink links = 7;
+}
+
+message TemplateCreateResp {
+}
+
+message TemplateGetReq {
+  // domain under consideration
+  string domain = 1;
+
+  // project under consideration
+  string project = 2;
+
+  // name of the template
+  string name = 3;
+}
+
+message TemplateGetResp {
+  // name of the template
+  string name = 1;
+
+  // id of the template entry
+  string id = 2;
+
+  // descriptive information for the workflow template
+  string desc = 3;
+
+  // created by
+  string createdBy = 4;
+
+  // create time
+  int64 createTime = 5;
+
+  // last update time
+  int64 lastUpdate = 6;
+
+  // is the entry being deleted
+  bool isDeleted = 7;
+
+  // optional tags
+  repeated string tags = 8;
+
+  // template nodes
+  repeated TemplateNode nodes = 9;
+
+  // template links
+  repeated TemplateLink links = 10;
+}
+
+message TemplateUpdateReq {
+  // domain under consideration
+  string domain = 1;
+
+  // project under consideration
+  string project = 2;
+
+  // name of the template
+  string name = 3;
+
+  // descriptive information for the workflow template
+  string desc = 4;
+
+  // optional tags
+  repeated string tags = 5;
+
+  // template nodes
+  repeated TemplateNode nodes = 6;
+
+  // template links
+  repeated TemplateLink links = 7;
+}
+
+message TemplateUpdateResp {
+}
+
+message TemplateDeleteReq {
+  // domain under consideration
+  string domain = 1;
+
+  // project under consideration
+  string project = 2;
+
+  // name of the template
+  string name = 3;
+}
+
+message TemplateDeleteResp {
+}
+
+message TemplateExecuteReq {
+  // domain under consideration
+  string domain = 1;
+
+  // project under consideration
+  string project = 2;
+
+  // name of the template
+  string name = 3;
+
+  // user input variables
+  map<string, string> inputs = 4;
+}
+
+message TemplateExecuteResp {
+  // domain under consideration
+  string domain = 1;
+
+  // project under consideration
+  string project = 2;
+
+  // name of the executed workflow
+  string name = 3;
+}

@@ -1,0 +1,29 @@
+replicaCount:
+  containerRegistry: 1
+
+resources:
+  limits:
+    cpu: "300m"
+    memory: "2Gi"
+  requests:
+    cpu: "100m"
+    memory: "400Mi"   
+
+#storage:
+#  cephS3:
+#    userId: ""
+#    endpoint: ""
+#    accessKey: ""
+#    secretKey: ""
+#  s3:
+#    endpoint: ""
+#    accessKey: ""
+#    secretKey: ""
+#  ecs:
+#    endpoint: ""
+#    s3Endpoint: ""
+#    username: ""
+#    password: ""
+#    accessKey: ""
+#    secretKey: ""
+#    namespace: ""

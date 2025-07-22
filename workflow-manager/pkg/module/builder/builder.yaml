@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ .Name }}
+  namespace: {{ .Namespace }}
+spec:
+  initContainers:
+  - name: file-initialization
+    image: alpine/git:latest
+{{- if .ProxyEnabled }}
+    env:
+{{- if ne .HttpProxy "" }}
+    - name: http_proxy
+      value: {{ .HttpProxy }}
+{{- end }}
+{{- if ne .HttpsProxy "" }}
+    - name: https_proxy
+      value: {{ .HttpsProxy }}
+{{- end }}
+{{- if ne .NoProxy "" }}
+    - name: no_proxy
+      value: {{ .NoProxy }}
+{{- end }}
+{{- end }}
+    command:
+    - /bin/sh
+    - -c
+    - |
+{{- if .Files }}
+{{- range $i, $file := .Files }}
+      cat <<EOF > /data/{{ $file.Name }}
+{{ $file.Content | indent 6 }}
+      EOF
+{{- end }}
+{{- end }}
+      {{- if .GitInfo }}
+      git clone {{ .GitInfo.Url }} /data/repo
+      {{- if .GitInfo.GitRef }}
+      (cd /data/repo && git checkout {{ .GitInfo.GitRef }})
+      {{- end }}
+      {{- end }}
+      cat <<EOF > /data/Dockerfile
+{{ .DockerFile | indent 6 }}
+      EOF
+    volumeMounts:
+    - name: shared-data
+      mountPath: /data
+  containers:
+  - name: builder
+    image: gcr.io/kaniko-project/executor:latest
+    {{- if .EnforceResourceLimits }}
+    resources:
+      requests:
+        memory: "20Mi"
+        cpu: "20m"
+      limits:
+        memory: "8Gi"
+        cpu: "4"
+    {{- end }}
+{{- if .ProxyEnabled }}
+    env:
+{{- if ne .HttpProxy "" }}
+    - name: http_proxy
+      value: {{ .HttpProxy }}
+{{- end }}
+{{- if ne .HttpsProxy "" }}
+    - name: https_proxy
+      value: {{ .HttpsProxy }}
+{{- end }}
+{{- if ne .NoProxy "" }}
+    - name: no_proxy
+      value: {{ .NoProxy }}
+{{- end }}
+{{- end }}
+    args:
+{{- if .RegInsecure }}
+    - "--insecure"
+{{- end }}
+    - "--skip-tls-verify"
+    - "--dockerfile=/data/Dockerfile"
+    - "--context=/data"
+    - "--destination={{ .Registry }}/{{ .Name }}:latest"
+    volumeMounts:
+    - name: reg-secret
+      mountPath: /kaniko/.docker/
+    - name: shared-data
+      mountPath: /data
+  restartPolicy: Never
+  volumes:
+  - name: reg-secret
+    secret:
+      secretName: {{ .RegSecret }}
+  - name: shared-data
+    emptyDir: {}

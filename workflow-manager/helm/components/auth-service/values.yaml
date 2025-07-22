@@ -1,0 +1,57 @@
+replicaCount:
+  orbiterAuth: 1
+
+keycloak:
+  # keycloak clientID (needs to be a public client)
+  clientId: controller
+  # introspection client credentials
+  introspect:
+    clientId: ""
+    clientSecret: ""
+  # keycloak URL used in OIDC for fetching well-known config
+  url: https://keycloak:8443
+  # list of public clients that need to be created at deploy time
+  clients:
+  - controller
+  # DNS for the origin that we want to allow when accessing the client
+  dns: ""
+  # user credentials for the default realm user that will be created
+  # along with creation of the realm
+  admin:
+    username: "admin"
+    password: "Orbiter@123"
+    firstname: ""
+    lastname: ""
+    email: ""
+  # IDP config for the IDP that needs to be created
+  # at deploy time in the realm created at deploy time
+  idpConfig:
+    enabled: false
+    name: ""
+    # auto onboarding allows users to directly use the IDP and create a new account
+    # instead of requiring the user to exist in the system beforehand
+    allowAutoOnboarding: true
+    # provider ID can either be OIDC or of type facebook, microsoft, google etc.
+    providerId: "oidc"
+    clientId: ""
+    clientSecret: ""
+    clientAuthMethod: ""
+    authorizationUrl: ""
+    tokenUrl: ""
+
+gateway:
+  # additional enpoint forwarding configuration
+  #locations:
+  #- prefix: /api/demo
+  #  endpoint: http://cloud-manager:8080
+  #  rewritePrefix: /
+  #  accessType: unscoped
+  locations: {}
+
+resources:
+  limits:
+    cpu: "300m"
+    memory: "2Gi"
+  requests:
+    cpu: "100m"
+    memory: "400Mi"

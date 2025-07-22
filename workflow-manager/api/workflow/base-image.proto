@@ -1,0 +1,133 @@
+// Copyright 2024, Coredge.io Inc.
+// All Rights reserved.
+//
+// Author Prabhjot Singh Sethi (prabhjot@coredge.io)
+
+syntax = "proto3";
+
+package workflow;
+
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option go_package = "github.com/coredgeio/workflow-manager/api/workflow";
+
+// These annotations are used when generating the OpenAPI file.
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    version: "1.0"
+    title: "Workflow manager API spec"
+  }
+  external_docs: {
+    description: "Workflow manager api specification for CoRobots"
+  }
+};
+
+service BaseImageApi {
+  // List of available base images
+  rpc ListBaseImages(BaseImagesListReq) returns (BaseImagesListResp) {
+    option (google.api.http) = {
+      get: "/api/workflow/v1/domain/{domain}/base-images"
+    };
+  }
+
+  // base image is always added with context of version
+  rpc AddBaseImage(BaseImageAddReq) returns (BaseImageAddResp) {
+    option (google.api.http) = {
+      post: "/api/workflow/v1/domain/{domain}/base-image/{name}/version"
+      body: "*"
+    };
+  }
+
+  // delete of base image can be triggered only with specific versions
+  rpc DeleteBaseImage(BaseImageDelReq) returns (BaseImageDelResp) {
+    option (google.api.http) = {
+      delete: "/api/workflow/v1/domain/{domain}/base-image/{name}/version/{version}"
+    };
+  }
+
+  // List of available base images in a project for module creation
+  rpc ListProjectBaseImages(ProjectBaseImagesListReq) returns (BaseImagesListResp) {
+    option (google.api.http) = {
+      get: "/api/workflow/v1/domain/{domain}/project/{project}/base-images"
+    };
+  }
+}
+
+message BaseImagesListReq {
+  // domain under consideration
+  string domain = 1;
+}
+
+message BaseImagesVersionInfo {
+  // version identifier of the image
+  string version = 1;
+
+  // description for the image
+  string desc = 2;
+
+  // base image id to be used
+  string imageId = 3;
+
+  // external reference for the image
+  string extRef = 4;
+}
+
+message BaseImagesListEntry {
+  // name of the image
+  string name = 1;
+
+  // list of supported versions for this image
+  repeated BaseImagesVersionInfo versions = 2;
+}
+
+message BaseImagesListResp {
+  // count is not relevant since we will not be providing
+  // paginattion of this api as of now
+
+  // list of items available in the response
+  repeated BaseImagesListEntry items = 2;
+}
+
+message BaseImageAddReq {
+  // domain under consideration
+  string domain = 1;
+
+  // name of the base image
+  string name = 2;
+
+  // version of the base image
+  string version = 3;
+
+  // description
+  string desc = 4;
+
+  // external reference of the image to be used
+  string extRef = 5;
+}
+
+message BaseImageAddResp {
+}
+
+message BaseImageDelReq {
+  // domain under consideration
+  string domain = 1;
+
+  // name of the base image
+  string name = 2;
+
+  // version of the base image
+  string version = 3;
+}
+
+message BaseImageDelResp {
+}
+
+message ProjectBaseImagesListReq {
+  // domain under consideration
+  string domain = 1;
+
+  // project under consideration
+  string project = 2;
+}
+

@@ -1,0 +1,273 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: configdb
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    {{- if .Values.configDB.metrics.enabled }}
+    prometheus.io/scrape: 'true'
+    prometheus.io/path: '/metrics'
+    prometheus.io/port: '9216'
+    {{- end }}
+spec:
+  serviceName: "configdb"
+  selector:
+    matchLabels:
+      app: configdb
+  replicas: {{ .Values.configDB.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: configdb
+    spec:
+      {{- if ne "Openshift" .Values.global.environment }}
+      securityContext:
+        fsGroup: 999
+        runAsUser: 999
+      {{- end }}
+      containers:
+      - name: mongodb
+        image: {{ .Values.global.repository }}/mongo:5.0.3
+        imagePullPolicy: IfNotPresent
+        command: ["bash"]
+        args: ["-c", "/start-mongodb.sh"]
+        volumeMounts:
+        - name: mongodb-data
+          mountPath: /data/db
+        - name: mongo-script-vol
+          mountPath: /start-mongodb.sh
+          subPath: start-mongodb.sh
+        - name: config-replica-auth-vol
+          mountPath: /opt/auth
+          subPath: auth
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        - name: MONGODB_SERVICE_SERVICE_HOST
+          value: "configdb"
+        - name: REPLICA_COUNT
+          value: "{{ .Values.configDB.replicaCount }}"
+        ports:
+        - name: mongodb
+          containerPort: 27017
+#        livenessProbe:
+#          exec:
+#            command:
+#            - mongosh
+#            - -u
+#            - $MONGO_INITDB_ROOT_USERNAME
+#            - -p
+#            - $MONGO_INITDB_ROOT_PASSWORD
+#            - --eval
+#            - db.adminCommand("ping")
+#          failureThreshold: 3
+#          periodSeconds: 10
+#          #successThreshold: 2
+#          timeoutSeconds: 2
+#          initialDelaySeconds: 10
+        resources:
+          {{- toYaml .Values.configDB.resources | nindent 10 }} 
+        readinessProbe:
+          exec:
+            command:
+            - /usr/bin/echo
+            - "hello"
+#            - mongosh
+#            - -u
+#            - $MONGO_INITDB_ROOT_USERNAME
+#            - -p
+#            - $MONGO_INITDB_ROOT_PASSWORD
+#            - --eval
+#            - db.adminCommand("ping")
+#          failureThreshold: 10
+#          periodSeconds: 5
+#          #successThreshold: 2
+#          timeoutSeconds: 2
+          initialDelaySeconds: 10
+      {{- if .Values.configDB.metrics.enabled }}
+      - name: metrics
+        image: {{ .Values.global.repository }}/mongodb-exporter:0.40.0
+        imagePullPolicy: IfNotPresent
+        args:
+        - --discovering-mode
+        - --compatible-mode
+        - --collect-all
+        - --log.level=debug
+        - --mongodb.uri=$(MONGODB_URI)
+        env:
+        - name: EXPORTER_USER
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: EXPORTER_PASS
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.podIP
+        - name: MONGODB_URI
+          value: mongodb://$(EXPORTER_USER):$(EXPORTER_PASS)@$(POD_IP):27017
+        ports:
+        - name: metrics
+          containerPort: 9216
+      {{- end }}
+      imagePullSecrets:
+      - name: {{ .Release.Name }}-docker-registry-key
+      volumes:
+      - name: config-replica-auth-vol
+        secret:
+          secretName: config-replica-auth
+          defaultMode: 0400
+      - name: mongo-script-vol
+        configMap:
+          name: mongo-init
+          defaultMode: 0555
+  volumeClaimTemplates:
+  - metadata:
+      name: mongodb-data
+    spec:
+      accessModes:
+      - "ReadWriteOnce"
+      resources:
+        requests:
+          storage: {{ .Values.configDB.persistence.size }}
+      {{- if .Values.global.storageClass }}
+      storageClassName: {{ .Values.global.storageClass }}
+      {{- end }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: metricsdb
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    {{- if .Values.metricsDB.metrics.enabled }}
+    prometheus.io/scrape: 'true'
+    prometheus.io/path: '/metrics'
+    prometheus.io/port: '9216'
+    {{- end }}
+spec:
+  serviceName: "metricsdb"
+  selector:
+    matchLabels:
+      app: metricsdb
+  replicas: {{ .Values.metricsDB.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: metricsdb
+    spec:
+      {{- if ne "Openshift" .Values.global.environment }}
+      securityContext:
+        fsGroup: 999
+        runAsUser: 999
+      {{- end }}
+      containers:
+      - name: mongodb
+        image: {{ .Values.global.repository }}/mongo:5.0.3
+        imagePullPolicy: IfNotPresent
+        command: ["bash"]
+        args: ["-c", "/start-mongodb.sh"]
+        volumeMounts:
+        - name: mongodb-data
+          mountPath: /data/db
+        - name: mongo-script-vol
+          mountPath: /start-mongodb.sh
+          subPath: start-mongodb.sh
+        - name: config-replica-auth-vol
+          mountPath: /opt/auth
+          subPath: auth
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        - name: MONGODB_SERVICE_SERVICE_HOST
+          value: "metricsdb"
+        - name: REPLICA_COUNT
+          value: "{{ .Values.metricsDB.replicaCount }}"
+        ports:
+        - name: mongodb
+          containerPort: 27017
+        resources:
+          {{- toYaml .Values.metricsDB.resources | nindent 10 }}  
+        readinessProbe:
+          exec:
+            command:
+            - /usr/bin/echo
+            - "hello"
+          initialDelaySeconds: 10
+      {{- if .Values.configDB.metrics.enabled }}
+      - name: metrics
+        image: {{ .Values.global.repository }}/mongodb-exporter:0.40.0
+        imagePullPolicy: IfNotPresent
+        args:
+        - --discovering-mode
+        - --compatible-mode
+        - --collect-all
+        - --log.level=debug
+        - --mongodb.uri=$(MONGODB_URI)
+        env:
+        - name: EXPORTER_USER
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: EXPORTER_PASS
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.podIP
+        - name: MONGODB_URI
+          value: mongodb://$(EXPORTER_USER):$(EXPORTER_PASS)@$(POD_IP):27017
+        ports:
+        - name: metrics
+          containerPort: 9216
+      {{- end }}
+      imagePullSecrets:
+      - name: {{ .Release.Name }}-docker-registry-key
+      volumes:
+      - name: config-replica-auth-vol
+        secret:
+          secretName: config-replica-auth
+          defaultMode: 0400
+      - name: mongo-script-vol
+        configMap:
+          name: mongo-init
+          defaultMode: 0555
+  volumeClaimTemplates:
+  - metadata:
+      name: mongodb-data
+    spec:
+      accessModes:
+      - "ReadWriteOnce"
+      resources:
+        requests:
+          storage: {{ .Values.metricsDB.persistence.size }}
+      {{- if .Values.global.storageClass }}
+      storageClassName: {{ .Values.global.storageClass }}
+      {{- end }}

@@ -1,0 +1,2603 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Workflow manager API spec",
+    "version": "1.0"
+  },
+  "tags": [
+    {
+      "name": "BaseImageApi"
+    },
+    {
+      "name": "ModuleApi"
+    },
+    {
+      "name": "WorkflowTemplateApi"
+    },
+    {
+      "name": "WorkflowApi"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/workflow/v1/domain/{domain}/base-image/{name}/version": {
+      "post": {
+        "summary": "base image is always added with context of version",
+        "operationId": "BaseImageApi_AddBaseImage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowBaseImageAddResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "description": "name of the base image",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "version": {
+                  "type": "string",
+                  "title": "version of the base image"
+                },
+                "desc": {
+                  "type": "string",
+                  "title": "description"
+                },
+                "extRef": {
+                  "type": "string",
+                  "title": "external reference of the image to be used"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "BaseImageApi"
+        ]
+      }
+    },
+    "/api/workflow/v1/domain/{domain}/base-image/{name}/version/{version}": {
+      "delete": {
+        "summary": "delete of base image can be triggered only with specific versions",
+        "operationId": "BaseImageApi_DeleteBaseImage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowBaseImageDelResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "description": "name of the base image",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "description": "version of the base image",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "BaseImageApi"
+        ]
+      }
+    },
+    "/api/workflow/v1/domain/{domain}/base-images": {
+      "get": {
+        "summary": "List of available base images",
+        "operationId": "BaseImageApi_ListBaseImages",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowBaseImagesListResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "BaseImageApi"
+        ]
+      }
+    },
+    "/api/workflow/v1/domain/{domain}/catalog-requests": {
+      "get": {
+        "summary": "list of module catalog review request",
+        "operationId": "ModuleApi_ListModuleCatalogRequest",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowModuleCatalogRequestListResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "offset",
+            "description": "offset for pagination.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "limit",
+            "description": "limit for pagination.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "status",
+            "description": " - Open: Open review requests\n - Closed: Closed review requests\n - All: All review requests",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "Open",
+              "Closed",
+              "All"
+            ],
+            "default": "Open"
+          }
+        ],
+        "tags": [
+          "ModuleApi"
+        ]
+      }
+    },
+    "/api/workflow/v1/domain/{domain}/project/{project}/base-images": {
+      "get": {
+        "summary": "List of available base images in a project for module creation",
+        "operationId": "BaseImageApi_ListProjectBaseImages",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowBaseImagesListResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "project",
+            "description": "project under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "BaseImageApi"
+        ]
+      }
+    },
+    "/api/workflow/v1/domain/{domain}/project/{project}/module": {
+      "post": {
+        "summary": "Create a new Module",
+        "operationId": "ModuleApi_CreateModule",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowModuleCreateResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "mandatory domain",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "project",
+            "description": "mandatory project",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "title": "name of the module entry"
+                },
+                "desc": {
+                  "type": "string",
+                  "title": "description of the module"
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "optional: tags corresponding to the module"
+                },
+                "buildConfig": {
+                  "$ref": "#/definitions/workflowModuleBuildConfig",
+                  "title": "build config for module creation"
+                },
+                "inputKeys": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/definitions/workflowInputKeyData"
+                  },
+                  "description": "key to fetch module input like config files or other data."
+                },
+                "outputKeys": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/definitions/workflowOutputKeyData"
+                  },
+                  "title": "key at which module's execution output is pushed"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "ModuleApi"
+        ]
+      }
+    },
+    "/api/workflow/v1/domain/{domain}/project/{project}/module-catalog": {
+      "get": {
+        "summary": "list catalog of modules (approved)",
+        "operationId": "ModuleApi_ListModuleCatalog",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowModuleCatalogListResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "project",
+            "description": "project under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "offset",
+            "description": "offset to being from.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "limit",
+            "description": "limit of the entries to include in the response list.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "ModuleApi"
+        ]
+      }
+    },
+    "/api/workflow/v1/domain/{domain}/project/{project}/module-catalog/{name}/versions": {
+      "get": {
+        "summary": "list catalog versions of modules (approved)",
+        "operationId": "ModuleApi_ListModuleCatalogVer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowModuleCatalogVerListResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "project",
+            "description": "project under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "description": "names of the module in catalog",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "offset",
+            "description": "offset to being from.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "limit",
+            "description": "limit of the entries to include in the response list.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "ModuleApi"
+        ]
+      }
+    },
+    "/api/workflow/v1/domain/{domain}/project/{project}/module/{name}": {
+      "get": {
+        "summary": "Get module",
+        "operationId": "ModuleApi_GetModule",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowModuleGetResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "project",
+            "description": "project under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "description": "name of the module",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ModuleApi"
+        ]
+      },
+      "delete": {
+        "summary": "Delete module",
+        "operationId": "ModuleApi_DeleteModule",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowModuleDeleteResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "project",
+            "description": "project under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "description": "name of the module",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ModuleApi"
+        ]
+      },
+      "put": {
+        "summary": "Update module",
+        "operationId": "ModuleApi_UpdateModule",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowModuleCreateResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "mandatory domain",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "project",
+            "description": "mandatory project",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "description": "name of the module entry",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "desc": {
+                  "type": "string",
+                  "title": "description of the module"
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "optional: tags corresponding to the module"
+                },
+                "buildConfig": {
+                  "$ref": "#/definitions/workflowModuleBuildConfig",
+                  "title": "build config for module creation"
+                },
+                "inputKeys": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/definitions/workflowInputKeyData"
+                  },
+                  "description": "key to fetch module input like config files or other data."
+                },
+                "outputKeys": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/definitions/workflowOutputKeyData"
+                  },
+                  "title": "key at which module's execution output is pushed"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "ModuleApi"
+        ]
+      }
+    },
+    "/api/workflow/v1/domain/{domain}/project/{project}/module/{name}/catalog": {
+      "delete": {
+        "summary": "delete catalog request from module",
+        "operationId": "ModuleApi_DeleteCatalogRequest",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowModuleCatalogDeleteResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "project",
+            "description": "project under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "description": "name of the module",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "msg",
+            "description": "accompaning message for audit trail.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ModuleApi"
+        ]
+      },
+      "post": {
+        "summary": "create a catalog request from module",
+        "operationId": "ModuleApi_CreateCatalogRequest",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowModuleCatalogCreateResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "project",
+            "description": "project under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "description": "name of the module",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "catalogId": {
+                  "type": "string",
+                  "title": "catalog entry against which the request is raised\nif empty it is considered to be raised as request\nfor new catalog entry"
+                },
+                "msg": {
+                  "type": "string",
+                  "title": "accompaning message for audit trail"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "ModuleApi"
+        ]
+      }
+    },
+    "/api/workflow/v1/domain/{domain}/project/{project}/module/{name}/comment": {
+      "post": {
+        "summary": "provide option for project members to add comments to the module audit trail,\navailable only if request for the module is created",
+        "operationId": "ModuleApi_AddModuleComment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowModuleCommentAddResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "project",
+            "description": "project under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "description": "name of the module",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "msg": {
+                  "type": "string",
+                  "title": "accompaning message for audit trail"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "ModuleApi"
+        ]
+      }
+    },
+    "/api/workflow/v1/domain/{domain}/project/{project}/module/{name}/rebuild": {
+      "post": {
+        "summary": "trigger rebuild of the module image",
+        "operationId": "ModuleApi_RebuildModule",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowModuleRebuildResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "project",
+            "description": "project under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "description": "name of the module",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ModuleApi"
+        ]
+      }
+    },
+    "/api/workflow/v1/domain/{domain}/project/{project}/modules": {
+      "get": {
+        "summary": "List Modules in a project",
+        "operationId": "ModuleApi_ListModules",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowModulesListResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "project",
+            "description": "project under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "offset",
+            "description": "offset for pagination.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "limit",
+            "description": "limit for pagination.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "search",
+            "description": "search text.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ModuleApi"
+        ]
+      }
+    },
+    "/api/workflow/v1/domain/{domain}/project/{project}/template": {
+      "post": {
+        "summary": "create a new workflow template",
+        "operationId": "WorkflowTemplateApi_CreateTemplate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowTemplateCreateResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "project",
+            "description": "project under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "title": "name of the template"
+                },
+                "desc": {
+                  "type": "string",
+                  "title": "descriptive information for the workflow template"
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "optional tags"
+                },
+                "nodes": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/workflowTemplateNode"
+                  },
+                  "title": "template nodes"
+                },
+                "links": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/workflowTemplateLink"
+                  },
+                  "title": "template links"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "WorkflowTemplateApi"
+        ]
+      }
+    },
+    "/api/workflow/v1/domain/{domain}/project/{project}/template/{name}": {
+      "get": {
+        "summary": "get workflow template",
+        "operationId": "WorkflowTemplateApi_GetTemplate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowTemplateGetResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "project",
+            "description": "project under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "description": "name of the template",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "WorkflowTemplateApi"
+        ]
+      },
+      "delete": {
+        "summary": "delete an existing workflow template",
+        "operationId": "WorkflowTemplateApi_DeleteTemplate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowTemplateDeleteResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "project",
+            "description": "project under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "description": "name of the template",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "WorkflowTemplateApi"
+        ]
+      },
+      "put": {
+        "summary": "update an existing workflow template",
+        "operationId": "WorkflowTemplateApi_UpdateTemplate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowTemplateUpdateResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "project",
+            "description": "project under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "description": "name of the template",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "desc": {
+                  "type": "string",
+                  "title": "descriptive information for the workflow template"
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "optional tags"
+                },
+                "nodes": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/workflowTemplateNode"
+                  },
+                  "title": "template nodes"
+                },
+                "links": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/workflowTemplateLink"
+                  },
+                  "title": "template links"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "WorkflowTemplateApi"
+        ]
+      }
+    },
+    "/api/workflow/v1/domain/{domain}/project/{project}/template/{name}/execute": {
+      "post": {
+        "summary": "execute a workflow template",
+        "operationId": "WorkflowTemplateApi_ExecuteTemplate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowTemplateExecuteResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "project",
+            "description": "project under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "description": "name of the template",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "inputs": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "user input variables"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "WorkflowTemplateApi"
+        ]
+      }
+    },
+    "/api/workflow/v1/domain/{domain}/project/{project}/templates": {
+      "get": {
+        "summary": "List Workflow Templates in a project",
+        "operationId": "WorkflowTemplateApi_ListTemplates",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowTemplateListResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "project",
+            "description": "project under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "offset",
+            "description": "offset for pagination.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "limit",
+            "description": "limit for pagination.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "search",
+            "description": "search text.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "WorkflowTemplateApi"
+        ]
+      }
+    },
+    "/api/workflow/v1/domain/{domain}/project/{project}/workflow/{name}": {
+      "get": {
+        "operationId": "WorkflowApi_GetWorkflow",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowWorkflowGetResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "project",
+            "description": "project under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "description": "name of the workflow to be deleted",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "WorkflowApi"
+        ]
+      },
+      "delete": {
+        "operationId": "WorkflowApi_DeleteWorkflow",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowWorkflowDeleteResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "project",
+            "description": "project under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "description": "name of the workflow to be deleted",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "WorkflowApi"
+        ]
+      }
+    },
+    "/api/workflow/v1/domain/{domain}/project/{project}/workflows": {
+      "get": {
+        "summary": "List Workflows executed in a project",
+        "operationId": "WorkflowApi_ListWorkflows",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/workflowWorkflowListResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domain",
+            "description": "domain under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "project",
+            "description": "project under consideration",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "offset",
+            "description": "offset for pagination.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "limit",
+            "description": "limit for pagination.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "search",
+            "description": "search text.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "WorkflowApi"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "ModuleCatalogRequestListReqFilterStatus": {
+      "type": "string",
+      "enum": [
+        "Open",
+        "Closed",
+        "All"
+      ],
+      "default": "Open",
+      "title": "- Open: Open review requests\n - Closed: Closed review requests\n - All: All review requests"
+    },
+    "googlerpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "workflowBaseImageAddResp": {
+      "type": "object"
+    },
+    "workflowBaseImageDelResp": {
+      "type": "object"
+    },
+    "workflowBaseImagesListEntry": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name of the image"
+        },
+        "versions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workflowBaseImagesVersionInfo"
+          },
+          "title": "list of supported versions for this image"
+        }
+      }
+    },
+    "workflowBaseImagesListResp": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workflowBaseImagesListEntry"
+          },
+          "title": "list of items available in the response"
+        }
+      }
+    },
+    "workflowBaseImagesVersionInfo": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "title": "version identifier of the image"
+        },
+        "desc": {
+          "type": "string",
+          "title": "description for the image"
+        },
+        "imageId": {
+          "type": "string",
+          "title": "base image id to be used"
+        },
+        "extRef": {
+          "type": "string",
+          "title": "external reference for the image"
+        }
+      }
+    },
+    "workflowInputKeyData": {
+      "type": "object",
+      "properties": {
+        "dataType": {
+          "type": "string",
+          "title": "specify type of data to be carried into the key\nanything which is not a string is expected to be\nstring parseable values like \"true\" for true\n\"1\" instead of 1 etc"
+        },
+        "opt": {
+          "type": "boolean",
+          "title": "specify if the key is optional"
+        },
+        "defaultVal": {
+          "type": "string",
+          "title": "default value for the input when it is optional\nprovided by the user while defining the input\nparameter itself"
+        }
+      }
+    },
+    "workflowModuleBuildConfig": {
+      "type": "object",
+      "properties": {
+        "baseImage": {
+          "type": "string",
+          "title": "base image from which the module will be built"
+        },
+        "buildScript": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "raw script/Dockerfile to build code if repository is not provided. Ignored if git repo is provided"
+        },
+        "env": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "setting up default environment variables"
+        },
+        "entryPoint": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "entrypoint for container image"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workflowModuleFileInfo"
+          },
+          "title": "raw content / script to be executed as part of module"
+        },
+        "gitInfo": {
+          "$ref": "#/definitions/workflowModuleGitInfo",
+          "title": "git information to work with"
+        }
+      }
+    },
+    "workflowModuleBuildDefStatus": {
+      "type": "string",
+      "enum": [
+        "Scheduled",
+        "InProgress",
+        "Completed",
+        "Failed"
+      ],
+      "default": "Scheduled",
+      "title": "- Scheduled: init status indicating nothing has started yet\n - InProgress: build has been started\n - Completed: build completed with success\n - Failed: build completed with failure"
+    },
+    "workflowModuleBuildStatus": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "$ref": "#/definitions/workflowModuleBuildDefStatus",
+          "title": "current status of the moudle build"
+        },
+        "errMsg": {
+          "type": "string",
+          "title": "error message in case of build failure"
+        },
+        "timeStamp": {
+          "type": "string",
+          "format": "int64",
+          "title": "timestamp of the status"
+        }
+      }
+    },
+    "workflowModuleCatalogCreateResp": {
+      "type": "object"
+    },
+    "workflowModuleCatalogDeleteResp": {
+      "type": "object"
+    },
+    "workflowModuleCatalogListEntry": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "Unique id of module catalog entry"
+        },
+        "name": {
+          "type": "string",
+          "title": "name of the catalog entry"
+        },
+        "desc": {
+          "type": "string",
+          "title": "description of the Catalog"
+        },
+        "createdBy": {
+          "type": "string",
+          "title": "created by"
+        },
+        "createTime": {
+          "type": "string",
+          "format": "int64",
+          "title": "create time"
+        },
+        "lastUpdate": {
+          "type": "string",
+          "format": "int64",
+          "title": "last update time"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "optional tags"
+        },
+        "inputKeys": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/workflowInputKeyData"
+          },
+          "description": "key to fetch module input like config files or other data."
+        },
+        "outputKeys": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/workflowOutputKeyData"
+          },
+          "title": "key at which module's execution output is pushed"
+        },
+        "image": {
+          "type": "string",
+          "title": "image this catalog module will consume"
+        },
+        "latestVersion": {
+          "type": "string",
+          "title": "latest version"
+        },
+        "isArchived": {
+          "type": "boolean",
+          "title": "is this entry archived"
+        },
+        "isDeleted": {
+          "type": "boolean",
+          "title": "is this entry being deleted"
+        }
+      }
+    },
+    "workflowModuleCatalogListResp": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "format": "int32",
+          "title": "count of enties available corresponding to the filter"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workflowModuleCatalogListEntry"
+          },
+          "title": "list of catalog entries"
+        }
+      }
+    },
+    "workflowModuleCatalogRequestListEntry": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "id of the request"
+        },
+        "status": {
+          "$ref": "#/definitions/workflowModuleRequestStatusStatus",
+          "title": "request status"
+        },
+        "module": {
+          "$ref": "#/definitions/workflowModuleRequestModuleInfo",
+          "title": "module info"
+        },
+        "catalog": {
+          "$ref": "#/definitions/workflowModuleRequestCatalogInfo",
+          "title": "catalog mapping info"
+        },
+        "auditTrail": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workflowModuleRequestAuditInfo"
+          },
+          "title": "Audit trail of the message for this request"
+        }
+      }
+    },
+    "workflowModuleCatalogRequestListResp": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "format": "int32",
+          "title": "total number of available requests"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workflowModuleCatalogRequestListEntry"
+          },
+          "title": "list of requests corresponding to this response"
+        }
+      }
+    },
+    "workflowModuleCatalogVerListEntry": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name of the catalog entry"
+        },
+        "version": {
+          "type": "string",
+          "title": "version of the catalog entry"
+        },
+        "desc": {
+          "type": "string",
+          "title": "description of the Catalog"
+        },
+        "createdBy": {
+          "type": "string",
+          "title": "created by"
+        },
+        "createTime": {
+          "type": "string",
+          "format": "int64",
+          "title": "create time"
+        },
+        "lastUpdate": {
+          "type": "string",
+          "format": "int64",
+          "title": "last update time"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "optional tags"
+        },
+        "inputKeys": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/workflowInputKeyData"
+          },
+          "description": "key to fetch module input like config files or other data."
+        },
+        "outputKeys": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/workflowOutputKeyData"
+          },
+          "title": "key at which module's execution output is pushed"
+        },
+        "image": {
+          "type": "string",
+          "title": "image this catalog module will consume"
+        },
+        "isLatest": {
+          "type": "boolean",
+          "title": "is this latest version"
+        },
+        "isArchived": {
+          "type": "boolean",
+          "title": "is this entry archived"
+        },
+        "isDeleted": {
+          "type": "boolean",
+          "title": "is this entry being deleted"
+        }
+      }
+    },
+    "workflowModuleCatalogVerListResp": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "format": "int32",
+          "title": "count of enties available corresponding to the filter"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workflowModuleCatalogVerListEntry"
+          },
+          "title": "list of catalog version entries"
+        }
+      }
+    },
+    "workflowModuleCommentAddResp": {
+      "type": "object"
+    },
+    "workflowModuleCreateResp": {
+      "type": "object"
+    },
+    "workflowModuleDeleteResp": {
+      "type": "object"
+    },
+    "workflowModuleFileInfo": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name of the file"
+        },
+        "content": {
+          "type": "string",
+          "title": "content of the file"
+        },
+        "perm": {
+          "type": "string",
+          "title": "this needs to be of the format\n777 / 755 / 600 / 644 etc"
+        }
+      }
+    },
+    "workflowModuleGetResp": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "Unique id of module"
+        },
+        "name": {
+          "type": "string",
+          "title": "name of the module entry"
+        },
+        "desc": {
+          "type": "string",
+          "title": "description of the module"
+        },
+        "createdBy": {
+          "type": "string",
+          "title": "created by"
+        },
+        "createTime": {
+          "type": "string",
+          "format": "int64",
+          "title": "create time"
+        },
+        "lastUpdate": {
+          "type": "string",
+          "format": "int64",
+          "title": "last update time"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "optional tags"
+        },
+        "buildConfig": {
+          "$ref": "#/definitions/workflowModuleBuildConfig",
+          "title": "build config for module creation"
+        },
+        "inputKeys": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/workflowInputKeyData"
+          },
+          "description": "key to fetch module input like config files or other data."
+        },
+        "outputKeys": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/workflowOutputKeyData"
+          },
+          "title": "key at which module's execution output is pushed"
+        },
+        "build": {
+          "$ref": "#/definitions/workflowModuleBuildStatus",
+          "title": "module build status"
+        },
+        "request": {
+          "$ref": "#/definitions/workflowModuleRequestStatus",
+          "title": "module status"
+        },
+        "isDeleted": {
+          "type": "boolean",
+          "title": "module is being deleted"
+        }
+      }
+    },
+    "workflowModuleGitInfo": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "title": "git repo url"
+        },
+        "gitRef": {
+          "type": "string",
+          "title": "git reference - branch tag or commit id to use"
+        },
+        "workingDir": {
+          "type": "string",
+          "title": "working directory inside the git repository"
+        }
+      }
+    },
+    "workflowModuleRebuildResp": {
+      "type": "object"
+    },
+    "workflowModuleRequestAuditInfo": {
+      "type": "object",
+      "properties": {
+        "timeStamp": {
+          "type": "string",
+          "format": "int64",
+          "title": "timestamp of the message"
+        },
+        "username": {
+          "type": "string",
+          "title": "username who left the message"
+        },
+        "fullname": {
+          "type": "string",
+          "title": "Full name for the user"
+        },
+        "msg": {
+          "type": "string",
+          "title": "message left over by the reviewer"
+        }
+      }
+    },
+    "workflowModuleRequestCatalogInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "catalog entry id, this field will be empty,\nif the requesst is for new catalog entry"
+        },
+        "name": {
+          "type": "string",
+          "title": "name of the catalog entry"
+        },
+        "desc": {
+          "type": "string",
+          "title": "description of the Catalog"
+        }
+      }
+    },
+    "workflowModuleRequestModuleInfo": {
+      "type": "object",
+      "properties": {
+        "domain": {
+          "type": "string",
+          "title": "domain under consideration"
+        },
+        "project": {
+          "type": "string",
+          "title": "project under consideration"
+        },
+        "name": {
+          "type": "string",
+          "title": "name of the module"
+        },
+        "id": {
+          "type": "string",
+          "title": "id of the module"
+        }
+      }
+    },
+    "workflowModuleRequestStatus": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "module request id for reference"
+        },
+        "status": {
+          "$ref": "#/definitions/workflowModuleRequestStatusStatus",
+          "title": "status of the module request"
+        },
+        "auditTrail": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workflowModuleRequestAuditInfo"
+          },
+          "title": "Audit trail of the message for this request"
+        }
+      }
+    },
+    "workflowModuleRequestStatusStatus": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Submitted",
+        "Approved",
+        "Rejected"
+      ],
+      "default": "Draft",
+      "title": "- Draft: Draft\n - Submitted: Submitted\n - Approved: Approved\n - Rejected: Rejected"
+    },
+    "workflowModulesListEntry": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "Unique id of module"
+        },
+        "name": {
+          "type": "string",
+          "title": "name of the module entry"
+        },
+        "desc": {
+          "type": "string",
+          "title": "description of the module"
+        },
+        "createdBy": {
+          "type": "string",
+          "title": "created by"
+        },
+        "createTime": {
+          "type": "string",
+          "format": "int64",
+          "title": "create time"
+        },
+        "lastUpdate": {
+          "type": "string",
+          "format": "int64",
+          "title": "last update time"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "optional tags"
+        },
+        "inputKeys": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/workflowInputKeyData"
+          },
+          "description": "key to fetch module input like config files or other data."
+        },
+        "outputKeys": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/workflowOutputKeyData"
+          },
+          "title": "key at which module's execution output is pushed"
+        },
+        "build": {
+          "$ref": "#/definitions/workflowModuleBuildStatus",
+          "title": "module build status"
+        },
+        "request": {
+          "$ref": "#/definitions/workflowModuleRequestStatus",
+          "title": "module status"
+        },
+        "isDeleted": {
+          "type": "boolean",
+          "title": "module is being deleted"
+        }
+      }
+    },
+    "workflowModulesListResp": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "format": "int32",
+          "title": "total number of modules available for the list\nthis is used for pagination purpose\ntypically consider seach criteria, but other not\nthe length of the items in the response,\nbut typically equal to or more than the number of\nentries in items"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workflowModulesListEntry"
+          },
+          "title": "modules list entries available as part of the\npaginated response"
+        }
+      }
+    },
+    "workflowOutputKeyData": {
+      "type": "object",
+      "properties": {
+        "dataType": {
+          "type": "string",
+          "title": "specify type of data to be carried into the key\nanything which is not a string is expected to be\nstring parseable values like \"true\" for true\n\"1\" instead of 1 etc"
+        },
+        "valueFrom": {
+          "type": "string",
+          "title": "where this value will be mapped from the container\nthis will be the file with absolute path in the\ncontainer, generated by the module as part of\nexecution, which will be exposed as paramter output"
+        }
+      }
+    },
+    "workflowTemplateCreateResp": {
+      "type": "object"
+    },
+    "workflowTemplateDeleteResp": {
+      "type": "object"
+    },
+    "workflowTemplateExecuteResp": {
+      "type": "object",
+      "properties": {
+        "domain": {
+          "type": "string",
+          "title": "domain under consideration"
+        },
+        "project": {
+          "type": "string",
+          "title": "project under consideration"
+        },
+        "name": {
+          "type": "string",
+          "title": "name of the executed workflow"
+        }
+      }
+    },
+    "workflowTemplateGetResp": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name of the template"
+        },
+        "id": {
+          "type": "string",
+          "title": "id of the template entry"
+        },
+        "desc": {
+          "type": "string",
+          "title": "descriptive information for the workflow template"
+        },
+        "createdBy": {
+          "type": "string",
+          "title": "created by"
+        },
+        "createTime": {
+          "type": "string",
+          "format": "int64",
+          "title": "create time"
+        },
+        "lastUpdate": {
+          "type": "string",
+          "format": "int64",
+          "title": "last update time"
+        },
+        "isDeleted": {
+          "type": "boolean",
+          "title": "is the entry being deleted"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "optional tags"
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workflowTemplateNode"
+          },
+          "title": "template nodes"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workflowTemplateLink"
+          },
+          "title": "template links"
+        }
+      }
+    },
+    "workflowTemplateLink": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string",
+          "title": "source - nodeid of one of the nodes above"
+        },
+        "sourceVar": {
+          "type": "string",
+          "title": "source variable - output from the source"
+        },
+        "target": {
+          "type": "string",
+          "title": "target - nodeid of one of the nodes above"
+        },
+        "targetVar": {
+          "type": "string",
+          "title": "target variable - input of the target"
+        }
+      }
+    },
+    "workflowTemplateListEntry": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name of the template"
+        },
+        "id": {
+          "type": "string",
+          "title": "id of the template entry"
+        },
+        "desc": {
+          "type": "string",
+          "title": "description for the template entry"
+        },
+        "createdBy": {
+          "type": "string",
+          "title": "created by"
+        },
+        "createTime": {
+          "type": "string",
+          "format": "int64",
+          "title": "create time"
+        },
+        "lastUpdate": {
+          "type": "string",
+          "format": "int64",
+          "title": "last update time"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "optional tags"
+        },
+        "isDeleted": {
+          "type": "boolean",
+          "title": "is this entry being deleted"
+        }
+      }
+    },
+    "workflowTemplateListResp": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "format": "int32",
+          "title": "count of templates available in project"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workflowTemplateListEntry"
+          },
+          "title": "list of templates as part of this response"
+        }
+      }
+    },
+    "workflowTemplateNode": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/workflowTemplateNodeNodeType",
+          "title": "type of the node"
+        },
+        "nodeId": {
+          "type": "string",
+          "title": "node unique id in the template\nto identify links"
+        },
+        "moduleId": {
+          "type": "string",
+          "title": "unique id of the module or catalog entry"
+        },
+        "name": {
+          "type": "string",
+          "title": "name of the node"
+        },
+        "x": {
+          "type": "number",
+          "format": "double",
+          "title": "position x"
+        },
+        "y": {
+          "type": "number",
+          "format": "double",
+          "title": "position y"
+        },
+        "userData": {
+          "$ref": "#/definitions/workflowTemplateUserInputNodeData",
+          "title": "node data for user inputs"
+        }
+      }
+    },
+    "workflowTemplateNodeNodeType": {
+      "type": "string",
+      "enum": [
+        "Module",
+        "Catalog",
+        "UserInput"
+      ],
+      "default": "Module",
+      "description": "- Module: module node, where domain and project is assumed\nsame as template\n - Catalog: module from catalog, where the domain is assumed\nsame as template, and project is considered empty\n - UserInput: user input, where user will be prompted for input\nat the time of executing the workflow template",
+      "title": "node type"
+    },
+    "workflowTemplateUpdateResp": {
+      "type": "object"
+    },
+    "workflowTemplateUserInputNodeData": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name of the input field"
+        },
+        "desc": {
+          "type": "string",
+          "title": "description for the input field"
+        },
+        "defaultVal": {
+          "type": "string",
+          "title": "default value of the field"
+        },
+        "opt": {
+          "type": "boolean",
+          "title": "is value input optional or mandatory for the user"
+        }
+      }
+    },
+    "workflowWorkflowDefStatus": {
+      "type": "string",
+      "enum": [
+        "Created",
+        "Scheduled",
+        "Running",
+        "Completed",
+        "Failed"
+      ],
+      "default": "Created",
+      "title": "- Created: workflow is created by pending to be scheduled\n - Scheduled: workflow is currently scheduled for execution\n - Running: workflow is currently being executed\n - Completed: workflow execution is completed\n - Failed: workflow execution failed"
+    },
+    "workflowWorkflowDeleteResp": {
+      "type": "object"
+    },
+    "workflowWorkflowGetResp": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name of the workflow execution"
+        },
+        "template": {
+          "type": "string",
+          "title": "workflow template used"
+        },
+        "desc": {
+          "type": "string",
+          "title": "workflow descrption"
+        },
+        "status": {
+          "$ref": "#/definitions/workflowWorkflowDefStatus",
+          "title": "status of the workflow"
+        },
+        "createdBy": {
+          "type": "string",
+          "title": "executed by"
+        },
+        "createTime": {
+          "type": "string",
+          "format": "int64",
+          "title": "create time"
+        },
+        "startTime": {
+          "type": "string",
+          "format": "int64",
+          "title": "start time"
+        },
+        "endTime": {
+          "type": "string",
+          "format": "int64",
+          "title": "completion time"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "optional tags"
+        },
+        "isDeleted": {
+          "type": "boolean",
+          "title": "is this entry being deleted"
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workflowWorkflowNode"
+          },
+          "title": "workflow nodes"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workflowTemplateLink"
+          },
+          "title": "workflow links"
+        }
+      }
+    },
+    "workflowWorkflowListEntry": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name of the workflow execution"
+        },
+        "template": {
+          "type": "string",
+          "title": "workflow template used"
+        },
+        "desc": {
+          "type": "string",
+          "title": "workflow descrption"
+        },
+        "status": {
+          "$ref": "#/definitions/workflowWorkflowDefStatus",
+          "title": "status of the workflow"
+        },
+        "createdBy": {
+          "type": "string",
+          "title": "executed by"
+        },
+        "createTime": {
+          "type": "string",
+          "format": "int64",
+          "title": "create time"
+        },
+        "startTime": {
+          "type": "string",
+          "format": "int64",
+          "title": "start time"
+        },
+        "endTime": {
+          "type": "string",
+          "format": "int64",
+          "title": "completion time"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "optional tags"
+        },
+        "isDeleted": {
+          "type": "boolean",
+          "title": "is this entry being deleted"
+        }
+      }
+    },
+    "workflowWorkflowListResp": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "format": "int32",
+          "title": "count of total workflows executed in this project"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workflowWorkflowListEntry"
+          },
+          "title": "list of items for current response"
+        }
+      }
+    },
+    "workflowWorkflowNode": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/workflowWorkflowNodeNodeType",
+          "title": "type of the node"
+        },
+        "nodeId": {
+          "type": "string",
+          "title": "node unique id in the template\nto identify links"
+        },
+        "moduleId": {
+          "type": "string",
+          "title": "unique id of the module or catalog entry"
+        },
+        "name": {
+          "type": "string",
+          "title": "name of the node"
+        },
+        "x": {
+          "type": "number",
+          "format": "double",
+          "title": "position x"
+        },
+        "y": {
+          "type": "number",
+          "format": "double",
+          "title": "position y"
+        },
+        "status": {
+          "$ref": "#/definitions/workflowWorkflowDefStatus",
+          "title": "status of node"
+        },
+        "err": {
+          "type": "string",
+          "title": "error message"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workflowWorkflowNodeData"
+          },
+          "title": "inputs"
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workflowWorkflowNodeData"
+          },
+          "title": "outputs"
+        }
+      }
+    },
+    "workflowWorkflowNodeData": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name of the data"
+        },
+        "value": {
+          "type": "string",
+          "title": "value for the data"
+        }
+      }
+    },
+    "workflowWorkflowNodeNodeType": {
+      "type": "string",
+      "enum": [
+        "Module",
+        "Catalog",
+        "UserInput"
+      ],
+      "default": "Module",
+      "description": "- Module: module node, where domain and project is assumed\nsame as template\n - Catalog: module from catalog, where the domain is assumed\nsame as template, and project is considered empty\n - UserInput: user input, where user will be prompted for input\nat the time of executing the workflow template",
+      "title": "node type"
+    }
+  },
+  "externalDocs": {
+    "description": "Workflow manager api specification for CoRobots"
+  }
+}

@@ -1,0 +1,41 @@
+FROM {{ .BaseImage }}
+
+{{- if ne .HttpProxy "" }}
+ENV http_proxy={{ .HttpProxy }}
+{{- end }}
+
+{{- if ne .HttpsProxy "" }}
+ENV https_proxy={{ .HttpsProxy }}
+{{- end }}
+
+{{- if ne .NoProxy "" }}
+ENV no_proxy={{ .NoProxy }}
+{{- end }}
+
+{{- if .EnvVars }}
+{{- range $key, $val := .EnvVars }}
+ENV {{ $key }}={{ $val }}
+{{- end }}
+{{- end }}
+
+{{- if .GitInfo }}
+COPY ./repo /repo
+WORKDIR /repo/{{ .GitInfo.WorkingDir }}
+{{- end }}
+
+{{- range $file := .Files }}
+COPY ./{{ $file.Name }} {{ $file.Name }}
+{{- end }}
+
+{{- if .Files }}
+RUN {{ range $i, $file := .Files }}{{ if ne $i 0 }} && {{ end }} chmod {{ $file.Perm }} {{ $file.Name}}{{ end }}
+{{- end }}
+
+{{- range $buildScript := .BuildScript }}
+RUN {{ $buildScript }}
+
+{{- end }}
+
+{{- if .EntryPoint }}
+ENTRYPOINT [{{ range $i, $entrypoint := .EntryPoint }}{{ if ne $i 0 }}, {{ end }}"{{$entrypoint}}"{{ end }}]
+{{- end }}

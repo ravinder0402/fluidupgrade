@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: workflow-manager-init-{{ include "helper.jobIdentifier" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  backoffLimit: 8
+  template:
+    spec:
+      serviceAccountName: workflow-controller
+      containers:
+      - name: init
+        image: {{ .Values.global.repository }}/workflow-init:{{ include "helper.imageTag" . }}
+        imagePullPolicy: Always
+        args:
+        - "-host"
+        - "orbiter-auth:8080"
+        - "-reg-host"
+{{- if .Values.global.domain  }}
+        - "{{ .Values.global.domain }}"
+        - "-secure-reg"
+{{- else }}
+        - "{{ .Values.global.externalIP }}:{{ .Values.global.frontend.nodePort  }}"
+{{- end }}
+        - "-user"
+        - "{{ .Values.global.admin.username }}"
+        - "-realm"
+        - "{{ .Values.global.rootRealm }}"
+      restartPolicy: OnFailure
+      imagePullSecrets:
+      - name: {{ .Release.Name }}-docker-registry-key
+

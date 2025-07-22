@@ -1,0 +1,686 @@
+// Copyright 2024, Coredge.io Inc.
+// All Rights reserved.
+//
+// Author Prabhjot Singh Sethi (prabhjot@coredge.io)
+
+syntax = "proto3";
+
+package workflow;
+
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option go_package = "github.com/coredgeio/workflow-manager/api/workflow";
+
+// These annotations are used when generating the OpenAPI file.
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    version: "1.0"
+    title: "Workflow manager API spec"
+  }
+  external_docs: {
+    description: "Workflow manager api specification for CoRobots"
+  }
+};
+
+service ModuleApi {
+  // List Modules in a project
+  rpc ListModules(ModulesListReq) returns (ModulesListResp) {
+    option (google.api.http) = {
+      get: "/api/workflow/v1/domain/{domain}/project/{project}/modules"
+    };
+  }
+
+  // Create a new Module
+  rpc CreateModule(ModuleCreateReq) returns (ModuleCreateResp) {
+    option (google.api.http) = {
+      post: "/api/workflow/v1/domain/{domain}/project/{project}/module"
+      body: "*"
+    };
+  }
+
+  // Get module
+  rpc GetModule(ModuleEntryKey) returns (ModuleGetResp) {
+    option (google.api.http) = {
+      get: "/api/workflow/v1/domain/{domain}/project/{project}/module/{name}"
+    };
+  }
+
+  // Update module
+  rpc UpdateModule(ModuleCreateReq) returns (ModuleCreateResp) {
+    option (google.api.http) = {
+      put: "/api/workflow/v1/domain/{domain}/project/{project}/module/{name}"
+      body: "*"
+    };
+  }
+
+  // Delete module
+  rpc DeleteModule(ModuleEntryKey) returns (ModuleDeleteResp) {
+    option (google.api.http) = {
+      delete: "/api/workflow/v1/domain/{domain}/project/{project}/module/{name}"
+    };
+  }
+
+  // trigger rebuild of the module image
+  rpc RebuildModule(ModuleEntryKey) returns (ModuleRebuildResp) {
+    option (google.api.http) = {
+      post: "/api/workflow/v1/domain/{domain}/project/{project}/module/{name}/rebuild"
+    };
+  }
+
+  // create a catalog request from module
+  rpc CreateCatalogRequest(ModuleCatalogCreateReq) returns (ModuleCatalogCreateResp) {
+    option (google.api.http) = {
+      post: "/api/workflow/v1/domain/{domain}/project/{project}/module/{name}/catalog"
+      body: "*"
+    };
+  }
+
+  // delete catalog request from module
+  rpc DeleteCatalogRequest(ModuleCatalogDeleteReq) returns (ModuleCatalogDeleteResp) {
+    option (google.api.http) = {
+      delete: "/api/workflow/v1/domain/{domain}/project/{project}/module/{name}/catalog"
+    };
+  }
+
+  // provide option for project members to add comments to the module audit trail,
+  // available only if request for the module is created
+  rpc AddModuleComment(ModuleCommentAddReq) returns (ModuleCommentAddResp) {
+    option (google.api.http) = {
+      post: "/api/workflow/v1/domain/{domain}/project/{project}/module/{name}/comment"
+      body: "*"
+    };
+  }
+
+  // list catalog of modules (approved)
+  rpc ListModuleCatalog(ModuleCatalogListReq) returns (ModuleCatalogListResp) {
+    option (google.api.http) = {
+      get: "/api/workflow/v1/domain/{domain}/project/{project}/module-catalog"
+    };
+  }
+
+  // list catalog versions of modules (approved)
+  rpc ListModuleCatalogVer(ModuleCatalogVerListReq) returns (ModuleCatalogVerListResp) {
+    option (google.api.http) = {
+      get: "/api/workflow/v1/domain/{domain}/project/{project}/module-catalog/{name}/versions"
+    };
+  }
+
+  // list of module catalog review request
+  rpc ListModuleCatalogRequest(ModuleCatalogRequestListReq) returns (ModuleCatalogRequestListResp) {
+    option (google.api.http) = {
+      get: "/api/workflow/v1/domain/{domain}/catalog-requests"
+    };
+  }
+}
+
+message ModulesListReq {
+  // domain under consideration
+  string domain = 1;
+
+  // project under consideration
+  string project = 2;
+
+  // offset for pagination
+  int32 offset = 3;
+
+  // limit for pagination
+  int32 limit = 4;
+
+  // search text
+  string search = 5;
+}
+
+message ModuleGitInfo {
+  // git repo url
+  string url = 1;
+
+  // git reference - branch tag or commit id to use
+  string gitRef = 2;
+
+  // working directory inside the git repository
+  string workingDir = 3;
+}
+
+message ModuleDef {
+  enum KeyType {
+    // default type as parameter
+    Parameter = 0;
+
+    // artifact type
+    //Artifact = 1;
+  }
+}
+
+message ModuleBuildDef {
+  enum Status {
+    // init status indicating nothing has started yet
+    Scheduled = 0;
+
+    // build has been started
+    InProgress = 1;
+
+    // build completed with success
+    Completed = 2;
+
+    // build completed with failure
+    Failed = 3;
+  }
+}
+
+message InputKeyData {
+  // specify type of data to be carried into the key
+  // anything which is not a string is expected to be
+  // string parseable values like "true" for true
+  // "1" instead of 1 etc
+  string dataType = 1;
+
+  // specify if the key is optional
+  bool opt = 2;
+
+  // default value for the input when it is optional
+  // provided by the user while defining the input
+  // parameter itself
+  string defaultVal = 3;
+}
+
+message OutputKeyData {
+  // specify type of data to be carried into the key
+  // anything which is not a string is expected to be
+  // string parseable values like "true" for true
+  // "1" instead of 1 etc
+  string dataType = 1;
+
+  // where this value will be mapped from the container
+  // this will be the file with absolute path in the
+  // container, generated by the module as part of
+  // execution, which will be exposed as paramter output
+  string valueFrom = 2;
+}
+
+message ModuleBuildConfig {
+  // base image from which the module will be built
+  string baseImage = 1;
+
+  // raw script/Dockerfile to build code if repository is not provided. Ignored if git repo is provided
+  repeated string buildScript = 2;
+
+  // setting up default environment variables
+  map<string, string> env = 3;
+
+  // entrypoint for container image
+  repeated string entryPoint = 4;
+
+  // raw content / script to be executed as part of module
+  repeated ModuleFileInfo files = 5;
+
+  // git information to work with
+  ModuleGitInfo gitInfo = 6;
+}
+
+message ModuleBuildStatus {
+  // current status of the moudle build
+  ModuleBuildDef.Status status = 1;
+
+  // error message in case of build failure
+  string errMsg = 2;
+
+  // timestamp of the status
+  int64 timeStamp = 3;
+}
+
+message ModuleRequestAuditInfo {
+  // timestamp of the message
+  int64 timeStamp = 1;
+
+  // username who left the message
+  string username = 2;
+
+  // Full name for the user
+  string fullname = 3;
+
+  // message left over by the reviewer
+  string msg = 4;
+
+  // new state as part of this message
+  // TODO(prabhjot) might need to include
+  // a state change as part of this
+}
+
+message ModuleRequestStatus {
+  enum Status {
+    // Draft
+    Draft = 0;
+
+    // Submitted
+    Submitted = 1;
+
+    // Approved
+    Approved = 2;
+
+    // Rejected
+    Rejected = 3;
+  }
+
+  // module request id for reference
+  string id = 1;
+
+  // status of the module request
+  Status status = 2;
+
+  // Audit trail of the message for this request
+  repeated ModuleRequestAuditInfo auditTrail = 3;
+}
+
+message ModulesListEntry {
+  // Unique id of module
+  string id = 1;
+
+  // name of the module entry
+  string name = 2;
+
+  // description of the module
+  string desc = 3;
+
+  // created by
+  string createdBy = 4;
+
+  // create time
+  int64 createTime = 5;
+
+  // last update time
+  int64 lastUpdate = 6;
+
+  // optional tags
+  repeated string tags = 7;
+
+  // key to fetch module input like config files or other data.
+  map<string, InputKeyData> inputKeys = 8;
+
+  // key at which module's execution output is pushed
+  map<string, OutputKeyData> outputKeys = 9;
+
+  // module build status
+  ModuleBuildStatus build = 10;
+
+  // module status
+  ModuleRequestStatus request = 11;
+
+  // module is being deleted
+  bool isDeleted = 12;
+}
+
+message ModulesListResp {
+  // total number of modules available for the list
+  // this is used for pagination purpose
+  // typically consider seach criteria, but other not
+  // the length of the items in the response,
+  // but typically equal to or more than the number of
+  // entries in items
+  int32 count = 1;
+
+  // modules list entries available as part of the
+  // paginated response
+  repeated ModulesListEntry items = 2;
+}
+
+message ModuleFileInfo {
+  // name of the file
+  string name = 1;
+
+  // content of the file
+  string content = 2;
+
+  // this needs to be of the format
+  // 777 / 755 / 600 / 644 etc
+  string perm = 3;
+}
+
+message ModuleCreateReq {
+  // mandatory domain
+  string domain = 1;
+
+  // mandatory project
+  string project = 2;
+  
+  // name of the module entry
+  string name = 3;
+
+  // description of the module
+  string desc = 4;
+
+  // optional: tags corresponding to the module
+  repeated string tags = 5;
+
+  // build config for module creation
+  ModuleBuildConfig buildConfig = 6;
+
+  // key to fetch module input like config files or other data.
+  map<string, InputKeyData> inputKeys = 7;
+
+  // key at which module's execution output is pushed
+  map<string, OutputKeyData> outputKeys = 8;
+}
+
+message ModuleCreateResp {
+}
+
+message ModuleEntryKey {
+  // domain under consideration
+  string domain = 1;
+
+  // project under consideration
+  string project = 2;
+
+  // name of the module
+  string name = 3;
+}
+
+message ModuleGetResp {
+  // Unique id of module
+  string id = 1;
+
+  // name of the module entry
+  string name = 2;
+
+  // description of the module
+  string desc = 3;
+
+  // created by
+  string createdBy = 4;
+
+  // create time
+  int64 createTime = 5;
+
+  // last update time
+  int64 lastUpdate = 6;
+
+  // optional tags
+  repeated string tags = 7;
+
+  // build config for module creation
+  ModuleBuildConfig buildConfig = 8;
+
+  // key to fetch module input like config files or other data.
+  map<string, InputKeyData> inputKeys = 9;
+
+  // key at which module's execution output is pushed
+  map<string, OutputKeyData> outputKeys = 10;
+
+  // module build status
+  ModuleBuildStatus build = 11;
+
+  // module status
+  ModuleRequestStatus request = 12;
+
+  // module is being deleted
+  bool isDeleted = 13;
+}
+
+message ModuleDeleteResp {
+}
+
+message ModuleRebuildResp {
+}
+
+message ModuleCatalogCreateReq {
+  // domain under consideration
+  string domain = 1;
+
+  // project under consideration
+  string project = 2;
+
+  // name of the module
+  string name = 3;
+
+  // catalog entry against which the request is raised
+  // if empty it is considered to be raised as request
+  // for new catalog entry
+  string catalogId = 4;
+
+  // accompaning message for audit trail
+  string msg = 5;
+}
+
+message ModuleCatalogCreateResp {
+}
+
+message ModuleCatalogDeleteReq {
+  // domain under consideration
+  string domain = 1;
+
+  // project under consideration
+  string project = 2;
+
+  // name of the module
+  string name = 3;
+
+  // accompaning message for audit trail
+  string msg = 4;
+}
+
+message ModuleCatalogDeleteResp {
+}
+
+message ModuleCommentAddReq {
+  // domain under consideration
+  string domain = 1;
+
+  // project under consideration
+  string project = 2;
+
+  // name of the module
+  string name = 3;
+
+  // accompaning message for audit trail
+  string msg = 4;
+}
+
+message ModuleCommentAddResp {
+}
+
+message ModuleCatalogListReq {
+  // domain under consideration
+  string domain = 1;
+
+  // project under consideration
+  string project = 2;
+
+  // offset to being from
+  int32 offset = 3;
+
+  // limit of the entries to include in the response list
+  int32 limit = 4;
+
+  // TODO(prabhjot) need to provider filter options
+}
+
+message ModuleCatalogListEntry {
+  // Unique id of module catalog entry
+  string id = 1;
+
+  // name of the catalog entry
+  string name = 2;
+
+  // description of the Catalog
+  string desc = 3;
+
+  // created by
+  string createdBy = 4;
+
+  // create time
+  int64 createTime = 5;
+
+  // last update time
+  int64 lastUpdate = 6;
+
+  // optional tags
+  repeated string tags = 7;
+
+  // key to fetch module input like config files or other data.
+  map<string, InputKeyData> inputKeys = 8;
+
+  // key at which module's execution output is pushed
+  map<string, OutputKeyData> outputKeys = 9;
+
+  // image this catalog module will consume
+  string image = 10;
+
+  // latest version
+  string latestVersion = 11;
+
+  // is this entry archived
+  bool isArchived = 12;
+
+  // is this entry being deleted
+  bool isDeleted = 13;
+}
+
+message ModuleCatalogListResp {
+  // count of enties available corresponding to the filter
+  int32 count = 1;
+
+  // list of catalog entries
+  repeated ModuleCatalogListEntry items = 2;
+}
+
+message ModuleCatalogVerListReq {
+  // domain under consideration
+  string domain = 1;
+
+  // project under consideration
+  string project = 2;
+
+  // names of the module in catalog
+  string name = 3;
+
+  // offset to being from
+  int32 offset = 4;
+
+  // limit of the entries to include in the response list
+  int32 limit = 5;
+}
+
+message ModuleCatalogVerListEntry {
+  // name of the catalog entry
+  string name = 1;
+
+  // version of the catalog entry
+  string version = 2;
+
+  // description of the Catalog
+  string desc = 3;
+
+  // created by
+  string createdBy = 4;
+
+  // create time
+  int64 createTime = 5;
+
+  // last update time
+  int64 lastUpdate = 6;
+
+  // optional tags
+  repeated string tags = 7;
+
+  // key to fetch module input like config files or other data.
+  map<string, InputKeyData> inputKeys = 8;
+
+  // key at which module's execution output is pushed
+  map<string, OutputKeyData> outputKeys = 9;
+
+  // image this catalog module will consume
+  string image = 10;
+
+  // is this latest version
+  bool isLatest = 11;
+
+  // is this entry archived
+  bool isArchived = 12;
+
+  // is this entry being deleted
+  bool isDeleted = 13;
+}
+
+message ModuleCatalogVerListResp {
+  // count of enties available corresponding to the filter
+  int32 count = 1;
+
+  // list of catalog version entries
+  repeated ModuleCatalogVerListEntry items = 2;
+}
+
+message ModuleCatalogRequestListReq {
+  // domain under consideration
+  string domain = 1;
+
+  // offset for pagination
+  int32 offset = 2;
+
+  // limit for pagination
+  int32 limit = 3;
+
+  enum FilterStatus {
+    // Open review requests
+    Open = 0;
+
+    // Closed review requests
+    Closed = 1;
+
+    // All review requests
+    All = 2;
+  }
+
+  FilterStatus status = 4;
+}
+
+message ModuleRequestModuleInfo {
+  // domain under consideration
+  string domain = 1;
+
+  // project under consideration
+  string project = 2;
+
+  // name of the module
+  string name = 3;
+
+  // id of the module
+  string id = 4;
+}
+
+message ModuleRequestCatalogInfo {
+  // catalog entry id, this field will be empty,
+  // if the requesst is for new catalog entry
+  string id = 1;
+
+  // name of the catalog entry
+  string name = 2;
+
+  // description of the Catalog
+  string desc = 3;
+}
+
+message ModuleCatalogRequestListEntry {
+  // id of the request
+  string id = 1;
+
+  // request status
+  ModuleRequestStatus.Status status = 2;
+
+  // module info
+  ModuleRequestModuleInfo module = 3;
+
+  // catalog mapping info
+  ModuleRequestCatalogInfo catalog = 4;
+
+  // Audit trail of the message for this request
+  repeated ModuleRequestAuditInfo auditTrail = 5;
+}
+
+message ModuleCatalogRequestListResp {
+  // total number of available requests
+  int32 count = 1;
+
+  // list of requests corresponding to this response
+  repeated ModuleCatalogRequestListEntry items = 2;
+}

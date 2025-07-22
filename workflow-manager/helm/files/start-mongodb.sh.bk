@@ -1,0 +1,37 @@
+#!/bin/bash
+cp /opt/auth /tmp/auth
+chmod 400 /tmp/auth
+REPLICA_COUNT=${REPLICA_COUNT:-1}
+REPLICA_NAME=${REPLICA_NAME:-compass-configdb}
+PODNAME=$(hostname -f | awk '{split($0,a,"."); print a[1]}')
+SUBDOMAIN=$(hostname -f | awk '{split($0,a,"."); print a[2]}')
+export HOSTNAME=$(echo $PODNAME"."$SUBDOMAIN)
+export HOME=/tmp
+# execute rs.initiate only on replica id 0
+if [ "$PODNAME" == "$SUBDOMAIN-0" ]; then
+  cat << EOF > /tmp/mongo-exec.sh
+# wait for mongod to start
+sleep 30
+mongosh -u \$MONGO_INITDB_ROOT_USERNAME -p \$MONGO_INITDB_ROOT_PASSWORD --eval 'rs.initiate(
+   {
+      _id: "${REPLICA_NAME}",
+      version: 1,
+      members: [
+         { _id: 0, host : "${HOSTNAME}:27017" },
+EOF
+  id=1
+  while [ "$id" != "$REPLICA_COUNT" ]; do
+    cat << EOF >> /tmp/mongo-exec.sh
+         { _id: $id, host : "${SUBDOMAIN}-${id}.${SUBDOMAIN}:27017" },
+EOF
+    id=$((id+1))
+  done
+  cat << EOF >> /tmp/mongo-exec.sh
+      ]
+   }
+
+)'
+EOF
+  bash /tmp/mongo-exec.sh &
+fi
+eval docker-entrypoint.sh --ipv6 --replSet ${REPLICA_NAME} --keyFile /tmp/auth

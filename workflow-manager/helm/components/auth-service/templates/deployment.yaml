@@ -1,0 +1,129 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orbiter-auth
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount.orbiterAuth }}
+  selector:
+    matchLabels:
+      orbiter.coredge.io: auth
+  template:
+    metadata:
+      labels:
+        orbiter.coredge.io: auth
+      annotations:
+        prometheus.io/path: metrics
+        prometheus.io/port: "9100"
+        prometheus.io/scrape: "true"
+    spec:
+      initContainers:
+      - name: mongodb-wait-configdb
+        image: {{ .Values.global.repository }}/mongo:5.0.3
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/bash
+        - -c
+        - |
+          while true; do
+            mongosh --host $MONGODB_SERVICE_SERVICE_HOST -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --eval "rs.status()"
+            if [ $? == "0" ]; then
+              exit 0
+            fi
+            echo "waiting for mongodb to start"
+            sleep 5
+          done
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        - name: MONGODB_SERVICE_SERVICE_HOST
+          value: "workflow-configdb"
+      - name: mongodb-wait-metricsdb
+        image: {{ .Values.global.repository }}/mongo:5.0.3
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/bash
+        - -c
+        - |
+          while true; do
+            mongosh --host $MONGODB_SERVICE_SERVICE_HOST -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --eval "rs.status()"
+            if [ $? == "0" ]; then
+              exit 0
+            fi
+            echo "waiting for mongodb to start"
+            sleep 5
+          done
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        - name: MONGODB_SERVICE_SERVICE_HOST
+          value: "workflow-metricsdb"
+      containers:
+      - name: auth
+        image: {{ .Values.global.repository }}/orbiter-auth:v1.0-kc
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        volumeMounts:
+        - name: config-vol
+          mountPath: /opt/config.yml
+          subPath: config.yml
+        - name: gateway-config-vol
+          mountPath: /opt/gateway.yml
+          subPath: config.yml
+        - name: keycloak-secret-vol
+          mountPath: /opt/keycloak.yml
+          subPath: keycloak.yml
+        env:
+        - name: KEYCLOAK_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "helper.keycloakSecretName" . }}
+              key: username
+        - name: KEYCLOAK_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "helper.keycloakSecretName" . }}
+              key: password
+        - name: MONGO_DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: username
+        - name: MONGO_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: configdb-secret
+              key: password
+        - name: LOCAL_KEYCLOAK_URL
+          value: {{ .Values.keycloak.url }}
+        - name: ACCESS_LOG_VERBOSE
+          value: "true"
+      volumes:
+      - name: config-vol
+        configMap:
+          name: orbiter-auth-config
+      - name: gateway-config-vol
+        configMap:
+          name: gateway-config
+      - name: keycloak-secret-vol
+        secret:
+          secretName: keycloak-secret

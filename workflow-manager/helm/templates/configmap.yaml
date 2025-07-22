@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: workflow-config
+  namespace: {{ .Release.Namespace }}
+data:
+  config.yml: |
+    mongodb:
+      host: workflow-configdb
+      port: 27017
+    metricsdb:
+      host: workflow-metricsdb
+      port: 27017
+    internalAuth:
+      realm: {{ .Values.global.rootRealm }}
+      domain: default
+      user: {{ .Values.global.admin.username }}
+    registry:
+      host: container-registry
+      port: 8080
+      scheme: http
+    workflow:
+      serviceAccount: workflow-controller
+      registry:
+{{- if not .Values.global.domain  }}
+        name: {{ .Values.global.externalIP }}:{{ .Values.global.frontend.nodePort  }}/catalog
+        insecure: true
+{{- else }}
+        name: {{ .Values.global.domain }}/catalog
+{{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongo-init
+  namespace: {{ .Release.Namespace }}
+data:
+{{ (.Files.Glob "files/start-mongodb.sh").AsConfig | indent 2 }}

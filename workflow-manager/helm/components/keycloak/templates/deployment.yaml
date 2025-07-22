@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: keycloak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+      - name: keycloak
+        image: {{ .Values.images.keycloak }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        env:
+        - name: KEYCLOAK_USER
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-admin
+              key: username
+        - name: KEYCLOAK_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-admin
+              key: password
+        - name: PROXY_ADDRESS_FORWARDING
+          value: "true"
+        - name: DB_VENDOR
+          value: postgres
+        - name: DB_ADDR
+          value: keycloak-pg
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_DATABASE
+          value: keycloak
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-pg
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-pg
+              key: password
+        - name: JAVA_OPTS
+{{- if .Values.global.preferIPv6 }}
+          value: "-Djava.net.preferIPv4Stack=false -Djava.net.preferIPv6Addresses=true"
+{{- else }}
+          value: "-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false"
+{{- end }}
+{{- if .Values.global.enableRakutenTheme }}
+        - name: KEYCLOAK_DEFAULT_THEME
+          value: rakuten
+{{- end }}
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: https
+          containerPort: 8443
+        readinessProbe:
+          httpGet:
+            path: /auth/realms/master
+            port: 8080
+      imagePullSecrets:
+      - name: {{ .Release.Name }}-docker-registry-key                  

@@ -1,0 +1,241 @@
+// Copyright 2024, Coredge.io Inc.
+// All Rights reserved.
+//
+// Author Prabhjot Singh Sethi (prabhjot@coredge.io)
+
+syntax = "proto3";
+
+package workflow;
+
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "template.proto";
+
+option go_package = "github.com/coredgeio/workflow-manager/api/workflow";
+
+// These annotations are used when generating the OpenAPI file.
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    version: "1.0"
+    title: "Workflow manager API spec"
+  }
+  external_docs: {
+    description: "Workflow manager api specification for CoRobots"
+  }
+};
+
+service WorkflowApi {
+  // List Workflows executed in a project
+  rpc ListWorkflows(WorkflowListReq) returns (WorkflowListResp) {
+    option (google.api.http) = {
+      get: "/api/workflow/v1/domain/{domain}/project/{project}/workflows"
+    };
+  }
+
+  rpc DeleteWorkflow(WorkflowDeleteReq) returns (WorkflowDeleteResp) {
+    option (google.api.http) = {
+      delete: "/api/workflow/v1/domain/{domain}/project/{project}/workflow/{name}"
+    };
+  }
+
+  rpc GetWorkflow(WorkflowGetReq) returns (WorkflowGetResp) {
+    option (google.api.http) = {
+      get: "/api/workflow/v1/domain/{domain}/project/{project}/workflow/{name}"
+    };
+  }
+}
+
+message WorkflowListReq {
+  // domain under consideration
+  string domain = 1;
+
+  // project under consideration
+  string project = 2;
+
+  // offset for pagination
+  int32 offset = 3;
+
+  // limit for pagination
+  int32 limit = 4;
+
+  // search text
+  string search = 5;
+}
+
+message WorkflowDef {
+  enum Status {
+    // workflow is created by pending to be scheduled
+    Created = 0;
+
+    // workflow is currently scheduled for execution
+    Scheduled = 1;
+
+    // workflow is currently being executed
+    Running = 2;
+
+    // workflow execution is completed
+    Completed = 3;
+
+    // workflow execution failed
+    Failed = 4;
+  }
+}
+
+message WorkflowListEntry {
+  // name of the workflow execution
+  string name = 1;
+
+  // workflow template used
+  string template = 2;
+
+  // workflow descrption
+  string desc = 3;
+
+  // status of the workflow
+  WorkflowDef.Status status = 4;
+
+  // executed by
+  string createdBy = 5;
+
+  // create time
+  int64 createTime = 6;
+
+  // start time
+  int64 startTime = 7;
+
+  // completion time
+  int64 endTime = 8;
+
+  // optional tags
+  repeated string tags = 9;
+
+  // is this entry being deleted
+  bool isDeleted = 10;
+}
+
+message WorkflowListResp {
+  // count of total workflows executed in this project
+  int32 count = 1;
+
+  // list of items for current response
+  repeated WorkflowListEntry items = 2;
+}
+
+message WorkflowDeleteReq {
+  // domain under consideration
+  string domain = 1;
+
+  // project under consideration
+  string project = 2;
+
+  // name of the workflow to be deleted
+  string name = 3;
+}
+
+message WorkflowDeleteResp {
+}
+
+message WorkflowGetReq {
+  // domain under consideration
+  string domain = 1;
+
+  // project under consideration
+  string project = 2;
+
+  // name of the workflow to be deleted
+  string name = 3;
+}
+
+message WorkflowNodeData {
+  // name of the data
+  string name = 1;
+
+  // value for the data
+  string value = 2;
+}
+
+message WorkflowNode {
+  // node type
+  enum NodeType {
+    // module node, where domain and project is assumed
+    // same as template
+    Module = 0;
+
+    // module from catalog, where the domain is assumed
+    // same as template, and project is considered empty
+    Catalog = 1;
+
+    // user input, where user will be prompted for input
+    // at the time of executing the workflow template
+    UserInput = 100;
+  }
+
+  // type of the node
+  NodeType type = 1;
+
+  // node unique id in the template
+  // to identify links
+  string nodeId = 2;
+
+  // unique id of the module or catalog entry
+  string moduleId = 3;
+
+  // name of the node
+  string name = 4;
+
+  // position x
+  double x = 5;
+
+  // position y
+  double y = 6;
+
+  // status of node
+  WorkflowDef.Status status = 8;
+
+  // error message
+  string err = 9;
+
+  // inputs
+  repeated WorkflowNodeData inputs = 10;
+
+  // outputs
+  repeated WorkflowNodeData outputs = 11;
+}
+
+message WorkflowGetResp {
+  // name of the workflow execution
+  string name = 1;
+
+  // workflow template used
+  string template = 2;
+
+  // workflow descrption
+  string desc = 3;
+
+  // status of the workflow
+  WorkflowDef.Status status = 4;
+
+  // executed by
+  string createdBy = 5;
+
+  // create time
+  int64 createTime = 6;
+
+  // start time
+  int64 startTime = 7;
+
+  // completion time
+  int64 endTime = 8;
+
+  // optional tags
+  repeated string tags = 9;
+
+  // is this entry being deleted
+  bool isDeleted = 10;
+
+  // workflow nodes
+  repeated WorkflowNode nodes = 11;
+
+  // workflow links
+  repeated TemplateLink links = 12;
+}

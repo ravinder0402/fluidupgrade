@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount.frontend }}
+  selector:
+    matchLabels:
+      io.kompose.service: frontend
+  template:
+    metadata:
+      labels:
+        io.kompose.service: frontend
+    spec:
+      containers:
+      - env:
+        - name: WORKFLOW_API_BASE_URL
+          value: ""
+        - name: WORKFLOW_AUTH_URL
+          value: {{ include "helper.keycloakFrontendUrl" . }}
+        - name: WORKFLOW_AUTH_REALM
+          value: {{ .Values.global.rootRealm }}
+        - name: WORKFLOW_AUTH_CLIENT_ID
+          value: controller
+        {{- if .Values.global.frontend.theme }}
+        - name: WORKFLOW_THEME
+          value: {{ .Values.global.frontend.theme }}
+        {{- end }}
+        image: {{ .Values.global.repository }}/workflow-frontend:{{ include "helper.imageTag" . }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        name: frontend
+        ports:
+        - containerPort: 80
+          name: 80tcp2
+          protocol: TCP
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/nginx/conf.d
+          readOnly: true
+          name: default-conf
+        - name: frontend-certs-vol
+          readOnly: true
+          mountPath: /etc/nginx/certs/ingress
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+      imagePullSecrets:
+      - name: {{ .Release.Name }}-docker-registry-key
+      dnsPolicy: ClusterFirst
+      volumes:
+      - name: default-conf
+        configMap:
+          name: frontend-config
+      - name: frontend-certs-vol
+        secret:
+          {{- if .Values.global.frontend.certs.external }}
+          secretName: {{ .Values.global.frontend.certs.external }}
+          {{- else }}
+          secretName: frontend-certs
+          {{- end}}

@@ -1,0 +1,40 @@
+global:
+  # unused in dev environment, while ingress is disabled
+  domain: &compassDomain ""
+  controllerDNSName: &controllerDomainName ""
+
+  repository: &repository coredgeio
+  UseDailyBuilds: &useDailyBuilds true
+  ReleaseTag: &releaseTag latest
+  imagePullPolicy: &imagePolicy Always
+
+  enableRakutenTheme: &rakutenTheme false
+
+  externalIP: &controllerIP 127.0.0.1
+
+  preferIPv6: false
+
+images:
+  keycloak: coredgeio/kg-keycloak:19.0.3-7
+  postgres: coredgeio/postgres:9.5
+
+adminCredentials:
+  username: admin
+  password: admin@kg
+
+resources:
+  limits:
+    cpu: "300m"
+    memory: "2Gi"
+  requests:
+    cpu: "100m"
+    memory: "400Mi"
+
+postgres:
+  resources:
+    limits:
+      cpu: "300m"
+      memory: "2Gi"
+    requests:
+      cpu: "100m"
+      memory: "400Mi"
