@@ -32,7 +32,7 @@ global:
 
   # this field is considered only when UseDailyBuilds is set to be false
   # provides configuration of build tag to be used for container images
-  releaseTag: &releaseTag 2025-06-17
+  releaseTag: &releaseTag 2025-07-22
 
   # image pull policy to be used
   imagePullPolicy: &imagePolicy Always
@@ -769,7 +769,7 @@ adminServices:
     managementURL: 
       resource: ""
     ## Enabled Services
-    enabledServices: "bare-metal-server,admin-access-logs,admin-action-logs,admin-user,all-user,autoscaling-group,availability-zone,block-storage,compute,compute-availability-zone,file-storage,firewall,load-balancer,network,network-availability-zone,object-storage-provider,organisation,project,provider,provider-cluster,default-rule,public-ip,security-group,security-group-rule,subnets,user-access-logs,user-action-logs,volume-type,volume-availability-zone,volume-snapshot,quota-request,quota-list,storage-provider,default-quota,region"
+    enabledServices: "object-storage,storage-provider,cluster,region,all-user,availability-zone,block-storage,compute,compute-snapshot,flavors,images,network,organisation,project,provider,provider-cluster,default-rule,resource-metrics,security-group,security-group-rule,volume-type,volume-snapshot,flavor-group,admin-access-logs,load-balancer"
   adminPlatform:
     image: "fluid_admin_platform"
     resources: 
@@ -804,7 +804,7 @@ userPortal:
       cpu: 100m
       memory: 200Mi
   ## Enabled Services
-  enabledServices: "cluster,compute,slurm,registry"
+  enabledServices: "provider-cluster,object-storage,storage-provider,registry,dbaas-mongo,dbaas-postgresql,cluster,key-pair,load-balancer,compute,compute-snapshot,monitoring,network,project-activity,quota-service,quota-utilization,security-group,volume,volume-snapshot,volume-type,availability-zone"
   docsURL: ""
   additionalURLs:
     appStoreURL: ""
