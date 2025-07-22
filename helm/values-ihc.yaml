@@ -1,0 +1,1086 @@
+global:
+  # deployment environment indication for deployer to enable relevant
+  # environment specific configuration, currentely only environment
+  # supported is AWS
+  # default value is empty string indicating no special requirements
+  # for the environment
+  environment: ""
+
+  saas:
+    enabled: false
+
+  # indicates usage of external ingress, currently also acts as a
+  # switch to indicate use of domain configuration
+  dnsEnabled: &dnsEnabled true
+
+  # Ingress claas to be defined to inngress configuration when using Ingress controller
+  # Only supports Nginx Ingress Controller for now
+  ingressClass: &ingressClass "nginx"
+
+  # repository from where the controller images are pulled for
+  # controller
+  repository: &repository coredgeio
+
+  # use build using the tag generated based on the date of deployment
+  # this is relevant for enabling some of the CI/CD platforms
+  UseDailyBuilds: &useDailyBuilds false
+
+  # this field is considered only when UseDailyBuilds is set to be false
+  # provides configuration of build tag to be used for container images
+  releaseTag: &releaseTag 2025-07-22
+
+  # image pull policy to be used
+  imagePullPolicy: &imagePolicy Always
+
+  # storage class to use for persistent volumes, if empty fallback to
+  # default storage class
+  storageClass: &storageclass ""
+
+  # external IP for controller, relevant, when domain is not
+  # configured to allow generation of server certificate validity using
+  # this IP address
+  externalIP: &controllerIP 127.0.0.1
+
+  # Flask Config (Development OR Production)
+  # TEMPORARY
+  flaskConfig: "development"
+
+  kafkaEndpoint: ""
+
+  events:
+    enabled: false
+
+  # Default application type: "ccp"
+  application: "ccp"
+
+  ## Override for PostgresDB architecture
+  ## global.postgresql.architecture.standalone Set to 'false' deploys a postgresql as a cluster with High Availability
+  ## global.postgresql.architecture.standalone Set to 'true' deploys postgresql in standalone mode with no High Availability
+  postgresql:
+    architecture:
+      standalone: false
+    ### Config overrride to use external Postgres
+    ### This will not deploy postgresql with ccp
+    external:
+      host: ""
+      port: ""
+      user: ""
+      database: ""
+      password: ""
+
+  ## Config override for AuditDB Postgres server details
+  auditdb:
+    host: ''
+    port: ''
+    database: ''
+    username: ''
+    password: ''
+
+  #Set this to true for environments without internet and update the proxy details
+  proxy:
+    enabled: false
+    http_proxy: ""
+    https_proxy: ""
+    no_proxy: "localhost,127.0.0.1,cluster.local,.svc,.svc.cluster.local"
+
+  # user credentials for the default realm user that will be created
+  # along with creation of the realm
+  admin:
+    username: &adminUsername "ccsadmin"
+    password: &adminUserPass "Welcome@123"
+    firstname: &adminFirstname "CCS"
+    lastname: &adminLastname "Admin"
+    email: &adminUserEmail "info@coredge.io"
+
+  # keycloak realm to be used as the root
+  rootRealm: &rootRealm "cloud"
+  tenantRealmAssocType: ""
+
+  ## Keycloak Architecture override to enable HA or standalone
+  keycloak:
+    highavailability: true
+    domain: &keycloakDomain "dev-auth.dcvaults.com"
+    tlsSecret: &keycloakTls "dcvaults-wildcard"
+    nodePorts:
+      http: &keycloakNodePortHTTP "32701"
+      https: &keycloakNodePortHTTPS "32702"
+
+  controller:
+    mtls:
+      # supported but not recommended
+      # set this value to true to fallback to simple TLS communication
+      # between compass controller and compass agent
+      # this is usally required to save usage of an extra TCP port
+      disabled: false
+
+  frontend:
+    admin:
+      domain: &adminDomain "dev-admin.dcvaults.com"
+      tlsSecret: &adminTls "dcvaults-wildcard"
+    userPortal:
+      domain: &userDomain "dev-console.dcvaults.com"
+      tlsSecret: &userTls "dcvaults-wildcard"
+      nodePort: &frontendNodePort "32500"
+    vmconsole:
+      domain: &vmconsoleDomain "dev-vm-console.dcvaults.com"
+      tlsSecret: &vmconsoleTls "dcvaults-wildcard"
+      nodePort: &vmconsoleNodePort "32700"
+    # For Production environment we require kyc status validation
+    # However, for dev and test environments we should be able to skip
+    # these validations
+    # Setting skipKyc true will bypass this validation
+    # Note: This configuration should not be used for Production env
+    skipKyc: false
+
+  kubectl:
+    # supported but not recommended
+    # this can be enabled only if frontend is running with ssl certs
+    # with ingress enabled, with this configuration enabled,
+    # generated kubectl config file will fallback to usage of TLS
+    # connection with token for auth instead of mTLS
+    # Usually required only for scenarios where TCP port availability
+    # is limited and infrastructure admin cannot provide 6443 for mTLS
+    # communication of Kubectl
+    tokenAccess:
+      enabled: false
+
+  # proxy protocol is used to enable tracking client's IP both for API
+  # access by user and controller access by infrastructure components
+  # this allow enabling capability of geoloaction tracking for users
+  # and infrastructure components using thier public IP information
+  proxyProtocol:
+    enabled: false
+
+  # observability feature on the platform is rendered using grafana
+  # to enable observability set grafana enabled
+  grafana:
+    enabled: true
+
+  # enable cluster manager module, responsible for managing lifecycle of
+  # kubernetes clusters
+  clusterManager:
+    enabled: true
+
+  # to enable and configure cloud manager module for the platform
+  # that allows capability of interacting with multiple public clouds
+  cloudManager:
+    enabled: true
+
+  # to enable and configure wodcvaultsnager module for the platform
+  # that allows capability of workflow execution
+  workflowManager:
+    enabled: false
+
+  # to enable and configure container registry module for the platform
+  # that allows capability of container registry management
+  containerRegistry:
+    enabled: true
+
+  # to enable and configure baremetal module for the platform
+  # that allows capability of managing baremetal resources
+  baremetalManager:
+    enabled: false
+
+  # to enable and configure metering module for the platform that
+  # allows capability for metering the resource usage
+  # this needs to be always enabled as this microservice will be a
+  # mandatory module offering license based functionality
+  metering:
+    enabled: true
+
+  # to enable and configure storage plugin module for the platform that
+  # allows capability of managing storage resources(volume, export path etc)
+  # under various storage types like File storage, Object storage, Block storage etc.
+  storagePlugin:
+    enabled: true
+
+  # to enable and configure network manager service for the platform that
+  # provisions network configurations along with management of various
+  # network components including firewall, loadbalancer, PublicIP and NAT
+  # management apart from the core tenant access network rollout
+  networkManager:
+    enabled: true
+
+  adminServices:
+    enabled: true
+
+  userPortal:
+    enabled: true
+
+  coremgmtService:
+    enabled: true
+
+  computeService:
+    enabled: true
+
+  vmconsole:
+    enabled: true
+
+  autoscalingService:
+    enabled: false
+
+  volumeService:
+    enabled: true
+
+  neutronService:
+    enabled: true
+
+  archivalStorage:
+    enabled: false
+
+  certificatesManager:
+    enabled: true
+
+  notificationService:
+    enabled: false
+
+  # enable loading default repositories for better user experience with
+  # preconfigured helm repositories
+  defaultRepos:
+    enabled: true
+
+  # this configuration is used for integrating geolocation component
+  # with compass, the geolocation component is used for all location
+  # services like conversion between coordinates and geolocation &
+  # conversion from IP to location, the geolocation component exposes its
+  # functionality via gRPC services so compass requires this config info
+  # to connect with the geolocation component, currently we DO NOT support
+  # encrypted connections using certificates or any other mechanism
+  # hence it is expected that the geolocation component reside
+  # within the same cluster as the compass deployment
+  geolocation:
+    # grpc host name used to connect with geolocation component
+    # if deployed within the same cluster as compass, this will be
+    # of the form: <svc>.<namespace>
+    host: ""
+    # grpc port used to connect with geolocation component
+    # if deployed within the same cluster as compass, this will be
+    # geolocation component's svc port
+    port: ""
+
+  # preferIPv6 is used to indicate the stack if it needs to prefer
+  # using IPv6 over IPv4 network, right now this is being consumed
+  # only by keycloak stack to indicate the options for jvm env.
+  # default value for this is false, since most of the environments
+  # rely in ipv4 stack causing issues while IDP/SSO configuration
+  # exists and keycloak require communication with the IDP server
+  preferIPv6: false
+
+  tenantManagement:
+    # allow tenant management, providing capability to create multiple
+    # tenants enabling multi-tenancy
+    enabled: true
+
+    # configure if registeration process is enabled and SMTP configuration
+    # to be used for triggering emails to complete the overall flow
+    # enabling email verifications and welcome emails
+    register:
+      enabled: false
+      smtp:
+        # user email that will be used to send emails for OTP and welcome
+        # email
+        sender: ""
+        # password for the user provided, for authenticating with the smtp
+        # host
+        password: ""
+        # smtp host providing the service usually would be of the format
+        # smtp.gmail.com
+        smtpHost: ""
+        # smtp port over which the smtp protocol is provided by the server
+        smtpPort: ""
+
+  # Marketplace Integration
+  marketPlace:
+    url: ""
+
+
+  openfga:
+    enabled: true
+    endpoint: 'http://openfga.openfga:8080'
+    storeId: '01JT8H2E3JNR4ZS9EYE298ESXY'
+    apiToken: 'MYPreSharedToken1'
+
+
+keycloak-ha:
+  replicaCount: 1
+  ## Keycloak Image and Tag
+  image:
+    name: keycloak
+    tag: "24.0.5"
+  auth:
+    ### Keycloak administrator user
+    adminUser: "admin"
+    ### Keycloak administrator password
+    adminPass: "authAdmin@123"
+  ## Keycloak service overrides
+  ## Default is set to ClusterIP
+  service:
+    type: NodePort
+    nodePorts:
+      http: *keycloakNodePortHTTP
+      https: *keycloakNodePortHTTPS
+  ## Keycloak admin ingress parameters
+  adminIngress:
+    enabled: *dnsEnabled
+    className: *ingressClass
+    extraAnnotations: {}
+    hostname: *keycloakDomain
+    tlsSecret: *keycloakTls
+  ## Postgresql HA cluster Configuration
+  pgcluster:
+    ## No. of postgres cluster nodes.
+    ## Minimum 3 for HA. Must be Odd number
+    replica: "1"
+    configurationOverride:
+      maxConnections: "300"
+    ## Persistent Volume size override
+    volume:
+      size: 10Gi
+  postgres-operator:
+    enabled: false
+
+betaFeatures:
+  # Note: Skip Documentation
+  # allow deployment with beta features enabled, this will allow working
+  # with features that are still under development, for which UX and
+  # feature itself can be changed without prior notification
+  # These features are not expected to be enabled in production
+  # environment, and will not be supported.
+  enabled: true
+
+cluster:
+  accessLogs:
+    enabled: true
+
+replicaCount:
+  compassConfig: 1
+  compassController: 1
+  compassTerminal: 1
+  clusterManager: 1
+  compassMetricServer: 1
+  compassOrchestrator: 1
+  compassImageScanner: 1
+
+cloud-manager:
+  replicaCount:
+    cloudManager: 1
+
+metering:
+  replicaCount:
+    metering: 1
+
+## ConfigDB configuration overrides
+## configDB.replicaCount [default: 1] Override number of configDB replicas. Recommended Odd number. Scale down not supported.
+## configDB.service.type [default: ClusterIP] Override service type to expose ConfigDB - set to NodePort OR LoadBalancer (Disclaimer - Use at your own discretion; no guarantees or liabilities are assumed when exposing ConfigDB)
+## configDB.persistence.size [default: 2Gi] Override ConfigDB PVC Storage Request for data volume
+## configDB.metrics.enable [default: false] Enable mongo exporter to expose ConfigDB metrics
+configDB:
+  replicaCount: 1
+  service:
+    type: ClusterIP
+  persistence:
+    size: 5Gi
+  metrics:
+    enabled: false
+
+## MetricsDB configuration overrides
+## metricsDB.replicaCount [default: 1] Override number of MetricsDB replicas. Recommended Odd number. Scale down not supported.
+## metricsDB.service.type [default: ClusterIP] Override service type to expose MetricsDB - set to NodePort OR LoadBalancer (Disclaimer - Use at your own discretion; no guarantees or liabilities are assumed when exposing ConfigDB)
+## metricsDB.persistence.size [default: 2Gi] Override MetricsDB PVC Storage Request for data volume
+## metricsDB.metrics.enable [default: false] Enable mongo exporter to expose MetricsDB metrics
+metricsDB:
+  replicaCount: 1
+  service:
+    type: ClusterIP
+  persistence:
+    size: 5Gi
+  ## Set to metrics.enabled=true in order to expose metricsdb metrics
+  metrics:
+    enabled: false
+
+## Notification Store configuration overrides
+## notificationStore.persistence.size [default: 2Gi] Override Notification Store PVC Storage Request for data volume
+notificationStore:
+  persistence:
+    size: 2Gi
+
+baremetal-manager:
+  # add mass configuration for baremetal manager to interact with.
+  # Baremetal manager expects to work with MAAS Rest API, where it
+  # requires rest api endpoint and api key for authentication
+  # API url needs to be of the format "http://<IP>:<Port>/MAAS"
+  # where the default port usually is 5240
+  # whereas the api key are available under user preference section
+  # with sub tab api keys. refer to more details under MAAS Rest
+  # API access documentation
+  maas:
+    url: ""
+    apikey: ""
+
+  # fabric configuration for baremetal manager is currently relevant
+  # only if you are expected to provide kubernetes clusters using
+  # bare metal servers provided by manager. where kube api virutal
+  # ip management is required to work out of fabric IP space instead
+  # of Tenant Access network
+  # Without this configuration the CKP cluster creation using bare
+  # metal infrastructure over fabric network will not work
+  fabric:
+    enabled: false
+    virtualIPs:
+      first: ""
+      last: ""
+
+controller:
+  # default user name for login
+  username: admin
+  # default password for login
+  password: Orbiter@123
+  firstname:
+  lastname:
+  email:
+  externalIP: *controllerIP
+  # provide ip addresses for white listed proxies via which infrastructure
+  # components are allowed to connect with controller
+  proxyIPs:
+  - 127.0.0.1
+  - "::1"
+  agent:
+    # specify override image if you do not want to use default agent image of release
+    image: ""
+    # specify override image repo, specifically useful for scenarios where customer wants to
+    # position image in their own container registries
+    imageRepo: ""
+    # hostNetwork indicating to generate agent manifest with host network enabled
+    # relevant for scenarios where pod network doesnot have access to external services
+    hostNetwork: true
+  prometheus:
+    # provide endpoint at which prometheus server for controller is installed.
+    # this is used to scrape metrics information from compass controller
+    # which is then rendered using grafana dashboards
+    endpoint: "vm-cluster-select.monitoring:8481/select/0/prometheus"
+
+repository-cred:
+  # container repository for which the credentials are provided
+  repository: docker.io
+  # container repository credentials
+  repositoryCred:
+    user: kubedrona
+    password: b0d2dd30-cca5-48ee-aa01-45a94fdc8751
+    mail: info@coredge.io
+
+# trivy configuration, for enabling vulnurability scan
+# current platform does not provide this support as yet
+trivy:
+  enabled: false
+  defaultServer:
+    hostName: ""
+    port: "4954"
+    scheme: "https"
+    allowInsecure: false
+    customHeaders:
+    - name: "Trivy-Token"
+      values:
+      - ""
+
+auth-service:
+  replicaCount:
+    orbiterAuth: 1
+  keycloak:
+    # keycloak clientID (needs to be a public client) DO NOT CHANGE
+    clientId: controller
+    # introspection client credentials
+    introspect:
+      clientId: ""
+      clientSecret: ""
+    # list of public clients that need to be created at deploy time. DO NOT CHANGE
+    clients:
+    - controller
+    # name of the realm that needs to be created at deploy time
+    realm: *rootRealm
+    # DNS for the origin that we want to allow when accessing the client
+    dns: ""
+    # user credentials for the default realm user that will be created
+    # along with creation of the realm
+    admin:
+      username: *adminUsername
+      password: *adminUserPass
+      firstname: *adminFirstname
+      lastname: *adminLastname
+      email: *adminUserEmail
+    # IDP config for the IDP that needs to be created
+    # at deploy time in the realm created at deploy time
+    idpConfig:
+      enabled: false
+      name: ""
+      # auto onboarding allows users to directly use the IDP and create a new account
+      # instead of requiring the user to exist in the system beforehand
+      allowAutoOnboarding: true
+      # provider ID can either be OIDC or of type facebook, microsoft, google etc.
+      providerId: "oidc"
+      clientId: ""
+      clientSecret: ""
+      clientAuthMethod: ""
+      authorizationUrl: ""
+      tokenUrl: ""
+    # enable below section while having the need to work with multiple
+    # redirect uris and web origins
+    # usually this case is more relevant while having the need to work
+    # with different dns for auth, regular portal and admin portal
+    # or even if a different tenat url is needed
+    redirectURIs:
+    - "*"
+    #
+    # always used in conjection with redirectURIs config
+    webOrigins:
+    - "*"
+  gateway:
+    # additional enpoint forwarding configuration
+    #locations:
+    #- prefix: /api/demo
+    #  endpoint: http://cloud-manager:8080
+    #  rewritePrefix: /
+    #  accessType: unscoped
+    #locations: {}
+    # enable/disable payment method availability check in gateway server
+    locations:
+      - endpoint: http://ccp-extension:8000
+        prefix: /api/v1/admin/network
+      - endpoint: http://ccp-extension:8000
+        prefix: /api/v1/admin/fortimanager
+      - endpoint: http://ccp-extension:8000
+        prefix: /api/v1/admin/fortiflex
+      - endpoint: http://ccp-extension:8000
+        prefix: /ext
+      - endpoint: http://ccp-extension:8000
+        prefix: /api/v1/admin/ipam_vip
+      - prefix: /api/airtel
+        endpoint: http://airtel-plugin:8080
+        rewritePrefix: /
+      - prefix: /api/airtel-ingress
+        endpoint: http://airtel-plugin:8060
+        rewritePrefix: /
+        accessType: public
+      - prefix: /api/airtel-kubeapi
+        endpoint: http://airtel-plugin:8060
+        accessType: unscoped
+      - prefix: /api/airtel/v1/download
+        endpoint: http://airtel-plugin:8080
+        rewritePrefix: /v1/download
+        accessType: public
+      - prefix: /api/quota
+        endpoint: http://orbiter-metering:8080
+    payment:
+      enabled: false
+
+frontend:
+  replicaCount:
+    frontend: 1
+  ## Add extra routes to frontend reverse proxy config
+  ## Use below example as reference.
+  ## [Disclaimer - Use at your own discretion. Make sure the route added is valid]
+  extraRoutes: []
+  # extraRoutes: |-
+  #   location /sample {
+  #       proxy_pass  http://orbiter-auth:8060;
+  #       proxy_http_version 1.1;
+  #       proxy_set_header Upgrade $http_upgrade;
+  #       proxy_set_header Connection $connection_upgrade;
+  #       proxy_read_timeout 3600s;
+  #       proxy_send_timeout 3600s;
+  #   }
+
+grafana:
+  replicas: 1
+  # grafana admin user and password
+  # this API access is restricted for external users and
+  # is relevant for controller to interact with grafana
+  # over API can configure relevant datasource and dashboards
+  adminUser: admin
+  adminPassword: admin@compass
+  # persistence is enabled to ensure we don't have to worry
+  # about grafana restarts, please don not change this configuration
+  persistence:
+    enabled: true
+    # storageClassName: default
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+    finalizers:
+      - kubernetes.io/pvc-protection
+  grafana.ini:
+    auth.anonymous:
+      enabled: true
+    server:
+      root_url: "%(protocol)s://%(domain)s:%(http_port)s/api/grafana/"
+      serve_from_sub_path: true
+    security:
+      allow_embedding: true
+
+container-registry:
+  replicaCount:
+    containerRegistry: 1
+  storage:
+    # prefix for bucket name for registries should be configured here
+    # default prefix will be added if nothing is configured
+    bucketPrefix: ""
+    # Ceph S3 configuration to be used for container-registry,
+    # we provide this service using a S3 backed storage, so
+    # this configuration is mandatory if containter-registry
+    # is enabled
+    #cephS3:
+    #  userId: nano
+    #  endpoint: http://192.168.100.177:8000
+    #  accessKey: 3ZU12D2N4WS0Y9MPWS5H
+    #  secretKey: F9AJPAnp6vGLKr1SzeaGxgdcuUi33A4fKVuhl7Jg
+    s3:
+      endpoint: http://10.100.73.21:9020
+      accessKey: 1_admin_accid
+      secretKey: 66SgG3d36J8Umi8ZBgPtsB9ciGIg
+    #ecs:
+    #  endpoint: http://192.168.100.177:8000
+    #  s3Endpoint: http://192.168.100.177:9000
+    #  username: registry
+    #  password: registry
+    #  accessKey: 3ZU12D2N4WS0Y9MPWS5H
+    #  secretKey: F9AJPAnp6vGLKr1SzeaGxgdcuUi33A4fKVuhl7Jg
+    #  namespace: container-registry
+
+storage-plugin:
+  replicaCount:
+    storagePlugin: 1
+  # configuration for storage provider which is used by storage-plugin
+  # as a storage backend for respective storage type.
+  # If storage-plugin is enabled, providing configuration for any
+  # one storage provider for each storage type is mandatory otherwise
+  # default storage provider configuration will be used.
+  storageProvider:
+    fileStorage:
+      #id: fs-1
+      # Ceph configuration required by storage-plugin to use ceph
+      # as a storage provider.
+      # endpoint is address and username,passwd are credentials
+      # of machine hosting ceph.
+      # nfsProto is config required for nfs protocol, where
+      # nfsClusterId is required to manage nfs export path on buckets.
+      # rgw: endpoint,userId, accessKey and secretKey is required to
+      # manage buckets on ceph.
+      # ceph:
+      #   endpoint: <ceph rest api endpoint (http://x.x.x.x)>
+      #   username: <ceph rest api username>
+      #   passwd: <ceph rest api password>
+      #   nfsProto:
+      #     nfsClusterId: <ceph nfs ganesha cluster id>
+      #   rgw:
+      #     endpoint: <ceph rgw endpoint>
+      #     userId: <ceph rgw user id >
+      #     accessKey: <ceph rgw access key>
+      #     secretKey: <ceph rgw secret key>
+      # dell:
+      #   endpoint: <dell endpoint address>
+      #   username: <dell username>
+      #   passwd: <dell password>
+      #   poolId: <dell storage pool id>
+      #   nasServerId: <dell nas server id on which file storage will be configured>
+      # ontap:
+      #   mgmtEndpoint: <ontap management endpoint address (http://x.x.x.x:yyyy)>
+      #   dataEndpoint: <ontap data endpoint address (x.x.x.x)>
+      #   username: <ontap username>
+      #   passwd: <ontap password>
+      #   svnName: <ontap storage virtual machine name>
+      #   svmUuid: <ontap nas storage virtual machine uuid>
+    blockStorage:
+      #id: bs-1
+      #ceph:
+        # params
+      #dell:
+        # params
+    objectStorage:
+      # storage provider config required by object storage
+      # providerType - supported types "ecs", "storageGrid" and "ceph"
+      # endpoint -  is the management API endpoint for provider
+      # s3Endpoint - provider s3 endpoint
+      # accessKey - admin s3 accessKey for provider
+      # secretKey - admin s3 secretKey for provider
+      # username and password is required to authenticate for
+      # management operations
+      # for multi-tenant provider we don't need tenantId as it
+      # will be handled within the service
+      # for single tenant provider we need to provide the tenant ID
+      # to use for managing resources
+      #
+      # default id will be default-object-storage, if user will to
+      # use a different id, it can be overridden with config for id
+      # field
+      # id: os-1
+      # providerType: ecs
+      # s3Endpoint: http://192.168.100.151:9000
+      # accessKey: 3ZU12D2N4WS0Y9MPWS5H
+      # secretKey: F9AJPAnp6vGLKr1SzeaGxgdcuUi33A4fKVuhl7Jg
+      # endpoint: https://10.13.26.198:443
+      # username: root
+      # password: password
+      # isMultiTenant: false
+      # tenantId: "35998885247589323395"
+  # This is default availability zone for storage plugin deployment
+  # Once provisioned, its value must not change in future.
+  # Volumes and providers created without availability zone should fall
+  # under default availability zone.
+  # availabilityZone: east
+
+adminServices:
+  replicaCount: '1'
+  allowedAdminUserDomain: "*"
+  adminportal:
+    image: "dcv-admin"
+    service:
+      nodePort: "32600"
+    resources:
+      limits:
+        cpu: 400m
+        # memory: 128Mi
+      requests:
+        cpu: 50m
+        memory: 200Mi
+    ingress:
+      tlsSecret: *adminTls
+      hostname: *adminDomain
+      class: *ingressClass
+    ## Monitoring URLs
+    monitoringURL:
+      resource: ""
+      projectResource: ""
+    ## Management URLs
+    managementURL:
+      resource: ""
+    ## Enabled Services
+    enabledServices: "object-storage,storage-provider,cluster,region,all-user,availability-zone,block-storage,compute,compute-snapshot,flavors,images,network,organisation,project,provider,provider-cluster,default-rule,resource-metrics,security-group,security-group-rule,volume-type,volume-snapshot,flavor-group,admin-access-logs,load-balancer"
+  adminPlatform:
+    image: "fluid_admin_platform"
+    resources:
+      limits:
+        cpu: 500m
+        # memory: 128Mi
+      requests:
+        cpu: 50m
+        memory: 200Mi
+    celery:
+      enabled: true
+      replicaCount: '1'
+      command: "celery -A app.celery worker --loglevel=INFO -B"
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 6Gi
+        requests:
+          cpu: 100m
+          memory: 2Gi
+
+userPortal:
+  replicaCount: '1'
+  image: "dcv-console"
+  service:
+    nodePort: *frontendNodePort
+  resources:
+    limits:
+      cpu: 400m
+      # memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 200Mi
+  ## Enabled Services
+  enabledServices: "provider-cluster,object-storage,storage-provider,registry,dbaas-mongo,dbaas-postgresql,cluster,key-pair,load-balancer,compute,compute-snapshot,monitoring,network,project-activity,quota-service,quota-utilization,security-group,volume,volume-snapshot,volume-type,availability-zone"
+  docsURL: ""
+  additionalURLs:
+    appStoreURL: ""
+    secComplianceURL: ""
+    userRegisterURL: ""
+    pamIframeURL: ""
+    vmconsoleURL: ""
+    quartzURL: ""
+    cobaltURL: ""
+    cloudSecurityPosture: ""
+    virtualSuiteDashboard: ""
+    ticketSupport: ""
+  objectStorage:
+    maxBucketSize: ""
+  blockStorage:
+    maxSize: ""
+  ## Enable ChatBot on the GUI
+  chatbot:
+    enabled: true
+
+coremgmtService:
+  replicaCount: '1'
+  image: "fluid_platform"
+  enabledServices: "core_mgmt,tickets,api"
+  resources:
+    limits:
+      cpu: 400m
+      # memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 200Mi
+  celery:
+    enabled: true
+    replicaCount: '1'
+    command: "celery -A app  worker --concurrency=2 --loglevel=debug"
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 6Gi
+      requests:
+        cpu: 100m
+        memory: 2Gi
+
+computeService:
+  replicaCount: '1'
+  image: "fluid_platform"
+  enabledServices: "compute,resource_metrices,api"
+  resources:
+    limits:
+      cpu: 400m
+      # memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 200Mi
+  celery:
+    enabled: true
+    replicaCount: '1'
+    command: "celery -A app  worker --concurrency=2 --loglevel=debug -Q q_compute"
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 6Gi
+      requests:
+        cpu: 100m
+        memory: 2Gi
+
+vmconsole:
+  replicaCount: "1"
+  image: nginx:latest
+  service:
+    nodePort: *vmconsoleNodePort
+  ingress:
+    tlsSecret: *vmconsoleTls
+    hostname: *vmconsoleDomain
+  ## Openstack Cloud Provider Details
+  ## Currently only supports single openstack cloud
+  cloudProvider:
+    name: "ihc-dev"
+    protocol: "http"
+    host: "10.100.64.10"
+    port: "6080"
+
+
+neutronService:
+  replicaCount: '1'
+  image: "fluid_platform"
+  enabledServices: "networks,dns,load_balancers,api"
+  celery:
+    enabled: true
+    replicaCount: '1'
+    command: "celery -A app  worker --concurrency=2 --loglevel=debug -Q q_network,q_load_balancers"
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 6Gi
+      requests:
+        cpu: 100m
+        memory: 2Gi
+
+network-manager:
+  providerinfo:
+    servicetoken: eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJkaWQiOjY5NDg0MDkxNzI0ODQ0ODU4MTgsImRzbiI6ImRldnRlc3RpbmciLCJkc3QiOiJhY2NvdW50IiwiZXhwIjoxNzUxMjIxODAxLCJpYXQiOjE3NDMwNDkwNTksIm9naSI6Njk0ODQwOTE3MjQ4NDQ3NzIwNywib2duIjoiYXJpdGVsLWFwYWMiLCJzaWQiOiJmMWM5N2M0OTdiZDM1YWZkNGQ5MDgxMjNjNjBiYzNlYjBmNzgzYmMwMmQwOTQ0NDk4YmNjYjU5NjU5NTM4NmQxLXp1U2lZNDZjRllwNElncXlRZTRmelNRQW1fQm00RnhlMF9HNVpncHQifQ.SWQXy0UhVTdKnFqoTP2Q-IA7PjjPKG-5FH0RnCWGHih1qo4VmERDplyK7NWKxltqf2GAziVC4-HC0T4cE44nSg
+    providername: ndfc
+    vnistart: 5000
+    vniend: 5999
+    vlanstart: 2
+    vlanend: 3000
+    customername: ihc
+    skipvpccreation: false
+
+volumeService:
+  image: "fluid_platform"
+  enabledServices: "volumes,api"
+  replicaCount: '1'
+  resources:
+    limits:
+      cpu: 400m
+      # memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 200Mi
+  celery:
+    enabled: true
+    replicaCount: '1'
+    command: "celery -A app  worker --concurrency=2 --loglevel=debug -Q q_volume"
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 6Gi
+      requests:
+        cpu: 100m
+        memory: 2Gi
+
+archivalStorage:
+  image: "fluid_platform"
+  enabledServices: "archival_storage,api"
+  replicaCount: '1'
+  resources:
+    limits:
+      cpu: 400m
+      # memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 200Mi
+
+autoscalingService:
+  enabledServices: "autoscaling_group,api"
+  replicaCount: '1'
+  image: "fluid_platform"
+  resources:
+    limits:
+      cpu: 400m
+      # memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 200Mi
+  celery:
+    enabled: true
+    replicaCount: '1'
+    command: "celery -A app  worker --concurrency=2 --loglevel=debug -Q q_autoscaling_group"
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 6Gi
+      requests:
+        cpu: 100m
+        memory: 2Gi
+
+certificatesManager:
+  replicaCount: '1'
+  image: "fluid_platform"
+  enabledServices: "certificates,api"
+  resources:
+    limits:
+      cpu: 500m
+      # memory: ""
+    requests:
+      cpu: 20m
+      memory: 100Mi
+  ## Vault integration for managing certificates
+  ## vault.ssl Enable SSL validation
+  ## vault.url Vault endpoint / URL
+  ## vault.token Vault root token
+  ## vault.kvPath Default vault KV Secret path
+  vault:
+    ssl: false
+    url: "http://vault.vault:8200"
+    token: "hvs.cZaQYzcHqLZCPNTgQ2rWbke4"
+    kvPath: "ccs-certificates"
+
+notificationService:
+  replicaCount: "1"
+  image: "fluid_notification"
+  smtp:
+    senderEmail: ''
+    server: ''
+    port: ''
+    username: ''
+    password: ''
+  sms:
+    sender: ''
+    apiKey: ''
+
+sockets:
+  replicaCount: 1
+
+## Postgresql HA Configuration
+## Deploys a postgresql cluster in HA configuration
+## Requires Zalando Operator running on the cluster or in the same namespace
+postgresqlHA:
+  ## Postgresql cluster name prefix
+  image: docker.io/coredgeio/spilo-16:3.2-p3
+  ## Support PG Versions: 12 - 16
+  ## Input only Major Version
+  pgVersion: '15'
+  maxconnections: "300"
+  ## Database user and password configuration
+  creds:
+    user: 'ccs'
+    pass: 'ccsdbadmin'
+  ## No. of postgres cluster nodes.
+  ## Minimum 3 for HA. Must be Odd number
+  replicaCount: '1'
+  ## Postgres LoadBalancer override
+  loadBalancer:
+    master: false
+    replica: false
+  ## Persistent Volume size override
+  volume:
+    size: 10Gi
+  ## Postgres resources configuration override
+  resources:
+    requests:
+      cpu: 10m
+      memory: 100Mi
+      # hugepages-2Mi: 128Mi
+      # hugepages-1Gi: 1Gi
+    limits:
+      cpu: 500m
+      memory: 500Mi
+      # hugepages-2Mi: 128Mi
+      # hugepages-1Gi: 1Gi
+  ## Postgres pg_hba configuration override
+  pg_hba: []
+    # - hostssl all             all          0.0.0.0/0                md5
+    # - host    all             all          0.0.0.0/0                md5
+    # - hostssl all             all          0.0.0.0/0                trust
+    # - host    all             all          0.0.0.0/0                trust
+  ## Enable postgres & patroni metrics
+  monitoring:
+    enabled: false
+
+## Postgresql Operator configuration
+## This operator will manage the lifecycle of the above postgresql cluster
+postgres-operator:
+  enabled: true
+  registry: docker.io
+  repository: coredgeio/postgres-operator
+  tag: v1.12.2
+  pullPolicy: "IfNotPresent"
+  configMajorVersionUpgrade:
+    # "off": no upgrade, "manual": manifest triggers action, "full": minimal version violation triggers too
+    major_version_upgrade_mode: "off"
+    # upgrades will only be carried out for clusters of listed teams when mode is "off"
+    # major_version_upgrade_team_allow_list:
+    # - acid
+    minimal_major_version: "12"
+    target_major_version: "16"
+  configKubernetes:
+    enable_cross_namespace_secret: false
+    enable_sidecars: true
+    # storage resize strategy, available options are: ebs, pvc, off or mixed
+    storage_resize_mode: pvc
+    watched_namespace: "*"  # listen to all namespaces
+    # toggles pod anti affinity on the Postgres pods
+    enable_pod_antiaffinity: false
+     # override topology key for pod anti affinity
+    pod_antiaffinity_topology_key: "kubernetes.io/hostname"
+  configConnectionPooler:
+    # docker image
+    connection_pooler_image: "docker.io/coredgeio/pgbouncer:master-32"
+    # max db connections the pooler should hold
+    connection_pooler_max_db_connections: 500
+  resources:
+    limits:
+      cpu: 400m
+      memory: 500Mi
+    requests:
+      cpu: 100m
+      memory: 250Mi
+  serviceAccount:
+    name: "postgresql-operator"
+
+pgadmin:
+  enabled: true
