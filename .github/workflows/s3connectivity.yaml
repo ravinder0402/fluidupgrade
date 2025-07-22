@@ -1,11 +1,13 @@
 name: Test MinIO Connectivity
 
 on:
-  push: main
+  push:
+    branches:
+      - main
 
 jobs:
   test-minio:
-    runs-on: self-hosted  # your runner is self-hosted
+    runs-on: self-hosted
 
     steps:
       - name: Checkout code
