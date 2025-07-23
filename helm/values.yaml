@@ -44,7 +44,7 @@ global:
   # external IP for controller, relevant, when domain is not
   # configured to allow generation of server certificate validity using
   # this IP address
-  externalIP: &controllerIP 172.16.108.223
+  externalIP: &controllerIP 172.16.109.86
 
   # Flask Config (Development OR Production)
   # TEMPORARY
