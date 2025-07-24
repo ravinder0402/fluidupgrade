@@ -265,66 +265,66 @@ jobs:
           rm "$FILE"
           echo " Config-db MongoDB restore complete."
           
-      - name: Restore Config-db MongoDB backup if helm upgrade failed (Corobots)
-        env:
-          MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
-          MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
-          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
-        run: |
-          echo "Restoring Config-db MongoDB backup..."
+      # - name: Restore Config-db MongoDB backup if helm upgrade failed (Corobots)
+      #   env:
+      #     MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+      #     MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
+      #     AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
+      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+      #     MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+      #   run: |
+      #     echo "Restoring Config-db MongoDB backup..."
       
-          # Get latest archive file matching corobots prefix
-          FILE=$(aws --endpoint-url $MINIO_ENDPOINT s3 ls s3://$MINIO_BUCKET/ | grep corobots_config-db_all_dbs_backup_ | sort | tail -n1 | awk '{print $4}')
-          echo "Downloading backup file $FILE from MinIO"
-          aws --endpoint-url $MINIO_ENDPOINT s3 cp s3://$MINIO_BUCKET/$FILE .
+      #     # Get latest archive file matching corobots prefix
+      #     FILE=$(aws --endpoint-url $MINIO_ENDPOINT s3 ls s3://$MINIO_BUCKET/ | grep corobots_config-db_all_dbs_backup_ | sort | tail -n1 | awk '{print $4}')
+      #     echo "Downloading backup file $FILE from MinIO"
+      #     aws --endpoint-url $MINIO_ENDPOINT s3 cp s3://$MINIO_BUCKET/$FILE .
       
-          # Drop all non-system databases and collections in corobots namespace pod
-          kubectl exec -i configdb-0 -n corobots -- mongosh -u sigma -p "$MONGO_PASSWORD" --authenticationDatabase admin --eval '
-          var dbs = db.adminCommand("listDatabases").databases;
-          dbs.forEach(function(database) {
-            var dbName = database.name;
-            if (dbName !== "admin" && dbName !== "local" && dbName !== "config") {
-              var curDB = db.getSiblingDB(dbName);
-              print("Dropping collections in database:", dbName);
-              curDB.getCollectionNames().forEach(function(c) {
-                print("Dropping collection:", c);
-                curDB[c].drop();
-              });
-              print("Dropping database:", dbName);
-              curDB.dropDatabase();
-            }
-          });
+      #     # Drop all non-system databases and collections in corobots namespace pod
+      #     kubectl exec -i configdb-0 -n corobots -- mongosh -u sigma -p "$MONGO_PASSWORD" --authenticationDatabase admin --eval '
+      #     var dbs = db.adminCommand("listDatabases").databases;
+      #     dbs.forEach(function(database) {
+      #       var dbName = database.name;
+      #       if (dbName !== "admin" && dbName !== "local" && dbName !== "config") {
+      #         var curDB = db.getSiblingDB(dbName);
+      #         print("Dropping collections in database:", dbName);
+      #         curDB.getCollectionNames().forEach(function(c) {
+      #           print("Dropping collection:", c);
+      #           curDB[c].drop();
+      #         });
+      #         print("Dropping database:", dbName);
+      #         curDB.dropDatabase();
+      #       }
+      #     });
       
-          // Explicitly drop problematic collection before restore
-          var compassDB = db.getSiblingDB("compass-config");
-          if (compassDB.getCollectionNames().includes("managerinstanceownership")) {
-            print("Dropping collection compass-config.managerinstanceownership explicitly");
-            compassDB.managerinstanceownership.drop();
-          }
-          '
+      #     // Explicitly drop problematic collection before restore
+      #     var compassDB = db.getSiblingDB("compass-config");
+      #     if (compassDB.getCollectionNames().includes("managerinstanceownership")) {
+      #       print("Dropping collection compass-config.managerinstanceownership explicitly");
+      #       compassDB.managerinstanceownership.drop();
+      #     }
+      #     '
       
-          # Upload archive file into pod
-          kubectl cp "$FILE" configdb-0:/tmp/configdb_restore.archive -n corobots
+      #     # Upload archive file into pod
+      #     kubectl cp "$FILE" configdb-0:/tmp/configdb_restore.archive -n corobots
       
-          # Restore with safer options
-          kubectl exec -n corobots configdb-0 -- mongorestore \
-            --username sigma \
-            --password "$MONGO_PASSWORD" \
-            --authenticationDatabase admin \
-            --archive=/tmp/configdb_restore.archive \
-            --drop \
-            --noIndexRestore \
-            --numParallelCollections=1 \
-            --nsInclude=auth-config.* \
-            --nsInclude=compass-config.* \
-            --nsInclude=capi-cluster-data.* \
-            --nsInclude=controller.* \
-            --nsInclude=event_store.*
+      #     # Restore with safer options
+      #     kubectl exec -n corobots configdb-0 -- mongorestore \
+      #       --username sigma \
+      #       --password "$MONGO_PASSWORD" \
+      #       --authenticationDatabase admin \
+      #       --archive=/tmp/configdb_restore.archive \
+      #       --drop \
+      #       --noIndexRestore \
+      #       --numParallelCollections=1 \
+      #       --nsInclude=auth-config.* \
+      #       --nsInclude=compass-config.* \
+      #       --nsInclude=capi-cluster-data.* \
+      #       --nsInclude=controller.* \
+      #       --nsInclude=event_store.*
       
-          rm "$FILE"
-          echo " Config-db MongoDB restore complete."
+      #     rm "$FILE"
+      #     echo " Config-db MongoDB restore complete."
 
       - name: Restore Metrics-db MongoDB backup if helm upgrade failed
         env:
