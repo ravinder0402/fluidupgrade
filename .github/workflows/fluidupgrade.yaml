@@ -86,7 +86,7 @@ jobs:
       - name: Backup all MongoDB databases and upload to MinIO (Config-db-Corobots)
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          FILE="config-db_all_dbs_backup_$TIMESTAMP.archive"
+          FILE="corobots_config-db_all_dbs_backup_$TIMESTAMP.archive"
           kubectl exec -it -n corobots configdb-0 -- \
             mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive > $FILE
           aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
@@ -95,7 +95,7 @@ jobs:
       - name: Backup all MongoDB databases and upload to MinIO (Metrics-db-Corobots)
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          FILE="metrics-db_all_dbs_backup_$TIMESTAMP.archive"
+          FILE="corobots_metrics-db_all_dbs_backup_$TIMESTAMP.archive"
           kubectl exec -it -n corobots metricsdb-0 -- \
             mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive > $FILE
           aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
