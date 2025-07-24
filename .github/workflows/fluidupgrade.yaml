@@ -42,74 +42,26 @@ jobs:
       - name: Backup CCS PostgreSQL and upload to MinIO
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          FILE="ccs_pg_backup$TIMESTAMP.sql"
-          kubectl exec -n fluid ccs-postgresql-cluster-0 -- \
-            env PGPASSWORD="${{ secrets.POSTGRES_PASSWORD }}" pg_dump -U ccs cloud > $FILE
+          FILE="ccs_pg_backup_$TIMESTAMP.sql"
+          kubectl exec -it -n fluid ccs-postgresql-cluster-0 -- pg_dumpall -U postgres > $FILE
           aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
           rm $FILE
+
           
-      - name: Backup Keycloak PostgreSQL cluster and upload to MinIO
+      - name: Backup Keycloak PostgreSQL  and upload to MinIO
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
           FILE="keycloak_pg_backup_$TIMESTAMP.sql"
-          kubectl exec -n fluid keycloak-postgresql-cluster-0 -- sh -c "
-            export PGPASSWORD='${{ secrets.KEYCLOAK_DB_PASSWORD }}';
-            pg_dump -U keycloak keycloak > /tmp/keycloak.sql &&
-            pg_dump -U keycloak keycloak_postgresql_cluster > /tmp/keycloak_cluster.sql &&
-            pg_dump -U postgres postgres > /tmp/postgres.sql &&
-            cat /tmp/keycloak.sql /tmp/keycloak_cluster.sql /tmp/postgres.sql
-          " > $FILE
+          kubectl exec -n fluid keycloak-postgresql-cluster-0 -- \
+            pg_dumpall -U postgres > $FILE
           aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
           rm $FILE
           
       - name: Backup Keycloak PostgreSQL cluster and upload to MinIO(corobots)
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          FILE="corobots_keycloak_pg_backup_$TIMESTAMP.sql"
-          kubectl exec -n corobots keycloak-pg-0 -- sh -c "
-            export PGPASSWORD='${{ secrets.KEYCLOAK_DB_PASSWORD }}';
-            pg_dump -U root -d keycloak > /tmp/keycloak_backup.sql &&
-            pg_dump -U root -d postgres > /tmp/postgres_backup.sql &&
-            cat /tmp/keycloak_backup.sql /tmp/postgres_backup.sql
-          " > $FILE
-          aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
-          rm $FILE
-
-
-
-      - name: Backup MongoDB and upload to MinIO ( Config-db)
-        run: |
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          FILE="config-db_mongodb_backup_$TIMESTAMP.gz"
-          kubectl exec -n fluid configdb-0 -- \
-            mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive --gzip > $FILE
-          aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
-          rm $FILE
-          
-      - name: Backup MongoDB and upload to MinIO ( Metrics-db)
-        run: |
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          FILE="metricsdb_mongodb_backup_$TIMESTAMP.gz"
-          kubectl exec -n fluid metricsdb-0 -- \
-            mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive --gzip > $FILE
-          aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
-          rm $FILE
-          
-      - name: Backup MongoDB and upload to MinIO ( Config-db corobots)
-        run: |
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          FILE="corobots_config-db_mongodb_backup_$TIMESTAMP.gz"
-          kubectl exec -n fluid configdb-0 -- \
-            mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive --gzip > $FILE
-          aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
-          rm $FILE
-          
-      - name: Backup MongoDB and upload to MinIO ( Metrics-db corobots)
-        run: |
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          FILE="corobots_metricsdb_mongodb_backup_$TIMESTAMP.gz"
-          kubectl exec -n fluid metricsdb-0 -- \
-            mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive --gzip > $FILE
+          FILE="corobots_all_databases_backup_$TIMESTAMP.sql"
+          kubectl exec -n corobots keycloak-pg-0 -- bash -c "pg_dumpall -U root" > $FILE
           aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
           rm $FILE
 
