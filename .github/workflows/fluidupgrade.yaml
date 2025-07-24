@@ -212,7 +212,7 @@ jobs:
       
           echo "Corobots PostgreSQL restore complete."
 
-      - name: Restore Config-db MongoDB backup
+      - name: Restore Config-db MongoDB backup if helm upgrade failed
         env:
           MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
           MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
@@ -222,12 +222,12 @@ jobs:
         run: |
           echo "Restoring Config-db MongoDB backup..."
       
-          # Find the latest MongoDB Config-db backup archive in MinIO
+          # Get latest archive filename
           FILE=$(aws --endpoint-url $MINIO_ENDPOINT s3 ls s3://$MINIO_BUCKET/ | grep config-db_all_dbs_backup_ | sort | tail -n1 | awk '{print $4}')
           echo "Downloading backup file $FILE from MinIO"
           aws --endpoint-url $MINIO_ENDPOINT s3 cp s3://$MINIO_BUCKET/$FILE .
       
-          # Drop all non-system databases and their collections
+          # Drop all non-system databases and collections
           kubectl exec -i configdb-0 -n fluid -- mongosh -u sigma -p "$MONGO_PASSWORD" --authenticationDatabase admin --eval '
           var dbs = db.adminCommand("listDatabases").databases;
           dbs.forEach(function(database) {
@@ -245,13 +245,9 @@ jobs:
           });
           '
       
-          # Restore from downloaded archive
-          kubectl exec -it configdb-0 -n fluid -- mongorestore --username sigma --password "$MONGO_PASSWORD" --authenticationDatabase admin --archive < "$FILE"
+          # Restore only data (ignore auth collections)
+          kubectl exec -i configdb-0 -n fluid -- mongorestore --username sigma --password "$MONGO_PASSWORD" --authenticationDatabase admin --archive --drop < "$FILE"
       
-          # Clean up
           rm "$FILE"
       
           echo "Config-db MongoDB restore complete."
-
-      
-      
