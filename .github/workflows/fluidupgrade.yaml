@@ -448,12 +448,14 @@ jobs:
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
         run: |
           echo "Restoring Metrics-db MongoDB backup..."
+      
           # Get latest archive file matching corobots_metrics-db prefix
           FILE=$(aws --endpoint-url $MINIO_ENDPOINT s3 ls s3://$MINIO_BUCKET/ | grep corobots_metrics-db_all_dbs_backup_ | sort | tail -n1 | awk '{print $4}')
           echo "Downloading backup file $FILE from MinIO"
           aws --endpoint-url $MINIO_ENDPOINT s3 cp s3://$MINIO_BUCKET/$FILE .
+      
           # Drop all non-system databases and collections in corobots namespace pod metricsdb-0
-          kubectl exec -it metricsdb-0 -n corobots -- mongosh -u sigma -p "$MONGO_PASSWORD" --authenticationDatabase admin --eval '
+          kubectl exec -i metricsdb-0 -n corobots -- mongosh -u sigma -p "$MONGO_PASSWORD" --authenticationDatabase admin --eval '
           var dbs = db.adminCommand("listDatabases").databases;
           dbs.forEach(function(database) {
             var dbName = database.name;
@@ -469,18 +471,27 @@ jobs:
             }
           });
           '
+      
           # Upload archive file into pod
           kubectl cp "$FILE" metricsdb-0:/tmp/metricsdb_restore.archive -n corobots
-          # Restore with safer options and parallelism control
-          kubectl exec -it -n corobots metricsdb-0 -- mongorestore \
+      
+          # Restore with safer options and exclude auth/internal system collections
+          kubectl exec -n corobots metricsdb-0 -- mongorestore \
             --username sigma \
             --password "$MONGO_PASSWORD" \
             --authenticationDatabase admin \
             --archive=/tmp/metricsdb_restore.archive \
             --drop \
             --noIndexRestore \
-            --numParallelCollections=1
+            --numParallelCollections=1 \
+            --nsExclude=admin.system.users \
+            --nsExclude=admin.system.roles \
+            --nsExclude=config.system.sessions \
+            --nsExclude=config.tenantMigration* \
+            --nsExclude=system.* \
+            --nsExclude=*.*system.users \
+            --nsExclude=*.*system.roles
+      
           # Cleanup local backup file
           rm "$FILE"
-          echo " Metrics-db MongoDB restore complete."
- 
+          echo "✅ Metrics-db MongoDB restore complete."
