@@ -212,6 +212,7 @@ jobs:
       
           echo "Corobots PostgreSQL restore complete."
 
+
       - name: Restore Config-db MongoDB backup if helm upgrade failed
         env:
           MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
@@ -245,20 +246,22 @@ jobs:
           });
           '
       
-          # Restore while excluding problematic auth collections
-          kubectl exec -i configdb-0 -n fluid -- mongorestore \
+          # Restore archive, exclude problematic collections
+          kubectl exec -i configdb-0 -n fluid -- bash -c "cat > /tmp/configdb_restore.archive" < "$FILE"
+          
+          kubectl exec -n fluid configdb-0 -- mongorestore \
             --username sigma \
-            --password "$MONGO_PASSWORD" \
+            --password \"$MONGO_PASSWORD\" \
             --authenticationDatabase admin \
-            --archive \
+            --archive=/tmp/configdb_restore.archive \
             --drop \
             --nsExclude=config.system.users \
             --nsExclude=config.system.roles \
             --nsExclude=config.tenantMigrationDonors \
             --nsExclude=config.tenantMigrationRecipients \
-            --nsExclude=config.external_validation_keys \
-            < "$FILE"
+            --nsExclude=config.external_validation_keys
       
           rm "$FILE"
-      
           echo "Config-db MongoDB restore complete."
+      
+                
