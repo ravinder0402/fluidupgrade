@@ -296,26 +296,32 @@ jobs:
               curDB.dropDatabase();
             }
           });
+      
+          // Explicitly drop problematic collection before restore
+          var compassDB = db.getSiblingDB("compass-config");
+          if (compassDB.getCollectionNames().includes("managerinstanceownership")) {
+            print("Dropping collection compass-config.managerinstanceownership explicitly");
+            compassDB.managerinstanceownership.drop();
+          }
           '
       
           # Upload archive file into pod
           kubectl cp "$FILE" configdb-0:/tmp/configdb_restore.archive -n corobots
       
-          # Restore with nsInclude to exclude system.users and avoid merge errors
+          # Restore with safer options
           kubectl exec -n corobots configdb-0 -- mongorestore \
             --username sigma \
             --password "$MONGO_PASSWORD" \
             --authenticationDatabase admin \
             --archive=/tmp/configdb_restore.archive \
             --drop \
+            --noIndexRestore \
+            --numParallelCollections=1 \
             --nsInclude=auth-config.* \
             --nsInclude=compass-config.* \
             --nsInclude=capi-cluster-data.* \
             --nsInclude=controller.* \
-            --nsInclude=event_store.* 
+            --nsInclude=event_store.*
       
           rm "$FILE"
-          echo "✅ Config-db MongoDB restore complete."
-      
-
-
+          echo " Config-db MongoDB restore complete."
