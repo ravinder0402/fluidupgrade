@@ -223,7 +223,7 @@ jobs:
         run: |
           echo "Restoring Config-db MongoDB backup..."
       
-          # Get latest archive filename
+          # Get latest archive file
           FILE=$(aws --endpoint-url $MINIO_ENDPOINT s3 ls s3://$MINIO_BUCKET/ | grep config-db_all_dbs_backup_ | sort | tail -n1 | awk '{print $4}')
           echo "Downloading backup file $FILE from MinIO"
           aws --endpoint-url $MINIO_ENDPOINT s3 cp s3://$MINIO_BUCKET/$FILE .
@@ -233,7 +233,7 @@ jobs:
           var dbs = db.adminCommand("listDatabases").databases;
           dbs.forEach(function(database) {
             var dbName = database.name;
-            if(dbName !== "admin" && dbName !== "local" && dbName !== "config") {
+            if (dbName !== "admin" && dbName !== "local" && dbName !== "config") {
               var curDB = db.getSiblingDB(dbName);
               print("Dropping collections in database:", dbName);
               curDB.getCollectionNames().forEach(function(c) {
@@ -246,22 +246,21 @@ jobs:
           });
           '
       
-          # Restore archive, exclude problematic collections
-          kubectl exec -i configdb-0 -n fluid -- bash -c "cat > /tmp/configdb_restore.archive" < "$FILE"
-          
+          # Upload archive into the pod
+          kubectl cp "$FILE" configdb-0:/tmp/configdb_restore.archive -n fluid
+      
+          # Run restore *with include filters* (skip system.users implicitly)
           kubectl exec -n fluid configdb-0 -- mongorestore \
             --username sigma \
-            --password \"$MONGO_PASSWORD\" \
+            --password "$MONGO_PASSWORD" \
             --authenticationDatabase admin \
             --archive=/tmp/configdb_restore.archive \
             --drop \
-            --nsExclude=config.system.users \
-            --nsExclude=config.system.roles \
-            --nsExclude=config.tenantMigrationDonors \
-            --nsExclude=config.tenantMigrationRecipients \
-            --nsExclude=config.external_validation_keys
+            --nsInclude=auth-config.* \
+            --nsInclude=compass-config.* \
+            --nsInclude=capi-cluster-data.* \
+            --nsInclude=controller.* \
+            --nsInclude=event_store.* 
       
           rm "$FILE"
-          echo "Config-db MongoDB restore complete."
-      
-                
+          echo "✅ Config-db MongoDB restore complete."
