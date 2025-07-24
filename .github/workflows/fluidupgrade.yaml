@@ -245,8 +245,19 @@ jobs:
           });
           '
       
-          # Restore only data (ignore auth collections)
-          kubectl exec -i configdb-0 -n fluid -- mongorestore --username sigma --password "$MONGO_PASSWORD" --authenticationDatabase admin --archive --drop < "$FILE"
+          # Restore while excluding problematic auth collections
+          kubectl exec -i configdb-0 -n fluid -- mongorestore \
+            --username sigma \
+            --password "$MONGO_PASSWORD" \
+            --authenticationDatabase admin \
+            --archive \
+            --drop \
+            --nsExclude=config.system.users \
+            --nsExclude=config.system.roles \
+            --nsExclude=config.tenantMigrationDonors \
+            --nsExclude=config.tenantMigrationRecipients \
+            --nsExclude=config.external_validation_keys \
+            < "$FILE"
       
           rm "$FILE"
       
