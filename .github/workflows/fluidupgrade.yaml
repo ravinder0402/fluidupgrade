@@ -113,15 +113,15 @@ jobs:
         run: |
           helm registry login docker.io -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Helm dependency build
-        working-directory: ./helm
-        run: helm dependency build
+      # - name: Helm dependency build
+      #   working-directory: ./helm
+      #   run: helm dependency build
 
-      - name: Helm upgrade/install fluid chart
-        working-directory: ./helm
-        run: |
-          helm upgrade --install fluid . -f values.yaml -n fluid --create-namespace
-          helm list -A
+      # - name: Helm upgrade/install fluid chart
+      #   working-directory: ./helm
+      #   run: |
+      #     helm upgrade --install fluid . -f values.yaml -n fluid --create-namespace
+      #     helm list -A
           
       # - name: Restoring CCS postgresql backup
       #   env:
