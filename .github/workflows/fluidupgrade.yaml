@@ -250,21 +250,18 @@ jobs:
           # Upload archive into the pod
           kubectl cp "$FILE" configdb-0:/tmp/configdb_restore.archive -n fluid
       
-          # Run restore *with include filters* (skip system.users implicitly)
+          # Run mongorestore with --drop and exclude system users
           kubectl exec -n fluid configdb-0 -- mongorestore \
             --username sigma \
             --password "$MONGO_PASSWORD" \
             --authenticationDatabase admin \
             --archive=/tmp/configdb_restore.archive \
             --drop \
-            --nsInclude=auth-config.* \
-            --nsInclude=compass-config.* \
-            --nsInclude=capi-cluster-data.* \
-            --nsInclude=controller.* \
-            --nsInclude=event_store.* 
+            --nsExclude=admin.system.users
       
           rm "$FILE"
           echo " Config-db MongoDB restore complete."
+
           
       # - name: Restore Config-db MongoDB backup if helm upgrade failed (Corobots)
       #   env:
