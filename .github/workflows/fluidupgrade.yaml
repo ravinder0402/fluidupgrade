@@ -68,7 +68,7 @@ jobs:
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
           FILE="config-db_all_dbs_backup_$TIMESTAMP.archive"
-          kubectl exec -it -n fluid configdb-0 -- \
+          kubectl exec -i -n fluid configdb-0 -- \
             mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive > $FILE
           aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
           rm $FILE
@@ -77,7 +77,7 @@ jobs:
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
           FILE="metrics-db_all_dbs_backup_$TIMESTAMP.archive"
-          kubectl exec -it -n fluid metricsdb-0 -- \
+          kubectl exec -i -n fluid metricsdb-0 -- \
             mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive > $FILE
           aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
           rm $FILE
@@ -246,7 +246,7 @@ jobs:
             }
           });
           '
-      
+          sleep 60
           # Upload archive into the pod
           kubectl cp "$FILE" configdb-0:/tmp/configdb_restore.archive -n fluid
       
