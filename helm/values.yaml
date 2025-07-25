@@ -526,6 +526,8 @@ trivy:
       - ""
 
 auth-service:
+  replicaCount:
+    orbiterAuth: 1
   authModel: basic
   resourceAlias:
     - name: domain
@@ -537,12 +539,20 @@ auth-service:
     - name: file-storage
       alias: file-storage
   roleNameAlias:
-    - name: admin
-      alias: admin
-    - name: manager
-      alias: manager
-    - name: member
-      alias: member
+    domain:
+      - name: admin
+        alias: admin
+      - name: manager
+        alias: manager
+      - name: member
+        alias: member
+    project:
+      - name: admin
+        alias: admin
+      - name: manager
+        alias: manager
+      - name: member
+        alias: member
   replicaCount:
     orbiterAuth: 1
   keycloak:
@@ -769,7 +779,7 @@ adminServices:
     managementURL: 
       resource: ""
     ## Enabled Services
-    enabledServices: "object-storage,storage-provider,cluster,region,all-user,availability-zone,block-storage,compute,compute-snapshot,flavors,images,network,organisation,project,provider,provider-cluster,default-rule,resource-metrics,security-group,security-group-rule,volume-type,volume-snapshot,flavor-group,admin-access-logs,load-balancer"
+    enabledServices: ""
   adminPlatform:
     image: "fluid_admin_platform"
     resources: 
@@ -804,7 +814,7 @@ userPortal:
       cpu: 100m
       memory: 200Mi
   ## Enabled Services
-  enabledServices: "provider-cluster,object-storage,storage-provider,registry,dbaas-mongo,dbaas-postgresql,cluster,key-pair,load-balancer,compute,compute-snapshot,monitoring,network,project-activity,quota-service,quota-utilization,security-group,volume,volume-snapshot,volume-type,availability-zone"
+  enabledServices: ""
   docsURL: ""
   additionalURLs:
     appStoreURL: ""
