@@ -67,7 +67,7 @@ jobs:
       - name: Backup all MongoDB databases and upload to MinIO (Config-db)
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          FILE="config-db_all_dbs_backup_$TIMESTAMP.archive"
+          FILE="config-db_all_dbs_backup_fluid_$TIMESTAMP.archive"
           kubectl exec -i -n fluid configdb-0 -- \
             mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive > $FILE
           aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
@@ -225,7 +225,7 @@ jobs:
           echo "Restoring Config-db MongoDB backup..."
       
           # Get latest archive file
-          FILE=$(aws --endpoint-url $MINIO_ENDPOINT s3 ls s3://$MINIO_BUCKET/ | grep config-db_all_dbs_backup_ | sort | tail -n1 | awk '{print $4}')
+          FILE=$(aws --endpoint-url $MINIO_ENDPOINT s3 ls s3://$MINIO_BUCKET/ | grep config-db_all_dbs_backup_fluid | sort | tail -n1 | awk '{print $4}')
           echo "Downloading backup file $FILE from MinIO"
           aws --endpoint-url $MINIO_ENDPOINT s3 cp s3://$MINIO_BUCKET/$FILE .
       
