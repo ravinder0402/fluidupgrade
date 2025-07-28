@@ -1,436 +1,436 @@
-name: Upgrading fluid using helm
+# name: Upgrading fluid using helm
 
-on:
-  push:
-    branches:
-      - main
-jobs:
-  deploy:
-    runs-on: self-hosted
+# on:
+#   push:
+#     branches:
+#       - main
+# jobs:
+#   deploy:
+#     runs-on: self-hosted
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
 
-      - name: Set up kubeconfig
-        run: |
-          echo "${{ secrets.KUBECONFIG_RAW }}" > kubeconfig
-          export KUBECONFIG=$PWD/kubeconfig
-          kubectl config get-contexts
+#       - name: Set up kubeconfig
+#         run: |
+#           echo "${{ secrets.KUBECONFIG_RAW }}" > kubeconfig
+#           export KUBECONFIG=$PWD/kubeconfig
+#           kubectl config get-contexts
 
-      - name: Install AWS CLI
-        run: |
-          sudo apt update
-          sudo apt install -y awscli
+#       - name: Install AWS CLI
+#         run: |
+#           sudo apt update
+#           sudo apt install -y awscli
 
-      - name: Configure AWS CLI for MinIO
-        run: |
-          mkdir -p ~/.aws
-          cat <<EOF > ~/.aws/credentials
-          [default]
-          aws_access_key_id = ${{ secrets.MINIO_ACCESS_KEY }}
-          aws_secret_access_key = ${{ secrets.MINIO_SECRET_KEY }}
-          EOF
+#       - name: Configure AWS CLI for MinIO
+#         run: |
+#           mkdir -p ~/.aws
+#           cat <<EOF > ~/.aws/credentials
+#           [default]
+#           aws_access_key_id = ${{ secrets.MINIO_ACCESS_KEY }}
+#           aws_secret_access_key = ${{ secrets.MINIO_SECRET_KEY }}
+#           EOF
 
-          cat <<EOF > ~/.aws/config
-          [default]
-          region = us-east-1
-          output = json
-          EOF
+#           cat <<EOF > ~/.aws/config
+#           [default]
+#           region = us-east-1
+#           output = json
+#           EOF
 
-      - name: Backup CCS PostgreSQL and upload to MinIO
-        run: |
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          FILE="fluid_ccs_pg_backup_$TIMESTAMP.sql"
-          kubectl exec -i -n fluid ccs-postgresql-cluster-0 -- pg_dumpall -U postgres > $FILE
-          aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
-          rm $FILE
+#       - name: Backup CCS PostgreSQL and upload to MinIO
+#         run: |
+#           TIMESTAMP=$(date +%Y%m%d%H%M%S)
+#           FILE="fluid_ccs_pg_backup_$TIMESTAMP.sql"
+#           kubectl exec -i -n fluid ccs-postgresql-cluster-0 -- pg_dumpall -U postgres > $FILE
+#           aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
+#           rm $FILE
  
 
           
-      - name: Backup Keycloak PostgreSQL  and upload to MinIO
-        run: |
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          FILE="fluid_keycloak_pg_backup_$TIMESTAMP.sql"
-          kubectl exec -i -n fluid keycloak-postgresql-cluster-0 -- \
-            pg_dumpall -U postgres > $FILE
-          aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
-          rm $FILE
+#       - name: Backup Keycloak PostgreSQL  and upload to MinIO
+#         run: |
+#           TIMESTAMP=$(date +%Y%m%d%H%M%S)
+#           FILE="fluid_keycloak_pg_backup_$TIMESTAMP.sql"
+#           kubectl exec -i -n fluid keycloak-postgresql-cluster-0 -- \
+#             pg_dumpall -U postgres > $FILE
+#           aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
+#           rm $FILE
           
-      - name: Backup Keycloak PostgreSQL cluster and upload to MinIO(corobots)
-        run: |
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          FILE="corobots_pg_databases_backup_$TIMESTAMP.sql"
-          kubectl exec -n corobots keycloak-pg-0 -- bash -c "pg_dumpall -U root" > $FILE
-          aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
-          rm $FILE
+#       - name: Backup Keycloak PostgreSQL cluster and upload to MinIO(corobots)
+#         run: |
+#           TIMESTAMP=$(date +%Y%m%d%H%M%S)
+#           FILE="corobots_pg_databases_backup_$TIMESTAMP.sql"
+#           kubectl exec -n corobots keycloak-pg-0 -- bash -c "pg_dumpall -U root" > $FILE
+#           aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
+#           rm $FILE
           
-      - name: Backup all MongoDB databases and upload to MinIO (Config-db)
-        run: |
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          FILE="fluid_config-db_all_dbs_backup_$TIMESTAMP.archive"
-          kubectl exec -i -n fluid configdb-0 -- \
-            mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive > $FILE
-          aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
-          rm $FILE
+#       - name: Backup all MongoDB databases and upload to MinIO (Config-db)
+#         run: |
+#           TIMESTAMP=$(date +%Y%m%d%H%M%S)
+#           FILE="fluid_config-db_all_dbs_backup_$TIMESTAMP.archive"
+#           kubectl exec -i -n fluid configdb-0 -- \
+#             mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive > $FILE
+#           aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
+#           rm $FILE
           
-      - name: Backup all MongoDB databases and upload to MinIO (Metrics-db)
-        run: |
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          FILE="fluid_metrics-db_all_dbs_backup_$TIMESTAMP.archive"
-          kubectl exec -i -n fluid metricsdb-0 -- \
-            mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive > $FILE
-          aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
-          rm $FILE
+#       - name: Backup all MongoDB databases and upload to MinIO (Metrics-db)
+#         run: |
+#           TIMESTAMP=$(date +%Y%m%d%H%M%S)
+#           FILE="fluid_metrics-db_all_dbs_backup_$TIMESTAMP.archive"
+#           kubectl exec -i -n fluid metricsdb-0 -- \
+#             mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive > $FILE
+#           aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
+#           rm $FILE
 
-      - name: Backup all MongoDB databases and upload to MinIO (Config-db-Corobots)
-        run: |
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          FILE="corobots_config-db_all_dbs_backup_$TIMESTAMP.archive"
-          kubectl exec -it -n corobots configdb-0 -- \
-            mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive > $FILE
-          aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
-          rm $FILE
+#       - name: Backup all MongoDB databases and upload to MinIO (Config-db-Corobots)
+#         run: |
+#           TIMESTAMP=$(date +%Y%m%d%H%M%S)
+#           FILE="corobots_config-db_all_dbs_backup_$TIMESTAMP.archive"
+#           kubectl exec -it -n corobots configdb-0 -- \
+#             mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive > $FILE
+#           aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
+#           rm $FILE
           
-      - name: Backup all MongoDB databases and upload to MinIO (Metrics-db-Corobots)
-        run: |
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          FILE="corobots_metrics-db_all_dbs_backup_$TIMESTAMP.archive"
-          kubectl exec -it -n corobots metricsdb-0 -- \
-            mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive > $FILE
-          aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
-          rm $FILE
+#       - name: Backup all MongoDB databases and upload to MinIO (Metrics-db-Corobots)
+#         run: |
+#           TIMESTAMP=$(date +%Y%m%d%H%M%S)
+#           FILE="corobots_metrics-db_all_dbs_backup_$TIMESTAMP.archive"
+#           kubectl exec -it -n corobots metricsdb-0 -- \
+#             mongodump --username sigma --password "${{ secrets.MONGO_PASSWORD }}" --authenticationDatabase admin --archive > $FILE
+#           aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
+#           rm $FILE
 
-      - name: Backup values.yaml and upload to MinIO
-        working-directory: ./helm
-        run: |
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          FILE="values.yaml.$TIMESTAMP"
-          cp values.yaml $FILE
-          aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
-          rm $FILE
+#       - name: Backup values.yaml and upload to MinIO
+#         working-directory: ./helm
+#         run: |
+#           TIMESTAMP=$(date +%Y%m%d%H%M%S)
+#           FILE="values.yaml.$TIMESTAMP"
+#           cp values.yaml $FILE
+#           aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
+#           rm $FILE
 
-      - name: Helm registry login
-        run: |
-          helm registry login docker.io -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+#       - name: Helm registry login
+#         run: |
+#           helm registry login docker.io -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
-      # - name: Helm dependency build
-      #   working-directory: ./helm
-      #   run: helm dependency build
+#       # - name: Helm dependency build
+#       #   working-directory: ./helm
+#       #   run: helm dependency build
 
-      # - name: Helm upgrade/install fluid chart
-      #   working-directory: ./helm
-      #   run: |
-      #     helm upgrade --install fluid . -f values.yaml -n fluid --create-namespace
-      #     helm list -A
+#       # - name: Helm upgrade/install fluid chart
+#       #   working-directory: ./helm
+#       #   run: |
+#       #     helm upgrade --install fluid . -f values.yaml -n fluid --create-namespace
+#       #     helm list -A
           
-      - name: Restoring CCS postgresql backup
-        env:
-          MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
-          MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
-        run: |
-          echo "MINIO_ENDPOINT=$MINIO_ENDPOINT"
-          echo "MINIO_BUCKET=$MINIO_BUCKET"
-          echo "Restoring CCS PostgreSQL backup..."
+#       - name: Restoring CCS postgresql backup
+#         env:
+#           MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+#           MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
+#           AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
+#           AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+#         run: |
+#           echo "MINIO_ENDPOINT=$MINIO_ENDPOINT"
+#           echo "MINIO_BUCKET=$MINIO_BUCKET"
+#           echo "Restoring CCS PostgreSQL backup..."
 
-          # Find the latest backup file in MinIO
-          FILE=$(aws --endpoint-url "$MINIO_ENDPOINT" s3 ls "s3://$MINIO_BUCKET/" | grep fluid_ccs_pg_backup_ | sort | tail -n1 | awk '{print $4}')
-          echo "Downloading backup file $FILE from MinIO"
-          aws --endpoint-url "$MINIO_ENDPOINT" s3 cp "s3://$MINIO_BUCKET/$FILE" .
+#           # Find the latest backup file in MinIO
+#           FILE=$(aws --endpoint-url "$MINIO_ENDPOINT" s3 ls "s3://$MINIO_BUCKET/" | grep fluid_ccs_pg_backup_ | sort | tail -n1 | awk '{print $4}')
+#           echo "Downloading backup file $FILE from MinIO"
+#           aws --endpoint-url "$MINIO_ENDPOINT" s3 cp "s3://$MINIO_BUCKET/$FILE" .
 
-          # Terminate connections and drop databases inside the pod
-          kubectl exec -i ccs-postgresql-cluster-0 -n fluid -- bash -c "
-          psql -U postgres -d postgres <<EOF
-          SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'audit-db';
-          SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'cloud';
-          SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'ccs_postgresql_cluster';
-          \\! psql -U postgres -d postgres -c \"DROP DATABASE IF EXISTS \\\"audit-db\\\";\"
-          \\! psql -U postgres -d postgres -c \"DROP DATABASE IF EXISTS cloud;\"
-          \\! psql -U postgres -d postgres -c \"DROP DATABASE IF EXISTS ccs_postgresql_cluster;\"
-          EOF
-          "
+#           # Terminate connections and drop databases inside the pod
+#           kubectl exec -i ccs-postgresql-cluster-0 -n fluid -- bash -c "
+#           psql -U postgres -d postgres <<EOF
+#           SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'audit-db';
+#           SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'cloud';
+#           SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'ccs_postgresql_cluster';
+#           \\! psql -U postgres -d postgres -c \"DROP DATABASE IF EXISTS \\\"audit-db\\\";\"
+#           \\! psql -U postgres -d postgres -c \"DROP DATABASE IF EXISTS cloud;\"
+#           \\! psql -U postgres -d postgres -c \"DROP DATABASE IF EXISTS ccs_postgresql_cluster;\"
+#           EOF
+#           "
 
-          # Restore from the downloaded backup file
-          kubectl exec -it ccs-postgresql-cluster-0 -n fluid -- psql -U postgres < "$FILE"
-          rm "$FILE"
-          echo "CCS PostgreSQL restore complete."
+#           # Restore from the downloaded backup file
+#           kubectl exec -it ccs-postgresql-cluster-0 -n fluid -- psql -U postgres < "$FILE"
+#           rm "$FILE"
+#           echo "CCS PostgreSQL restore complete."
  
 
 
 
           
-      # - name: Restore Keycloak PostgreSQL backup 
-      #   env:
-      #     MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
-      #     MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
-      #     AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
-      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
-      #   run: |
-      #     echo "Restoring Keycloak PostgreSQL backup..."
+#       # - name: Restore Keycloak PostgreSQL backup 
+#       #   env:
+#       #     MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+#       #     MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
+#       #     AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
+#       #     AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+#       #   run: |
+#       #     echo "Restoring Keycloak PostgreSQL backup..."
       
-      #     # Find latest Keycloak backup file in MinIO (adjust prefix if different)
-      #     FILE=$(aws --endpoint-url $MINIO_ENDPOINT s3 ls s3://$MINIO_BUCKET/ | grep fluid_keycloak_pg_backup_ | sort | tail -n1 | awk '{print $4}')
-      #     echo "Downloading backup file $FILE from MinIO"
-      #     aws --endpoint-url $MINIO_ENDPOINT s3 cp s3://$MINIO_BUCKET/$FILE .
+#       #     # Find latest Keycloak backup file in MinIO (adjust prefix if different)
+#       #     FILE=$(aws --endpoint-url $MINIO_ENDPOINT s3 ls s3://$MINIO_BUCKET/ | grep fluid_keycloak_pg_backup_ | sort | tail -n1 | awk '{print $4}')
+#       #     echo "Downloading backup file $FILE from MinIO"
+#       #     aws --endpoint-url $MINIO_ENDPOINT s3 cp s3://$MINIO_BUCKET/$FILE .
       
-      #     # Terminate connections and drop databases inside the pod
-      #     kubectl exec -i keycloak-postgresql-cluster-0 -n fluid -- bash -c "psql -U postgres -d postgres <<EOF
-      #     SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='keycloak';
-      #     SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='keycloak_postgresql_cluster';
-      #     \\! psql -U postgres -d postgres -c \"DROP DATABASE IF EXISTS keycloak;\"
-      #     \\! psql -U postgres -d postgres -c \"DROP DATABASE IF EXISTS keycloak_postgresql_cluster;\"
-      #     EOF
-      #     "
+#       #     # Terminate connections and drop databases inside the pod
+#       #     kubectl exec -i keycloak-postgresql-cluster-0 -n fluid -- bash -c "psql -U postgres -d postgres <<EOF
+#       #     SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='keycloak';
+#       #     SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='keycloak_postgresql_cluster';
+#       #     \\! psql -U postgres -d postgres -c \"DROP DATABASE IF EXISTS keycloak;\"
+#       #     \\! psql -U postgres -d postgres -c \"DROP DATABASE IF EXISTS keycloak_postgresql_cluster;\"
+#       #     EOF
+#       #     "
       
-      #     # Restore from backup file
-      #     kubectl exec -it keycloak-postgresql-cluster-0 -n fluid -- psql -U postgres < "$FILE"
-      #     rm "$FILE"
-      #     echo "Keycloak PostgreSQL restore complete."
+#       #     # Restore from backup file
+#       #     kubectl exec -it keycloak-postgresql-cluster-0 -n fluid -- psql -U postgres < "$FILE"
+#       #     rm "$FILE"
+#       #     echo "Keycloak PostgreSQL restore complete."
           
-      # - name: Restore Corobots PostgreSQL backup if helm upgrade failed
-      #   env:
-      #     MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
-      #     MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
-      #     AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
-      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
-      #   run: |
-      #     echo "Restoring Corobots PostgreSQL backup..."
+#       # - name: Restore Corobots PostgreSQL backup if helm upgrade failed
+#       #   env:
+#       #     MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+#       #     MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
+#       #     AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
+#       #     AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+#       #   run: |
+#       #     echo "Restoring Corobots PostgreSQL backup..."
       
-      #     # Find latest Corobots backup file in MinIO
-      #     FILE=$(aws --endpoint-url $MINIO_ENDPOINT s3 ls s3://$MINIO_BUCKET/ | grep corobots_pg_databases_backup_ | sort | tail -n1 | awk '{print $4}')
-      #     echo "Downloading backup file $FILE from MinIO"
-      #     aws --endpoint-url $MINIO_ENDPOINT s3 cp s3://$MINIO_BUCKET/$FILE .
+#       #     # Find latest Corobots backup file in MinIO
+#       #     FILE=$(aws --endpoint-url $MINIO_ENDPOINT s3 ls s3://$MINIO_BUCKET/ | grep corobots_pg_databases_backup_ | sort | tail -n1 | awk '{print $4}')
+#       #     echo "Downloading backup file $FILE from MinIO"
+#       #     aws --endpoint-url $MINIO_ENDPOINT s3 cp s3://$MINIO_BUCKET/$FILE .
       
-      #     # Terminate connections and drop database
-      #     kubectl exec -i keycloak-pg-0 -n corobots -- bash -c '
-      #     psql -U root -d template1 -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '\''keycloak'\'';"
-      #     psql -U root -d template1 -c "DROP DATABASE IF EXISTS keycloak;"
-      #     '
+#       #     # Terminate connections and drop database
+#       #     kubectl exec -i keycloak-pg-0 -n corobots -- bash -c '
+#       #     psql -U root -d template1 -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '\''keycloak'\'';"
+#       #     psql -U root -d template1 -c "DROP DATABASE IF EXISTS keycloak;"
+#       #     '
       
-      #     # Restore from backup file
-      #     kubectl exec -i keycloak-pg-0 -n corobots -- psql -U root -d postgres < "$FILE"
+#       #     # Restore from backup file
+#       #     kubectl exec -i keycloak-pg-0 -n corobots -- psql -U root -d postgres < "$FILE"
       
-      #     rm "$FILE"
+#       #     rm "$FILE"
       
-      #     echo "Corobots PostgreSQL restore complete."
+#       #     echo "Corobots PostgreSQL restore complete."
 
 
-      # - name: Restore Config-db MongoDB backup if helm upgrade failed
-      #   env:
-      #     MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
-      #     MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
-      #     AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
-      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
-      #     MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
-      #   run: |
-      #     echo "Restoring Config-db MongoDB backup..."
+#       # - name: Restore Config-db MongoDB backup if helm upgrade failed
+#       #   env:
+#       #     MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+#       #     MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
+#       #     AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
+#       #     AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+#       #     MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+#       #   run: |
+#       #     echo "Restoring Config-db MongoDB backup..."
       
-      #     # Get latest archive file
-      #     FILE=$(aws --endpoint-url $MINIO_ENDPOINT s3 ls s3://$MINIO_BUCKET/ | grep fluid_config-db_all_dbs_backup_ | sort | tail -n1 | awk '{print $4}')
-      #     echo "Downloading backup file $FILE from MinIO"
-      #     aws --endpoint-url $MINIO_ENDPOINT s3 cp s3://$MINIO_BUCKET/$FILE .
+#       #     # Get latest archive file
+#       #     FILE=$(aws --endpoint-url $MINIO_ENDPOINT s3 ls s3://$MINIO_BUCKET/ | grep fluid_config-db_all_dbs_backup_ | sort | tail -n1 | awk '{print $4}')
+#       #     echo "Downloading backup file $FILE from MinIO"
+#       #     aws --endpoint-url $MINIO_ENDPOINT s3 cp s3://$MINIO_BUCKET/$FILE .
       
-      #     # Drop all non-system databases and collections
-      #     kubectl exec -i configdb-0 -n fluid -- mongosh -u sigma -p "$MONGO_PASSWORD" --authenticationDatabase admin --eval '
-      #     var dbs = db.adminCommand("listDatabases").databases;
-      #     dbs.forEach(function(database) {
-      #       var dbName = database.name;
-      #       if (dbName !== "admin" && dbName !== "local" && dbName !== "config") {
-      #         var curDB = db.getSiblingDB(dbName);
-      #         print("Dropping collections in database:", dbName);
-      #         curDB.getCollectionNames().forEach(function(c) {
-      #           print("Dropping collection:", c);
-      #           curDB[c].drop();
-      #         });
-      #         print("Dropping database:", dbName);
-      #         curDB.dropDatabase();
-      #       }
-      #     });
-      #     '
-      #     sleep 60
-      #     # Upload archive into the pod
-      #     kubectl cp "$FILE" configdb-0:/tmp/configdb_restore.archive -n fluid
+#       #     # Drop all non-system databases and collections
+#       #     kubectl exec -i configdb-0 -n fluid -- mongosh -u sigma -p "$MONGO_PASSWORD" --authenticationDatabase admin --eval '
+#       #     var dbs = db.adminCommand("listDatabases").databases;
+#       #     dbs.forEach(function(database) {
+#       #       var dbName = database.name;
+#       #       if (dbName !== "admin" && dbName !== "local" && dbName !== "config") {
+#       #         var curDB = db.getSiblingDB(dbName);
+#       #         print("Dropping collections in database:", dbName);
+#       #         curDB.getCollectionNames().forEach(function(c) {
+#       #           print("Dropping collection:", c);
+#       #           curDB[c].drop();
+#       #         });
+#       #         print("Dropping database:", dbName);
+#       #         curDB.dropDatabase();
+#       #       }
+#       #     });
+#       #     '
+#       #     sleep 60
+#       #     # Upload archive into the pod
+#       #     kubectl cp "$FILE" configdb-0:/tmp/configdb_restore.archive -n fluid
       
-      #     # Run mongorestore with --drop and exclude system users
-      #     kubectl exec -n fluid configdb-0 -- mongorestore \
-      #       --username sigma \
-      #       --password "$MONGO_PASSWORD" \
-      #       --authenticationDatabase admin \
-      #       --archive=/tmp/configdb_restore.archive \
-      #       --drop \
-      #       --nsExclude=admin.system.users
+#       #     # Run mongorestore with --drop and exclude system users
+#       #     kubectl exec -n fluid configdb-0 -- mongorestore \
+#       #       --username sigma \
+#       #       --password "$MONGO_PASSWORD" \
+#       #       --authenticationDatabase admin \
+#       #       --archive=/tmp/configdb_restore.archive \
+#       #       --drop \
+#       #       --nsExclude=admin.system.users
       
-      #     rm "$FILE"
-      #     echo " Config-db MongoDB restore complete."
-
-          
-      # - name: Restore Config-db MongoDB backup if helm upgrade failed (Corobots)
-      #   env:
-      #     MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
-      #     MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
-      #     AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
-      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
-      #     MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
-      #   run: |
-      #     echo "Restoring Config-db MongoDB backup..."
-      
-      #     # Fetch the latest backup file from MinIO
-      #     FILE=$(aws --endpoint-url $MINIO_ENDPOINT s3 ls s3://$MINIO_BUCKET/ | grep corobots_config-db_all_dbs_backup_ | sort | tail -n1 | awk '{print $4}')
-      #     echo "Downloading backup file: $FILE"
-      #     aws --endpoint-url $MINIO_ENDPOINT s3 cp s3://$MINIO_BUCKET/$FILE .
-      
-      #     # Drop all non-system databases and collections
-      #     kubectl exec -i configdb-0 -n corobots -- mongosh -u sigma -p "$MONGO_PASSWORD" --authenticationDatabase admin --eval '
-      #     var dbs = db.adminCommand("listDatabases").databases;
-      #     dbs.forEach(function(database) {
-      #       var dbName = database.name;
-      #       if (["admin", "local", "config"].indexOf(dbName) === -1) {
-      #         var curDB = db.getSiblingDB(dbName);
-      #         print("Dropping collections in database:", dbName);
-      #         curDB.getCollectionNames().forEach(function(c) {
-      #           print("Dropping collection:", c);
-      #           curDB[c].drop();
-      #         });
-      #         print("Dropping database:", dbName);
-      #         curDB.dropDatabase();
-      #       }
-      #     });
-      #     '
-      
-      #     # Wait a bit to ensure the drops complete
-      #     sleep 30
-      
-      #     # Copy archive into the pod
-      #     kubectl cp "$FILE" configdb-0:/tmp/configdb_restore.archive -n corobots
-      
-      #     # Run restore (set --drop to force overwrite, disable index restore for safety)
-      #     kubectl exec -n corobots configdb-0 -- mongorestore \
-      #       --username sigma \
-      #       --password "$MONGO_PASSWORD" \
-      #       --authenticationDatabase admin \
-      #       --archive=/tmp/configdb_restore.archive \
-      #       --drop \
-      #       --nsExclude=admin.system.users
-      #     rm "$FILE"
-      #     echo "Config-db MongoDB restore complete."
-
-
-
-      # - name: Restore Metrics-db MongoDB backup if helm upgrade failed
-      #   env:
-      #     MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
-      #     MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
-      #     AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
-      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
-      #     MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
-      #   run: |
-      #     echo "Restoring Metrics-db MongoDB backup..."
-
-      #     # Get latest backup file with prefix
-      #     FILE=$(aws --endpoint-url "$MINIO_ENDPOINT" s3 ls s3://"$MINIO_BUCKET"/ | grep metrics-db_all_dbs_backup_ | sort | tail -n1 | awk '{print $4}')
-      #     echo "Downloading backup file $FILE from MinIO"
-      #     aws --endpoint-url "$MINIO_ENDPOINT" s3 cp s3://"$MINIO_BUCKET"/"$FILE" .
-
-      #     # Drop all non-system databases and collections
-      #     kubectl exec metricsdb-0 -n fluid -- mongosh -u sigma -p "$MONGO_PASSWORD" --authenticationDatabase admin --eval '
-      #     var dbs = db.adminCommand("listDatabases").databases;
-      #     dbs.forEach(function(database) {
-      #       var dbName = database.name;
-      #       if (dbName !== "admin" && dbName !== "local" && dbName !== "config") {
-      #         var curDB = db.getSiblingDB(dbName);
-      #         print("Dropping collections in database:", dbName);
-      #         curDB.getCollectionNames().forEach(function(c) {
-      #           print("Dropping collection:", c);
-      #           curDB[c].drop();
-      #         });
-      #         print("Dropping database:", dbName);
-      #         curDB.dropDatabase();
-      #       }
-      #     });
-      #     '
-
-      #     # Upload archive file into pod
-      #     kubectl cp "$FILE" metricsdb-0:/tmp/metricsdb_restore.archive -n fluid
-
-      #     # Restore from archive, excluding system/auth collections
-      #     kubectl exec -n fluid metricsdb-0 -- mongorestore \
-      #       --username sigma \
-      #       --password "$MONGO_PASSWORD" \
-      #       --authenticationDatabase admin \
-      #       --archive=/tmp/metricsdb_restore.archive \
-      #       --drop \
-      #       --noIndexRestore \
-      #       --numParallelCollections=1 \
-      #       --nsExclude=admin.system.users \
-      #       --nsExclude=admin.system.roles \
-      #       --nsExclude=config.system.sessions \
-      #       --nsExclude=config.tenantMigration* \
-      #       --nsExclude=system.* \
-      #       --nsExclude=*.*system.users \
-      #       --nsExclude=*.*system.roles \
-      #       --nsExclude=*.*users \
-      #       --nsExclude=*.*roles
-
-      #     # Clean up local backup file
-      #     rm "$FILE"
-      #     echo "Metrics-db MongoDB restore complete."
+#       #     rm "$FILE"
+#       #     echo " Config-db MongoDB restore complete."
 
           
-      # - name: Restore Metrics-db MongoDB backup if helm upgrade failed (Corobots)
-      #   env:
-      #     MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
-      #     MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
-      #     AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
-      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
-      #     MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
-      #   run: |
-      #     echo "Restoring Metrics-db MongoDB backup..."
+#       # - name: Restore Config-db MongoDB backup if helm upgrade failed (Corobots)
+#       #   env:
+#       #     MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+#       #     MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
+#       #     AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
+#       #     AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+#       #     MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+#       #   run: |
+#       #     echo "Restoring Config-db MongoDB backup..."
       
-      #     # Get latest archive file matching corobots_metrics-db prefix
-      #     FILE=$(aws --endpoint-url $MINIO_ENDPOINT s3 ls s3://$MINIO_BUCKET/ | grep corobots_metrics-db_all_dbs_backup_ | sort | tail -n1 | awk '{print $4}')
-      #     echo "Downloading backup file $FILE from MinIO"
-      #     aws --endpoint-url $MINIO_ENDPOINT s3 cp s3://$MINIO_BUCKET/$FILE .
+#       #     # Fetch the latest backup file from MinIO
+#       #     FILE=$(aws --endpoint-url $MINIO_ENDPOINT s3 ls s3://$MINIO_BUCKET/ | grep corobots_config-db_all_dbs_backup_ | sort | tail -n1 | awk '{print $4}')
+#       #     echo "Downloading backup file: $FILE"
+#       #     aws --endpoint-url $MINIO_ENDPOINT s3 cp s3://$MINIO_BUCKET/$FILE .
       
-      #     # Drop all non-system databases and collections in corobots namespace pod metricsdb-0
-      #     kubectl exec -i metricsdb-0 -n corobots -- mongosh -u sigma -p "$MONGO_PASSWORD" --authenticationDatabase admin --eval '
-      #     var dbs = db.adminCommand("listDatabases").databases;
-      #     dbs.forEach(function(database) {
-      #       var dbName = database.name;
-      #       if (dbName !== "admin" && dbName !== "local" && dbName !== "config") {
-      #         var curDB = db.getSiblingDB(dbName);
-      #         print("Dropping collections in database:", dbName);
-      #         curDB.getCollectionNames().forEach(function(c) {
-      #           print("Dropping collection:", c);
-      #           curDB[c].drop();
-      #         });
-      #         print("Dropping database:", dbName);
-      #         curDB.dropDatabase();
-      #       }
-      #     });
-      #     '
+#       #     # Drop all non-system databases and collections
+#       #     kubectl exec -i configdb-0 -n corobots -- mongosh -u sigma -p "$MONGO_PASSWORD" --authenticationDatabase admin --eval '
+#       #     var dbs = db.adminCommand("listDatabases").databases;
+#       #     dbs.forEach(function(database) {
+#       #       var dbName = database.name;
+#       #       if (["admin", "local", "config"].indexOf(dbName) === -1) {
+#       #         var curDB = db.getSiblingDB(dbName);
+#       #         print("Dropping collections in database:", dbName);
+#       #         curDB.getCollectionNames().forEach(function(c) {
+#       #           print("Dropping collection:", c);
+#       #           curDB[c].drop();
+#       #         });
+#       #         print("Dropping database:", dbName);
+#       #         curDB.dropDatabase();
+#       #       }
+#       #     });
+#       #     '
       
-      #     # Upload archive file into pod
-      #     kubectl cp "$FILE" metricsdb-0:/tmp/metricsdb_restore.archive -n corobots
+#       #     # Wait a bit to ensure the drops complete
+#       #     sleep 30
       
-      #     # Restore with safer options and exclude auth/internal system collections
-      #     kubectl exec -n corobots metricsdb-0 -- mongorestore \
-      #       --username sigma \
-      #       --password "$MONGO_PASSWORD" \
-      #       --authenticationDatabase admin \
-      #       --archive=/tmp/metricsdb_restore.archive \
-      #       --drop \
-      #       --noIndexRestore \
-      #       --numParallelCollections=1 \
-      #       --nsExclude=admin.system.users \
-      #       --nsExclude=admin.system.roles \
-      #       --nsExclude=config.system.sessions \
-      #       --nsExclude=config.tenantMigration* \
-      #       --nsExclude=system.* \
-      #       --nsExclude=*.*system.users \
-      #       --nsExclude=*.*system.roles
+#       #     # Copy archive into the pod
+#       #     kubectl cp "$FILE" configdb-0:/tmp/configdb_restore.archive -n corobots
       
-      #     # Cleanup local backup file
-      #     rm "$FILE"
-      #     echo " Metrics-db MongoDB restore complete."
+#       #     # Run restore (set --drop to force overwrite, disable index restore for safety)
+#       #     kubectl exec -n corobots configdb-0 -- mongorestore \
+#       #       --username sigma \
+#       #       --password "$MONGO_PASSWORD" \
+#       #       --authenticationDatabase admin \
+#       #       --archive=/tmp/configdb_restore.archive \
+#       #       --drop \
+#       #       --nsExclude=admin.system.users
+#       #     rm "$FILE"
+#       #     echo "Config-db MongoDB restore complete."
+
+
+
+#       # - name: Restore Metrics-db MongoDB backup if helm upgrade failed
+#       #   env:
+#       #     MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+#       #     MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
+#       #     AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
+#       #     AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+#       #     MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+#       #   run: |
+#       #     echo "Restoring Metrics-db MongoDB backup..."
+
+#       #     # Get latest backup file with prefix
+#       #     FILE=$(aws --endpoint-url "$MINIO_ENDPOINT" s3 ls s3://"$MINIO_BUCKET"/ | grep metrics-db_all_dbs_backup_ | sort | tail -n1 | awk '{print $4}')
+#       #     echo "Downloading backup file $FILE from MinIO"
+#       #     aws --endpoint-url "$MINIO_ENDPOINT" s3 cp s3://"$MINIO_BUCKET"/"$FILE" .
+
+#       #     # Drop all non-system databases and collections
+#       #     kubectl exec metricsdb-0 -n fluid -- mongosh -u sigma -p "$MONGO_PASSWORD" --authenticationDatabase admin --eval '
+#       #     var dbs = db.adminCommand("listDatabases").databases;
+#       #     dbs.forEach(function(database) {
+#       #       var dbName = database.name;
+#       #       if (dbName !== "admin" && dbName !== "local" && dbName !== "config") {
+#       #         var curDB = db.getSiblingDB(dbName);
+#       #         print("Dropping collections in database:", dbName);
+#       #         curDB.getCollectionNames().forEach(function(c) {
+#       #           print("Dropping collection:", c);
+#       #           curDB[c].drop();
+#       #         });
+#       #         print("Dropping database:", dbName);
+#       #         curDB.dropDatabase();
+#       #       }
+#       #     });
+#       #     '
+
+#       #     # Upload archive file into pod
+#       #     kubectl cp "$FILE" metricsdb-0:/tmp/metricsdb_restore.archive -n fluid
+
+#       #     # Restore from archive, excluding system/auth collections
+#       #     kubectl exec -n fluid metricsdb-0 -- mongorestore \
+#       #       --username sigma \
+#       #       --password "$MONGO_PASSWORD" \
+#       #       --authenticationDatabase admin \
+#       #       --archive=/tmp/metricsdb_restore.archive \
+#       #       --drop \
+#       #       --noIndexRestore \
+#       #       --numParallelCollections=1 \
+#       #       --nsExclude=admin.system.users \
+#       #       --nsExclude=admin.system.roles \
+#       #       --nsExclude=config.system.sessions \
+#       #       --nsExclude=config.tenantMigration* \
+#       #       --nsExclude=system.* \
+#       #       --nsExclude=*.*system.users \
+#       #       --nsExclude=*.*system.roles \
+#       #       --nsExclude=*.*users \
+#       #       --nsExclude=*.*roles
+
+#       #     # Clean up local backup file
+#       #     rm "$FILE"
+#       #     echo "Metrics-db MongoDB restore complete."
+
+          
+#       # - name: Restore Metrics-db MongoDB backup if helm upgrade failed (Corobots)
+#       #   env:
+#       #     MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+#       #     MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
+#       #     AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
+#       #     AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+#       #     MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+#       #   run: |
+#       #     echo "Restoring Metrics-db MongoDB backup..."
+      
+#       #     # Get latest archive file matching corobots_metrics-db prefix
+#       #     FILE=$(aws --endpoint-url $MINIO_ENDPOINT s3 ls s3://$MINIO_BUCKET/ | grep corobots_metrics-db_all_dbs_backup_ | sort | tail -n1 | awk '{print $4}')
+#       #     echo "Downloading backup file $FILE from MinIO"
+#       #     aws --endpoint-url $MINIO_ENDPOINT s3 cp s3://$MINIO_BUCKET/$FILE .
+      
+#       #     # Drop all non-system databases and collections in corobots namespace pod metricsdb-0
+#       #     kubectl exec -i metricsdb-0 -n corobots -- mongosh -u sigma -p "$MONGO_PASSWORD" --authenticationDatabase admin --eval '
+#       #     var dbs = db.adminCommand("listDatabases").databases;
+#       #     dbs.forEach(function(database) {
+#       #       var dbName = database.name;
+#       #       if (dbName !== "admin" && dbName !== "local" && dbName !== "config") {
+#       #         var curDB = db.getSiblingDB(dbName);
+#       #         print("Dropping collections in database:", dbName);
+#       #         curDB.getCollectionNames().forEach(function(c) {
+#       #           print("Dropping collection:", c);
+#       #           curDB[c].drop();
+#       #         });
+#       #         print("Dropping database:", dbName);
+#       #         curDB.dropDatabase();
+#       #       }
+#       #     });
+#       #     '
+      
+#       #     # Upload archive file into pod
+#       #     kubectl cp "$FILE" metricsdb-0:/tmp/metricsdb_restore.archive -n corobots
+      
+#       #     # Restore with safer options and exclude auth/internal system collections
+#       #     kubectl exec -n corobots metricsdb-0 -- mongorestore \
+#       #       --username sigma \
+#       #       --password "$MONGO_PASSWORD" \
+#       #       --authenticationDatabase admin \
+#       #       --archive=/tmp/metricsdb_restore.archive \
+#       #       --drop \
+#       #       --noIndexRestore \
+#       #       --numParallelCollections=1 \
+#       #       --nsExclude=admin.system.users \
+#       #       --nsExclude=admin.system.roles \
+#       #       --nsExclude=config.system.sessions \
+#       #       --nsExclude=config.tenantMigration* \
+#       #       --nsExclude=system.* \
+#       #       --nsExclude=*.*system.users \
+#       #       --nsExclude=*.*system.roles
+      
+#       #     # Cleanup local backup file
+#       #     rm "$FILE"
+#       #     echo " Metrics-db MongoDB restore complete."
