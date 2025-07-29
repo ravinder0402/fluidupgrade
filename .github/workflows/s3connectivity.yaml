@@ -1,48 +1,73 @@
-# name: Test MinIO Connectivity
+name: Backup PostgreSQL to MinIO
 
-# on:
-#   push:
-#     branches:
-#       - main
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
 
-# jobs:
-#   test-minio:
-#     runs-on: self-hosted
+jobs:
+  postgres-backup:
+    runs-on: self-hosted
 
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-#       - name: Install AWS CLI
-#         run: |
-#           sudo apt update
-#           sudo apt install -y awscli
+      - name: Install AWS CLI
+        run: |
+          sudo apt update
+          sudo apt install -y awscli
 
-#       - name: Configure AWS CLI with hardcoded MinIO credentials
-#         run: |
-#           mkdir -p ~/.aws
+      - name: Configure AWS CLI using GitHub Secrets
+        run: |
+          mkdir -p ~/.aws
 
-#           cat <<EOF > ~/.aws/credentials
-#           [default]
-#           aws_access_key_id = minioadmin
-#           aws_secret_access_key = minioadmin123
-#           EOF
+          cat <<EOF > ~/.aws/credentials
+          [default]
+          aws_access_key_id = ${{ secrets.MINIO_ACCESS_KEY }}
+          aws_secret_access_key = ${{ secrets.MINIO_SECRET_KEY }}
+          EOF
 
-#           cat <<EOF > ~/.aws/config
-#           [default]
-#           region = us-east-1
-#           output = json
-#           EOF
+          cat <<EOF > ~/.aws/config
+          [default]
+          region = us-east-1
+          output = json
+          EOF
 
-#       - name: List Buckets (MinIO)
-#         run: |
-#           aws --endpoint-url http://172.16.109.86:9000 s3 ls
+      - name: Set up kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_RAW }}" | base64 -d > ~/.kube/config
 
-#       - name: Upload test file to MinIO
-#         run: |
-#           echo "This is a test file from GitHub Actions" > testfile.txt
-#           aws --endpoint-url http://172.16.109.86:9000 s3 cp testfile.txt s3://minio-bucket/testfile.txt
+      - name: Backup PostgreSQL and upload to MinIO
+        env:
+          KUBECONFIG: ~/.kube/config
+        run: |
+          set -euo pipefail
 
-#       - name: Confirm upload by listing bucket contents
-#         run: |
-#           aws --endpoint-url http://172.16.109.86:9000 s3 ls s3://minio-bucket/
+          TIMESTAMP=$(date +"%Y-%m-%d-%H-%M-%S")
+          BACKUP_DIR="ccp-$TIMESTAMP"
+          mkdir "$BACKUP_DIR"
+
+          # Get PostgreSQL pod dynamically (adjust label if needed)
+          PG_POD=$(kubectl get pod -n fluid -l application=spilo -o jsonpath="{.items[0].metadata.name}")
+
+          # Get list of databases (excluding system DBs)
+          DB_LIST=$(kubectl exec -i -n fluid $PG_POD -- \
+            psql -U postgres -tAc "SELECT datname FROM pg_database WHERE datname NOT IN ('template0','template1','postgres','ccp_postgresql');")
+
+          for DB in $DB_LIST; do
+            echo "Backing up $DB"
+            kubectl exec -i -n fluid $PG_POD -- \
+              pg_dump -U postgres -d $DB -cC > "$BACKUP_DIR/pg-${DB}.sql"
+          done
+
+          ARCHIVE="ccp-${TIMESTAMP}.tar.gz"
+          tar -czf "$ARCHIVE" "$BACKUP_DIR"
+
+          # Upload to MinIO
+          aws --endpoint-url "${{ secrets.MINIO_ENDPOINT }}" s3 cp "$ARCHIVE" "s3://${{ secrets.MINIO_BUCKET }}/ccp-postgres/$ARCHIVE"
+
+          # Clean up
+          rm -rf "$BACKUP_DIR" "$ARCHIVE"
