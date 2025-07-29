@@ -1,111 +1,111 @@
-name: Upgrading fluid using helm
+# name: Upgrading fluid using helm
 
-on:
-  push:
-    branches:
-      - main
+# on:
+#   push:
+#     branches:
+#       - main
 
-jobs:
-  deploy:
-    runs-on: self-hosted
+# jobs:
+#   deploy:
+#     runs-on: self-hosted
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
 
-      - name: Set up kubeconfig
-        run: |
-          echo "${{ secrets.KUBECONFIG_RAW }}" > kubeconfig
-          kubectl --kubeconfig=kubeconfig config get-contexts
+#       - name: Set up kubeconfig
+#         run: |
+#           echo "${{ secrets.KUBECONFIG_RAW }}" > kubeconfig
+#           kubectl --kubeconfig=kubeconfig config get-contexts
 
-      - name: Install AWS CLI
-        run: |
-          sudo apt update
-          sudo apt install -y awscli
+#       - name: Install AWS CLI
+#         run: |
+#           sudo apt update
+#           sudo apt install -y awscli
 
-      - name: Configure AWS CLI for MinIO
-        run: |
-          mkdir -p ~/.aws
-          cat <<EOF > ~/.aws/credentials
-          [default]
-          aws_access_key_id = ${{ secrets.MINIO_ACCESS_KEY }}
-          aws_secret_access_key = ${{ secrets.MINIO_SECRET_KEY }}
-          EOF
+#       - name: Configure AWS CLI for MinIO
+#         run: |
+#           mkdir -p ~/.aws
+#           cat <<EOF > ~/.aws/credentials
+#           [default]
+#           aws_access_key_id = ${{ secrets.MINIO_ACCESS_KEY }}
+#           aws_secret_access_key = ${{ secrets.MINIO_SECRET_KEY }}
+#           EOF
 
-          cat <<EOF > ~/.aws/config
-          [default]
-          region = us-east-1
-          output = json
-          EOF
+#           cat <<EOF > ~/.aws/config
+#           [default]
+#           region = us-east-1
+#           output = json
+#           EOF
 
-      - name: Backup PostgreSQL and upload to MinIO
-        env:
-          KUBECONFIG: ${{ github.workspace }}/kubeconfig
-          MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
-          MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
-        run: |
-          set -euo pipefail
+#       - name: Backup PostgreSQL and upload to MinIO
+#         env:
+#           KUBECONFIG: ${{ github.workspace }}/kubeconfig
+#           MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+#           MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
+#         run: |
+#           set -euo pipefail
 
-          TIMESTAMP=$(date +"%Y-%m-%d-%H-%M-%S")
-          BACKUP_DIR="ccp-$TIMESTAMP"
-          mkdir "$BACKUP_DIR"
+#           TIMESTAMP=$(date +"%Y-%m-%d-%H-%M-%S")
+#           BACKUP_DIR="ccp-$TIMESTAMP"
+#           mkdir "$BACKUP_DIR"
 
-          PG_POD=$(kubectl get pod -n fluid -l application=spilo -o jsonpath="{.items[0].metadata.name}")
+#           PG_POD=$(kubectl get pod -n fluid -l application=spilo -o jsonpath="{.items[0].metadata.name}")
 
-          DB_LIST=$(kubectl exec -i -n fluid $PG_POD -- \
-            psql -U postgres -tAc "SELECT datname FROM pg_database WHERE datname NOT IN ('template0','template1','postgres','ccp_postgresql');")
+#           DB_LIST=$(kubectl exec -i -n fluid $PG_POD -- \
+#             psql -U postgres -tAc "SELECT datname FROM pg_database WHERE datname NOT IN ('template0','template1','postgres','ccp_postgresql');")
 
-          for DB in $DB_LIST; do
-            echo "Backing up $DB"
-            kubectl exec -i -n fluid $PG_POD -- \
-              pg_dump -U postgres -d $DB -cC > "$BACKUP_DIR/pg-${DB}.sql"
-          done
+#           for DB in $DB_LIST; do
+#             echo "Backing up $DB"
+#             kubectl exec -i -n fluid $PG_POD -- \
+#               pg_dump -U postgres -d $DB -cC > "$BACKUP_DIR/pg-${DB}.sql"
+#           done
 
-          ARCHIVE="ccp-${TIMESTAMP}.tar.gz"
-          tar -czf "$ARCHIVE" "$BACKUP_DIR"
+#           ARCHIVE="ccp-${TIMESTAMP}.tar.gz"
+#           tar -czf "$ARCHIVE" "$BACKUP_DIR"
 
-          aws --endpoint-url "$MINIO_ENDPOINT" s3 cp "$ARCHIVE" "s3://$MINIO_BUCKET/ccp-postgres/$ARCHIVE"
+#           aws --endpoint-url "$MINIO_ENDPOINT" s3 cp "$ARCHIVE" "s3://$MINIO_BUCKET/ccp-postgres/$ARCHIVE"
 
-          rm -rf "$BACKUP_DIR" "$ARCHIVE"
+#           rm -rf "$BACKUP_DIR" "$ARCHIVE"
       
-      - name: Backup Keycloak PostgreSQL and upload to MinIO
-        env:
-          KUBECONFIG: ${{ github.workspace }}/kubeconfig
-          MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
-          MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
-        run: |
-          set -euo pipefail
+#       - name: Backup Keycloak PostgreSQL and upload to MinIO
+#         env:
+#           KUBECONFIG: ${{ github.workspace }}/kubeconfig
+#           MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+#           MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
+#         run: |
+#           set -euo pipefail
 
-          TIMESTAMP=$(date +"%Y-%m-%d-%H-%M-%S")
-          BACKUP_DIR="keycloak-pg-backup-$TIMESTAMP"
-          mkdir "$BACKUP_DIR"
+#           TIMESTAMP=$(date +"%Y-%m-%d-%H-%M-%S")
+#           BACKUP_DIR="keycloak-pg-backup-$TIMESTAMP"
+#           mkdir "$BACKUP_DIR"
 
-          PG_POD="keycloak-postgresql-cluster-0"
-          NAMESPACE="fluid"
+#           PG_POD="keycloak-postgresql-cluster-0"
+#           NAMESPACE="fluid"
 
-          DB_LIST=$(kubectl exec -i -n $NAMESPACE $PG_POD -- \
-            psql -U postgres -tAc "SELECT datname FROM pg_database WHERE datname NOT IN ('template0','template1','postgres');")
+#           DB_LIST=$(kubectl exec -i -n $NAMESPACE $PG_POD -- \
+#             psql -U postgres -tAc "SELECT datname FROM pg_database WHERE datname NOT IN ('template0','template1','postgres');")
           
-          echo "Databases found: $DB_LIST"
+#           echo "Databases found: $DB_LIST"
 
-          for DB in $DB_LIST; do
-            echo "Backing up database: $DB"
-            kubectl exec -i -n $NAMESPACE $PG_POD -- \
-              pg_dump -U postgres -d $DB -cC | gzip > "$BACKUP_DIR/pg-${DB}.sql.gz"
-          done
+#           for DB in $DB_LIST; do
+#             echo "Backing up database: $DB"
+#             kubectl exec -i -n $NAMESPACE $PG_POD -- \
+#               pg_dump -U postgres -d $DB -cC | gzip > "$BACKUP_DIR/pg-${DB}.sql.gz"
+#           done
 
-          echo "Backup directory content:"
-          ls -la "$BACKUP_DIR"
+#           echo "Backup directory content:"
+#           ls -la "$BACKUP_DIR"
 
-          ARCHIVE="keycloak-pg-backup-${TIMESTAMP}.tar.gz"
-          tar -czf "$ARCHIVE" "$BACKUP_DIR"
+#           ARCHIVE="keycloak-pg-backup-${TIMESTAMP}.tar.gz"
+#           tar -czf "$ARCHIVE" "$BACKUP_DIR"
 
-          echo "Archive created:"
-          ls -la "$ARCHIVE"
+#           echo "Archive created:"
+#           ls -la "$ARCHIVE"
 
-          aws --endpoint-url "$MINIO_ENDPOINT" s3 cp "$ARCHIVE" "s3://$MINIO_BUCKET/keycloak-postgres/$ARCHIVE"
+#           aws --endpoint-url "$MINIO_ENDPOINT" s3 cp "$ARCHIVE" "s3://$MINIO_BUCKET/keycloak-postgres/$ARCHIVE"
 
-          rm -rf "$BACKUP_DIR" "$ARCHIVE"
+#           rm -rf "$BACKUP_DIR" "$ARCHIVE"
 
 
 
