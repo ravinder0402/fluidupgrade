@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+
 jobs:
   deploy:
     runs-on: self-hosted
@@ -14,52 +15,51 @@ jobs:
 
       - name: Set up kubeconfig
         run: |
-          echo "${{ secrets.KUBECONFIG_RAW }}" > kubeconfig
-          export KUBECONFIG=$PWD/kubeconfig
-          kubectl config get-contexts
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_RAW }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+          kubectl --kubeconfig=$HOME/.kube/config config get-contexts
+
       - name: Install AWS CLI
         run: |
           sudo apt update
           sudo apt install -y awscli
+
       - name: Configure AWS CLI for MinIO
         run: |
           mkdir -p ~/.aws
           cat <<EOF > ~/.aws/credentials
-          [default]
-          aws_access_key_id = ${{ secrets.MINIO_ACCESS_KEY }}
-          aws_secret_access_key = ${{ secrets.MINIO_SECRET_KEY }}
-          EOF
+[default]
+aws_access_key_id = ${{ secrets.MINIO_ACCESS_KEY }}
+aws_secret_access_key = ${{ secrets.MINIO_SECRET_KEY }}
+EOF
           cat <<EOF > ~/.aws/config
-          [default]
-          region = us-east-1
-          output = json
-          EOF
-
-      - name: Set up kubeconfig
-        run: |
-          mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG_RAW }}" > ~/.kube/config
-
+[default]
+region = us-east-1
+output = json
+EOF
 
       - name: Backup PostgreSQL and upload to MinIO
         env:
           KUBECONFIG: $HOME/.kube/config
         run: |
           set -euo pipefail
+          export KUBECONFIG=$KUBECONFIG
+
           TIMESTAMP=$(date +"%Y-%m-%d-%H-%M-%S")
           BACKUP_DIR="ccp-$TIMESTAMP"
           mkdir "$BACKUP_DIR"
 
           # Get PostgreSQL pod dynamically
-          PG_POD=$(kubectl get pod -n fluid -l application=spilo -o jsonpath="{.items[0].metadata.name}")
+          PG_POD=$(kubectl --kubeconfig=$KUBECONFIG get pod -n fluid -l application=spilo -o jsonpath="{.items[0].metadata.name}")
 
-          # Get list of databases (excluding system DBs)
-          DB_LIST=$(kubectl exec -i -n fluid $PG_POD -- \
+          # List databases (exclude system DBs)
+          DB_LIST=$(kubectl --kubeconfig=$KUBECONFIG exec -i -n fluid $PG_POD -- \
             psql -U postgres -tAc "SELECT datname FROM pg_database WHERE datname NOT IN ('template0','template1','postgres','ccp_postgresql');")
 
           for DB in $DB_LIST; do
             echo "Backing up $DB"
-            kubectl exec -i -n fluid $PG_POD -- \
+            kubectl --kubeconfig=$KUBECONFIG exec -i -n fluid $PG_POD -- \
               pg_dump -U postgres -d $DB -cC > "$BACKUP_DIR/pg-${DB}.sql"
           done
 
