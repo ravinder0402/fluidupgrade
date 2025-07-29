@@ -151,13 +151,14 @@ jobs:
           kubectl cp "$FILE" fluid/ccs-postgresql-cluster-0:/tmp/$FILE -c postgres
       
           echo "Restoring full backup..."
-          kubectl exec -i -n fluid ccs-postgresql-cluster-0 -c postgres -- psql -U postgres < /tmp/$FILE
+          kubectl exec -n fluid ccs-postgresql-cluster-0 -c postgres -- psql -U postgres -f /tmp/$FILE
       
           echo "Cleaning up local and pod files"
           rm "$FILE"
           kubectl exec -n fluid ccs-postgresql-cluster-0 -c postgres -- rm "/tmp/$FILE"
       
           echo "Full PostgreSQL restore complete."
+
 
 
 
