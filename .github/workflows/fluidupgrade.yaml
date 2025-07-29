@@ -153,8 +153,16 @@ jobs:
             \"
           "
       
-          echo "Restoring full PostgreSQL backup"
+          echo "Dropping existing 'ccs_postgresql_cluster' database if exists"
+          kubectl exec -i -n fluid ccs-postgresql-cluster-0 -- bash -c "
+            psql -U postgres -d postgres -c \"DROP DATABASE IF EXISTS ccs_postgresql_cluster;\"
+            psql -U postgres -d postgres -c \"CREATE DATABASE ccs_postgresql_cluster TEMPLATE template0;\"
+          "
+      
+          echo "Copying backup file to the pod"
           kubectl cp "$FILE" fluid/ccs-postgresql-cluster-0:/tmp/"$FILE"
+      
+          echo "Restoring full PostgreSQL backup"
           kubectl exec -i -n fluid ccs-postgresql-cluster-0 -- bash -c "
             psql -U postgres < /tmp/$FILE
             rm /tmp/$FILE
@@ -162,6 +170,7 @@ jobs:
       
           rm "$FILE"
           echo "Restore completed successfully."
+
 
 
 
