@@ -135,9 +135,7 @@ jobs:
         run: |
           echo "🔄 Restoring full PostgreSQL backup from MinIO..."
       
-          # Get the latest full backup file
           FILE=$(aws --endpoint-url "$MINIO_ENDPOINT" s3 ls "s3://$MINIO_BUCKET/" | grep "fluid_ccs_pg_backup_" | sort | tail -n1 | awk '{print $4}')
-      
           if [ -z "$FILE" ]; then
             echo "No backup file found in MinIO. Aborting restore."
             exit 1
@@ -146,13 +144,18 @@ jobs:
           echo "Found backup file: $FILE"
           aws --endpoint-url "$MINIO_ENDPOINT" s3 cp "s3://$MINIO_BUCKET/$FILE" .
       
-          echo "Restoring full backup..."
+          echo "Making sure /tmp exists inside container"
+          kubectl exec -n fluid ccs-postgresql-cluster-0 -c postgres -- mkdir -p /tmp
+      
+          echo "Copying backup into pod container"
           kubectl cp "$FILE" fluid/ccs-postgresql-cluster-0:/tmp/$FILE -c postgres
+      
+          echo "Restoring full backup..."
           kubectl exec -i -n fluid ccs-postgresql-cluster-0 -c postgres -- psql -U postgres < /tmp/$FILE
       
-          # Clean up
+          echo "Cleaning up local and pod files"
           rm "$FILE"
-          kubectl exec -i -n fluid ccs-postgresql-cluster-0 -c postgres -- rm "/tmp/$FILE"
+          kubectl exec -n fluid ccs-postgresql-cluster-0 -c postgres -- rm "/tmp/$FILE"
       
           echo "Full PostgreSQL restore complete."
 
