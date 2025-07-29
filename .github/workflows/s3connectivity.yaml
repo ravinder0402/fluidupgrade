@@ -75,28 +75,37 @@ jobs:
           MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
         run: |
           set -euo pipefail
-      
+
           TIMESTAMP=$(date +"%Y-%m-%d-%H-%M-%S")
           BACKUP_DIR="keycloak-pg-backup-$TIMESTAMP"
           mkdir "$BACKUP_DIR"
-      
+
           PG_POD="keycloak-postgresql-cluster-0"
           NAMESPACE="fluid"
-      
+
           DB_LIST=$(kubectl exec -i -n $NAMESPACE $PG_POD -- \
             psql -U postgres -tAc "SELECT datname FROM pg_database WHERE datname NOT IN ('template0','template1','postgres');")
-      
+          
+          echo "Databases found: $DB_LIST"
+
           for DB in $DB_LIST; do
             echo "Backing up database: $DB"
             kubectl exec -i -n $NAMESPACE $PG_POD -- \
               pg_dump -U postgres -d $DB -cC | gzip > "$BACKUP_DIR/pg-${DB}.sql.gz"
           done
-      
+
+          echo "Backup directory content:"
+          ls -la "$BACKUP_DIR"
+
           ARCHIVE="keycloak-pg-backup-${TIMESTAMP}.tar.gz"
           tar -czf "$ARCHIVE" "$BACKUP_DIR"
-      
+
+          echo "Archive created:"
+          ls -la "$ARCHIVE"
+
           aws --endpoint-url "$MINIO_ENDPOINT" s3 cp "$ARCHIVE" "s3://$MINIO_BUCKET/keycloak-postgres/$ARCHIVE"
-      
+
           rm -rf "$BACKUP_DIR" "$ARCHIVE"
+
 
 
