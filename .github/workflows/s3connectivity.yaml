@@ -1,34 +1,34 @@
-name: Backup PostgreSQL to MinIO
+name: Upgrading fluid using helm
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
-
 jobs:
-  postgres-backup:
+  deploy:
     runs-on: self-hosted
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up kubeconfig
+        run: |
+          echo "${{ secrets.KUBECONFIG_RAW }}" > kubeconfig
+          export KUBECONFIG=$PWD/kubeconfig
+          kubectl config get-contexts
       - name: Install AWS CLI
         run: |
           sudo apt update
           sudo apt install -y awscli
-
-      - name: Configure AWS CLI using GitHub Secrets
+      - name: Configure AWS CLI for MinIO
         run: |
           mkdir -p ~/.aws
-
           cat <<EOF > ~/.aws/credentials
           [default]
           aws_access_key_id = ${{ secrets.MINIO_ACCESS_KEY }}
           aws_secret_access_key = ${{ secrets.MINIO_SECRET_KEY }}
           EOF
-
           cat <<EOF > ~/.aws/config
           [default]
           region = us-east-1
