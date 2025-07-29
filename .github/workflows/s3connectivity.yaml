@@ -67,3 +67,40 @@ jobs:
           aws --endpoint-url "$MINIO_ENDPOINT" s3 cp "$ARCHIVE" "s3://$MINIO_BUCKET/ccp-postgres/$ARCHIVE"
 
           rm -rf "$BACKUP_DIR" "$ARCHIVE"
+      - name: Backup Keycloak PostgreSQL and upload to MinIO
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+          MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+          MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
+        run: |
+          set -euo pipefail
+      
+          TIMESTAMP=$(date +"%Y-%m-%d-%H-%M-%S")
+          BACKUP_DIR="keycloak-pg-backup-$TIMESTAMP"
+          mkdir "$BACKUP_DIR"
+      
+          # Find the keycloak postgres pod - adjust namespace and label if needed
+          PG_POD=$(kubectl get pod -n fluid -l app.kubernetes.io/name=keycloak-postgresql -o jsonpath="{.items[0].metadata.name}")
+      
+          if [ -z "$PG_POD" ]; then
+            echo "Keycloak PostgreSQL pod not found"
+            exit 1
+          fi
+      
+          # List databases excluding system DBs (adjust names as needed)
+          DB_LIST=$(kubectl exec -i -n fluid $PG_POD -- \
+            psql -U postgres -tAc "SELECT datname FROM pg_database WHERE datname NOT IN ('template0','template1','postgres');")
+      
+          for DB in $DB_LIST; do
+            echo "Backing up database: $DB"
+            kubectl exec -i -n fluid $PG_POD -- \
+              pg_dump -U postgres -d $DB -cC | gzip > "$BACKUP_DIR/pg-${DB}.sql.gz"
+          done
+      
+          ARCHIVE="keycloak-pg-backup-${TIMESTAMP}.tar.gz"
+          tar -czf "$ARCHIVE" "$BACKUP_DIR"
+      
+          aws --endpoint-url "$MINIO_ENDPOINT" s3 cp "$ARCHIVE" "s3://$MINIO_BUCKET/keycloak-postgres/$ARCHIVE"
+      
+          rm -rf "$BACKUP_DIR" "$ARCHIVE"
+
