@@ -43,15 +43,14 @@ jobs:
 
       - name: Backup PostgreSQL and upload to MinIO
         env:
-          KUBECONFIG: ~/.kube/config
+          KUBECONFIG: $HOME/.kube/config
         run: |
           set -euo pipefail
-
           TIMESTAMP=$(date +"%Y-%m-%d-%H-%M-%S")
           BACKUP_DIR="ccp-$TIMESTAMP"
           mkdir "$BACKUP_DIR"
 
-          # Get PostgreSQL pod dynamically (adjust label if needed)
+          # Get PostgreSQL pod dynamically
           PG_POD=$(kubectl get pod -n fluid -l application=spilo -o jsonpath="{.items[0].metadata.name}")
 
           # Get list of databases (excluding system DBs)
@@ -67,8 +66,6 @@ jobs:
           ARCHIVE="ccp-${TIMESTAMP}.tar.gz"
           tar -czf "$ARCHIVE" "$BACKUP_DIR"
 
-          # Upload to MinIO
           aws --endpoint-url "${{ secrets.MINIO_ENDPOINT }}" s3 cp "$ARCHIVE" "s3://${{ secrets.MINIO_BUCKET }}/ccp-postgres/$ARCHIVE"
 
-          # Clean up
           rm -rf "$BACKUP_DIR" "$ARCHIVE"
