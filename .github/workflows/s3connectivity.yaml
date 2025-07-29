@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-
 jobs:
   deploy:
     runs-on: self-hosted
@@ -15,10 +14,9 @@ jobs:
 
       - name: Set up kubeconfig
         run: |
-          mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG_RAW }}" > ~/.kube/config
-          chmod 600 ~/.kube/config
-          kubectl --kubeconfig=$HOME/.kube/config config get-contexts
+          echo "${{ secrets.KUBECONFIG_RAW }}" > kubeconfig
+          export KUBECONFIG=$PWD/kubeconfig
+          kubectl config get-contexts
 
       - name: Install AWS CLI
         run: |
@@ -26,22 +24,19 @@ jobs:
           sudo apt install -y awscli
 
       - name: Configure AWS CLI for MinIO
-        env:
-          MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
-          MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
         run: |
           mkdir -p ~/.aws
           cat <<EOF > ~/.aws/credentials
-[default]
-aws_access_key_id = $MINIO_ACCESS_KEY
-aws_secret_access_key = $MINIO_SECRET_KEY
-EOF
+          [default]
+          aws_access_key_id = ${{ secrets.MINIO_ACCESS_KEY }}
+          aws_secret_access_key = ${{ secrets.MINIO_SECRET_KEY }}
+          EOF
 
           cat <<EOF > ~/.aws/config
-[default]
-region = us-east-1
-output = json
-EOF
+          [default]
+          region = us-east-1
+          output = json
+          EOF
 
       - name: Backup PostgreSQL and upload to MinIO
         env:
