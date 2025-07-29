@@ -43,7 +43,7 @@ jobs:
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
           FILE="fluid_ccs_pg_backup_$TIMESTAMP.sql"
           # Use --clean to include DROP statements in the dump
-          kubectl exec -i -n fluid ccs-postgresql-cluster-0 -- pg_dumpall --clean -U postgres > $FILE
+          kubectl exec -i -n fluid ccs-postgresql-cluster-0 -- pg_dumpall  -U postgres > $FILE
           aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp $FILE s3://${{ secrets.MINIO_BUCKET }}/$FILE
           rm $FILE
 
@@ -125,39 +125,39 @@ jobs:
       #   run: |
       #     helm upgrade --install fluid . -f values.yaml -n fluid --create-namespace
       #     helm list -A
-          
-      - name: Restoring CCS PostgreSQL full backup
+      - name: Restoring CCS postgresql backup
         env:
           MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
           MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
           AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
         run: |
-          echo "🔄 Restoring full PostgreSQL backup from MinIO..."
-      
-          FILE=$(aws --endpoint-url "$MINIO_ENDPOINT" s3 ls "s3://$MINIO_BUCKET/" | grep "fluid_ccs_pg_backup_" | sort | tail -n1 | awk '{print $4}')
-          if [ -z "$FILE" ]; then
-            echo "No backup file found in MinIO. Aborting restore."
-            exit 1
-          fi
-      
-          echo "Found backup file: $FILE"
+          echo "MINIO_ENDPOINT=$MINIO_ENDPOINT"
+          echo "MINIO_BUCKET=$MINIO_BUCKET"
+          echo "Restoring CCS PostgreSQL backup..."
+
+          # Find the latest backup file in MinIO
+          FILE=$(aws --endpoint-url "$MINIO_ENDPOINT" s3 ls "s3://$MINIO_BUCKET/" | grep fluid_ccs_pg_backup_ | sort | tail -n1 | awk '{print $4}')
+          echo "Downloading backup file $FILE from MinIO"
           aws --endpoint-url "$MINIO_ENDPOINT" s3 cp "s3://$MINIO_BUCKET/$FILE" .
-      
-          echo "Making sure /tmp exists inside container"
-          kubectl exec -n fluid ccs-postgresql-cluster-0 -c postgres -- mkdir -p /tmp
-      
-          echo "Copying backup into pod container"
-          kubectl cp "$FILE" fluid/ccs-postgresql-cluster-0:/tmp/$FILE -c postgres
-      
-          echo "Restoring full backup..."
-          kubectl exec -n fluid ccs-postgresql-cluster-0 -c postgres -- psql -U postgres -f /tmp/$FILE
-      
-          echo "Cleaning up local and pod files"
+
+          # Terminate connections and drop databases inside the pod
+          kubectl exec -i ccs-postgresql-cluster-0 -n fluid -- bash -c "
+          psql -U postgres -d postgres <<EOF
+          SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'audit-db';
+          SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'cloud';
+          SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'ccs_postgresql_cluster';
+          \\! psql -U postgres -d postgres -c \"DROP DATABASE IF EXISTS \\\"audit-db\\\";\"
+          \\! psql -U postgres -d postgres -c \"DROP DATABASE IF EXISTS cloud;\"
+          \\! psql -U postgres -d postgres -c \"DROP DATABASE IF EXISTS ccs_postgresql_cluster;\"
+          EOF
+          "
+
+          # Restore from the downloaded backup file
+          kubectl exec -it ccs-postgresql-cluster-0 -n fluid -- psql -U postgres < "$FILE"
           rm "$FILE"
-          kubectl exec -n fluid ccs-postgresql-cluster-0 -c postgres -- rm "/tmp/$FILE"
-      
-          echo "Full PostgreSQL restore complete."
+          echo "CCS PostgreSQL restore complete."     
+
 
 
 
