@@ -146,7 +146,8 @@ jobs:
             # Drop and recreate the database inside the pod
             echo "Dropping and recreating database: $DB"
             kubectl exec -i -n fluid ccs-postgresql-cluster-0 -- bash -c "psql -U postgres -c 'DROP DATABASE IF EXISTS \"${DB}\";'"
-            kubectl exec -i -n fluid ccs-postgresql-cluster-0 -- bash -c "psql -U postgres -c 'CREATE DATABASE \"${DB}\";'"
+            kubectl exec -i -n fluid ccs-postgresql-cluster-0 -- bash -c "psql -U postgres -c 'CREATE DATABASE \"${DB}\" WITH TEMPLATE template0 ENCODING '\''UTF8'\'';'"
+
       
             # Restore the backup into the new database
             echo "Restoring backup into $DB"
