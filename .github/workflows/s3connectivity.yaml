@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+
 jobs:
   deploy:
     runs-on: self-hosted
@@ -15,8 +16,7 @@ jobs:
       - name: Set up kubeconfig
         run: |
           echo "${{ secrets.KUBECONFIG_RAW }}" > kubeconfig
-          export KUBECONFIG=$PWD/kubeconfig
-          kubectl config get-contexts
+          kubectl --kubeconfig=kubeconfig config get-contexts
 
       - name: Install AWS CLI
         run: |
@@ -40,29 +40,30 @@ jobs:
 
       - name: Backup PostgreSQL and upload to MinIO
         env:
-          KUBECONFIG: $HOME/.kube/config
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+          MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+          MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
         run: |
           set -euo pipefail
-          export KUBECONFIG=$KUBECONFIG
 
           TIMESTAMP=$(date +"%Y-%m-%d-%H-%M-%S")
           BACKUP_DIR="ccp-$TIMESTAMP"
           mkdir "$BACKUP_DIR"
 
-          PG_POD=$(kubectl --kubeconfig=$KUBECONFIG get pod -n fluid -l application=spilo -o jsonpath="{.items[0].metadata.name}")
+          PG_POD=$(kubectl get pod -n fluid -l application=spilo -o jsonpath="{.items[0].metadata.name}")
 
-          DB_LIST=$(kubectl --kubeconfig=$KUBECONFIG exec -i -n fluid $PG_POD -- \
+          DB_LIST=$(kubectl exec -i -n fluid $PG_POD -- \
             psql -U postgres -tAc "SELECT datname FROM pg_database WHERE datname NOT IN ('template0','template1','postgres','ccp_postgresql');")
 
           for DB in $DB_LIST; do
             echo "Backing up $DB"
-            kubectl --kubeconfig=$KUBECONFIG exec -i -n fluid $PG_POD -- \
+            kubectl exec -i -n fluid $PG_POD -- \
               pg_dump -U postgres -d $DB -cC > "$BACKUP_DIR/pg-${DB}.sql"
           done
 
           ARCHIVE="ccp-${TIMESTAMP}.tar.gz"
           tar -czf "$ARCHIVE" "$BACKUP_DIR"
 
-          aws --endpoint-url "${{ secrets.MINIO_ENDPOINT }}" s3 cp "$ARCHIVE" "s3://${{ secrets.MINIO_BUCKET }}/ccp-postgres/$ARCHIVE"
+          aws --endpoint-url "$MINIO_ENDPOINT" s3 cp "$ARCHIVE" "s3://$MINIO_BUCKET/ccp-postgres/$ARCHIVE"
 
           rm -rf "$BACKUP_DIR" "$ARCHIVE"
