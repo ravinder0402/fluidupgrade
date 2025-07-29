@@ -124,56 +124,45 @@ jobs:
       #     helm upgrade --install fluid . -f values.yaml -n fluid --create-namespace
       #     helm list -A
           
-      - name: Restoring CCS PostgreSQL backup
+      - name: Restoring full CCS PostgreSQL backup
         env:
           MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
           MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
           AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
         run: |
-          echo "Restoring CCS PostgreSQL databases..."
+          echo "Listing MinIO backups:"
+          aws --endpoint-url "$MINIO_ENDPOINT" s3 ls "s3://$MINIO_BUCKET/"
       
-          # Define the list of databases to restore
-          DBS=("audit-db" "cloud" "ccs_postgresql_cluster")
+          # Find the latest backup file matching the full backup naming pattern
+          FILE=$(aws --endpoint-url "$MINIO_ENDPOINT" s3 ls "s3://$MINIO_BUCKET/" \
+                 | grep "fluid_ccs_pg_backup_" | sort | tail -n1 | awk '{print $4}')
       
-          for DB in "${DBS[@]}"; do
-            echo "Looking for latest backup for DB: $DB"
+          if [ -z "$FILE" ]; then
+            echo "ERROR: No backup file found in MinIO. Exiting."
+            exit 1
+          fi
       
-            FILE=$(aws --endpoint-url "$MINIO_ENDPOINT" s3 ls "s3://$MINIO_BUCKET/" | grep "fluid_ccs_pg_backup_${DB}_" | sort | tail -n1 | awk '{print $4}')
+          echo "Downloading backup file $FILE"
+          aws --endpoint-url "$MINIO_ENDPOINT" s3 cp "s3://$MINIO_BUCKET/$FILE" .
       
-            if [ -z "$FILE" ]; then
-              echo " No backup found for $DB. Skipping."
-              continue
-            fi
+          echo "Terminating connections to all databases except 'postgres' and 'template1'"
+          kubectl exec -i -n fluid ccs-postgresql-cluster-0 -- bash -c "
+            psql -U postgres -d postgres -c \"
+              SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE pid <> pg_backend_pid() AND datname NOT IN ('postgres', 'template1');
+            \"
+          "
       
-            echo "Downloading $FILE from MinIO"
-            aws --endpoint-url "$MINIO_ENDPOINT" s3 cp "s3://$MINIO_BUCKET/$FILE" .
+          echo "Restoring full PostgreSQL backup"
+          kubectl cp "$FILE" fluid/ccs-postgresql-cluster-0:/tmp/"$FILE"
+          kubectl exec -i -n fluid ccs-postgresql-cluster-0 -- bash -c "
+            psql -U postgres < /tmp/$FILE
+            rm /tmp/$FILE
+          "
       
-            echo "🔧 Dropping and recreating DB: $DB"
-            kubectl exec -i -n fluid ccs-postgresql-cluster-0 -- bash -c "
-              psql -U postgres -d postgres -c \"
-                SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$DB';
-              \"
-              psql -U postgres -d postgres -c \"
-                DROP DATABASE IF EXISTS \\\"$DB\\\";
-              \"
-              psql -U postgres -d postgres -c \"
-                CREATE DATABASE \\\"$DB\\\" TEMPLATE template0;
-              \"
-            "
-      
-            echo "Restoring database from $FILE"
-            kubectl cp "$FILE" fluid/ccs-postgresql-cluster-0:/tmp/"$FILE"
-            kubectl exec -i -n fluid ccs-postgresql-cluster-0 -- bash -c "
-              psql -U postgres -d \\\"$DB\\\" < /tmp/$FILE
-              rm /tmp/$FILE
-            "
-      
-            rm "$FILE"
-            echo " Successfully restored: $DB"
-          done
-      
-          echo "All requested PostgreSQL databases restored."
+          rm "$FILE"
+          echo "Restore completed successfully."
+
 
 
 
