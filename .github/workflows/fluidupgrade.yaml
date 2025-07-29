@@ -147,14 +147,15 @@ jobs:
           aws --endpoint-url "$MINIO_ENDPOINT" s3 cp "s3://$MINIO_BUCKET/$FILE" .
       
           echo "Restoring full backup..."
-          kubectl cp "$FILE" fluid/ccs-postgresql-cluster-0:/tmp/$FILE
-          kubectl exec -i -n fluid ccs-postgresql-cluster-0 -- psql -U postgres < /tmp/$FILE
+          kubectl cp "$FILE" fluid/ccs-postgresql-cluster-0:/tmp/$FILE -c postgres
+          kubectl exec -i -n fluid ccs-postgresql-cluster-0 -c postgres -- psql -U postgres < /tmp/$FILE
       
           # Clean up
           rm "$FILE"
-          kubectl exec -i -n fluid ccs-postgresql-cluster-0 -- rm "/tmp/$FILE"
+          kubectl exec -i -n fluid ccs-postgresql-cluster-0 -c postgres -- rm "/tmp/$FILE"
       
           echo "Full PostgreSQL restore complete."
+
 
 
           
