@@ -133,17 +133,24 @@ jobs:
         run: |
           echo "Restoring CCS PostgreSQL databases..."
       
-          # Define databases
+          # Define the list of databases to restore
           DBS=("audit-db" "cloud" "ccs_postgresql_cluster")
       
           for DB in "${DBS[@]}"; do
-            # Get the latest backup for the specific database
+            echo "Looking for latest backup for DB: $DB"
+      
             FILE=$(aws --endpoint-url "$MINIO_ENDPOINT" s3 ls "s3://$MINIO_BUCKET/" | grep "fluid_ccs_pg_backup_${DB}_" | sort | tail -n1 | awk '{print $4}')
+      
+            if [ -z "$FILE" ]; then
+              echo " No backup found for $DB. Skipping."
+              continue
+            fi
+      
             echo "Downloading $FILE from MinIO"
             aws --endpoint-url "$MINIO_ENDPOINT" s3 cp "s3://$MINIO_BUCKET/$FILE" .
       
-            # Drop the existing DB (terminate active connections first)
-            kubectl exec -i ccs-postgresql-cluster-0 -n fluid -- bash -c "
+            echo "🔧 Dropping and recreating DB: $DB"
+            kubectl exec -i -n fluid ccs-postgresql-cluster-0 -- bash -c "
               psql -U postgres -d postgres -c \"
                 SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$DB';
               \"
@@ -151,22 +158,23 @@ jobs:
                 DROP DATABASE IF EXISTS \\\"$DB\\\";
               \"
               psql -U postgres -d postgres -c \"
-                CREATE DATABASE \\\"$DB\\\";
+                CREATE DATABASE \\\"$DB\\\" TEMPLATE template0;
               \"
             "
       
-            # Restore the database
+            echo "Restoring database from $FILE"
             kubectl cp "$FILE" fluid/ccs-postgresql-cluster-0:/tmp/"$FILE"
             kubectl exec -i -n fluid ccs-postgresql-cluster-0 -- bash -c "
-              psql -U postgres -d \"$DB\" < /tmp/$FILE
+              psql -U postgres -d \\\"$DB\\\" < /tmp/$FILE
               rm /tmp/$FILE
             "
       
             rm "$FILE"
-            echo "$DB restored successfully."
+            echo " Successfully restored: $DB"
           done
       
           echo "All requested PostgreSQL databases restored."
+
 
 
 
